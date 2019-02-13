@@ -1,0 +1,31 @@
+{
+  "name": "kin-sdk-node",
+  "version": "1.0.0",
+  "description": "Kin SDK for the Node runtime",
+  "main": "index.js",
+  "scripts": {
+    "lint": "tslint -p scripts/tsconfig.json",
+    "build": "tsc -p scripts/tsconfig.json"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kinecosystem/kin-sdk-node.git"
+  },
+  "keywords": [
+    "typescript",
+    "kin",
+    "node"
+  ],
+  "author": "Kin Ecosystem",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/kinecosystem/kin-sdk-node/issues"
+  },
+  "homepage": "https://github.com/kinecosystem/kin-sdk-node#readme",
+  "devDependencies": {
+    "typescript": "^3.3.3"
+  },
+  "dependencies": {
+    "@kinecosystem/kin-sdk": "^0.20.0"
+  }
+}
