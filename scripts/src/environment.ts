@@ -1,9 +1,8 @@
+import * as KinSdk from "@kinecosystem/kin-sdk";
+
 /**
  * The blockchain's environment
  */
-
-import * as KinSdk from "@kinecosystem/kin-sdk";
-
 export class Environment {
 	public static readonly Production = new Environment(
 		"Production",
@@ -15,7 +14,8 @@ export class Environment {
 		"Test",
 		"https://horizon-testnet.kininfrastructure.com/",
 		KinSdk.Networks.TESTNET,
+		"https://friendbot-testnet.kininfrastructure.com"
 	);
 
-	private constructor(readonly name: string, readonly url: string, readonly passphrase: string) {}
+	private constructor(readonly name: string, readonly url: string, readonly passphrase: string, friendbotUrl?: string) {}
 }
