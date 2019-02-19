@@ -4,8 +4,12 @@
   "description": "Kin SDK for the Node runtime",
   "main": "index.js",
   "scripts": {
-    "lint": "tslint -p scripts/tsconfig.json",
-    "build": "tsc -p scripts/tsconfig.json"
+    "clean": "rimraf scripts/bin",
+    "transpile": "tsc -p scripts",
+    "lint": "./node_modules/.bin/tslint -p ./scripts",
+    "build": "npm-run-all clean transpile",
+    "transpile-tests": "tsc -p tests",
+    "test": "jest --forceExit --runInBand --detectOpenHandles"
   },
   "repository": {
     "type": "git",
@@ -23,9 +27,31 @@
   },
   "homepage": "https://github.com/kinecosystem/kin-sdk-node#readme",
   "devDependencies": {
+    "@types/jest": "^24.0.4",
+    "jest": "^24.1.0",
+    "npm-run-all": "^4.1.5",
+    "ts-jest": "^23.10.5",
+    "tslint": "^5.12.1",
+    "tslint-eslint-rules": "^5.4.0",
     "typescript": "^3.3.3"
   },
   "dependencies": {
     "@kinecosystem/kin-sdk": "^0.20.0"
+  },
+  "jest": {
+    "moduleFileExtensions": [
+      "ts",
+      "tsx",
+      "js"
+    ],
+    "transform": {
+      "^.+\\.(ts|tsx)$": "<rootDir>/tests/preprocessor.js"
+    },
+    "testMatch": [
+      "**/tests/src/**.ts"
+    ],
+    "testPathIgnorePatterns": [
+      ".d.ts"
+    ]
   }
 }
