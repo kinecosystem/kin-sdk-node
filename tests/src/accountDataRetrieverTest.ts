@@ -1,4 +1,4 @@
-import {AccountDataRetreiver} from "../../scripts/bin/blockchain/accountDataRetreiver";
+import {AccountDataRetriever} from "../../scripts/bin/blockchain/accountDataRetriever";
 import {Server} from "@kinecosystem/kin-sdk";
 import {AccountData} from "../../scripts/bin/blockchain/horizonModels";
 import * as nock from "nock";
@@ -6,17 +6,17 @@ import {AccountNotFoundError, ServerError} from "../../scripts/bin/errors";
 
 const fakeUrl = "http://horizon.com";
 const publicAddress = "GDAVCZIOYRGV74ROE344CMRLPZYSZVRHNTRFGOUSAQBILJ7M5ES25KOZ";
-let accountDataRetreiver: AccountDataRetreiver;
+let accountDataRetriever: AccountDataRetriever;
 
 describe("AccountDataRetreiver.fetchAccountData", async () => {
 	beforeAll(async () => {
-		accountDataRetreiver = new AccountDataRetreiver(new Server(fakeUrl, {allowHttp: true}));
+		accountDataRetriever = new AccountDataRetriever(new Server(fakeUrl, {allowHttp: true}));
 	});
 
 	test("returned AccountData object matches network data", async () => {
 		mockAccountNetworkResponse();
 
-		const accountData = await accountDataRetreiver.fetchAccountData(publicAddress);
+		const accountData = await accountDataRetriever.fetchAccountData(publicAddress);
 		expect(accountData.accountId).toBe("GDAVCZIOYRGV74ROE344CMRLPZYSZVRHNTRFGOUSAQBILJ7M5ES25KOZ");
 		expect(accountData.id).toBe("GDAVCZIOYRGV74ROE344CMRLPZYSZVRHNTRFGOUSAQBILJ7M5ES25KOZ");
 		expect(accountData.balances).toHaveLength(2);
@@ -55,20 +55,20 @@ describe("AccountDataRetreiver.fetchAccountData", async () => {
 
 	test("no account, expect AccountNotFoundError", async () => {
 		mock404NetworkResponse();
-		await expect(accountDataRetreiver.fetchAccountData(publicAddress))
+		await expect(accountDataRetriever.fetchAccountData(publicAddress))
 			.rejects.toEqual(new AccountNotFoundError(publicAddress));
 	});
 
 	test("error 500, expect ServerError", async () => {
 		mock500NetworkResponse();
-		await expect(accountDataRetreiver.fetchAccountData(publicAddress))
+		await expect(accountDataRetriever.fetchAccountData(publicAddress))
 			.rejects.toEqual(new ServerError(500));
 	});
 
 	test("timeout error, expect NetworkError", async () => {
 		mockTimeoutNetworkReponse();
 		//TODO check stellar sdk for exposing network errors up
-		await expect(accountDataRetreiver.fetchAccountData(publicAddress))
+		await expect(accountDataRetriever.fetchAccountData(publicAddress))
 			.rejects.toBeDefined();
 	});
 
@@ -76,31 +76,31 @@ describe("AccountDataRetreiver.fetchAccountData", async () => {
 
 describe("AccountDataRetreiver.fetchKinBalance", async () => {
 	beforeAll(async () => {
-		accountDataRetreiver = new AccountDataRetreiver(new Server(fakeUrl, {allowHttp: true}));
+		accountDataRetriever = new AccountDataRetriever(new Server(fakeUrl, {allowHttp: true}));
 	});
 
 	test("balance should match network balance", async () => {
 		mockAccountNetworkResponse();
 
-		expect(await accountDataRetreiver.fetchKinBalance(publicAddress)).toBe(2.96005);
+		expect(await accountDataRetriever.fetchKinBalance(publicAddress)).toBe(2.96005);
 	});
 
 	test("no account, expect AccountNotFoundError", async () => {
 		mock404NetworkResponse();
-		await expect(accountDataRetreiver.fetchKinBalance(publicAddress))
+		await expect(accountDataRetriever.fetchKinBalance(publicAddress))
 			.rejects.toEqual(new AccountNotFoundError(publicAddress));
 	});
 
 	test("error 500, expect ServerError", async () => {
 		mock500NetworkResponse();
-		await expect(accountDataRetreiver.fetchKinBalance(publicAddress))
+		await expect(accountDataRetriever.fetchKinBalance(publicAddress))
 			.rejects.toEqual(new ServerError(500));
 	});
 
 	test("timeout error, expect NetworkError", async () => {
 		mockTimeoutNetworkReponse();
 		//TODO check stellar sdk for exposing network errors up
-		await expect(accountDataRetreiver.fetchKinBalance(publicAddress))
+		await expect(accountDataRetriever.fetchKinBalance(publicAddress))
 			.rejects.toBeDefined();
 	});
 
@@ -108,30 +108,30 @@ describe("AccountDataRetreiver.fetchKinBalance", async () => {
 
 describe("AccountDataRetreiver.isAccountExisting", async () => {
 	beforeAll(async () => {
-		accountDataRetreiver = new AccountDataRetreiver(new Server(fakeUrl, {allowHttp: true}));
+		accountDataRetriever = new AccountDataRetriever(new Server(fakeUrl, {allowHttp: true}));
 	});
 
 	test("account exists, should return true", async () => {
 		mockAccountNetworkResponse();
 
-		expect(await accountDataRetreiver.isAccountExisting(publicAddress)).toBe(true);
+		expect(await accountDataRetriever.isAccountExisting(publicAddress)).toBe(true);
 	});
 
 	test("no account, should return false", async () => {
 		mock404NetworkResponse();
-		expect(await accountDataRetreiver.isAccountExisting(publicAddress)).toBe(false);
+		expect(await accountDataRetriever.isAccountExisting(publicAddress)).toBe(false);
 	});
 
 	test("error 500, expect ServerError", async () => {
 		mock500NetworkResponse();
-		await expect(accountDataRetreiver.isAccountExisting(publicAddress))
+		await expect(accountDataRetriever.isAccountExisting(publicAddress))
 			.rejects.toEqual(new ServerError(500));
 	});
 
 	test("timeout error, expect NetworkError", async () => {
 		mockTimeoutNetworkReponse();
 		//TODO check stellar sdk for exposing network errors up
-		await expect(accountDataRetreiver.isAccountExisting(publicAddress))
+		await expect(accountDataRetriever.isAccountExisting(publicAddress))
 			.rejects.toBeDefined();
 	});
 
