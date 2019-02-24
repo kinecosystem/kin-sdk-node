@@ -2,7 +2,7 @@ import {Environment} from "./environment";
 import {KinAccount} from "./kinAccount";
 import {KinClientConfig} from "./KinClientConfig";
 import {AccountData, Balance} from "./blockchain/horizonModels";
-import {SimplifiedTransaction, RawTransaction} from "./transaction";
+import {RawTransaction, SimplifiedTransaction} from "./transaction";
 
 export class KinClient {
 	constructor(readonly environment: Environment) {
@@ -21,15 +21,15 @@ export class KinClient {
 	}
 
 	async getAccountBalance(address: Address): Promise<Balance> {
-		return Promise.resolve(new Balance());
+		return Promise.resolve(0);
 	}
 
 	async isAccountExisting(address: Address): Promise<boolean> {
 		return Promise.resolve(false);
 	}
 
-	async getAccountData(address: Address): Promise<AccountData> {
-		return Promise.resolve(false);
+	async getAccountData(address: Address): Promise<AccountData | null> {
+		return Promise.resolve(null);
 	}
 
 	async getTransactionData(txHash: string): Promise<SimplifiedTransaction | RawTransaction> {

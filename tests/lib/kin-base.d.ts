@@ -542,10 +542,10 @@ declare module "@kinecosystem/kin-base" {
 
             toXDR(base?: string): Buffer;
             toXDR(encoding: string): string;
-        }
+		}
 
-        export import Operation = xdrHidden.Operation2;  // tslint:disable-line:strict-export-declare-modifiers
-        class Asset extends XDRStruct {
+		export import Operation = xdrHidden.Operation2; // tslint:disable-line:strict-export-declare-modifiers
+		class Asset extends XDRStruct {
             static fromXDR(xdr: Buffer): Asset;
         }
 

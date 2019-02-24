@@ -2,7 +2,7 @@
 
 declare module "@kinecosystem/kin-sdk" {
 
-    import {AssetType, Asset, Memo, MemoType, Transaction} from 'kin-base';
+	import {Asset, AssetType, Memo, MemoType, Transaction} from 'kin-base';
 
 // Re-StellarBase
     export {
@@ -241,12 +241,12 @@ declare module "@kinecosystem/kin-sdk" {
             price: string;
 
             seller?: CallFunction<AccountRecord>;
-        }
+		}
 
-        import OperationResponseType = Horizon.OperationResponseType;
-        import OperationResponseTypeI = Horizon.OperationResponseTypeI;
+		import OperationResponseType = Horizon.OperationResponseType;
+		import OperationResponseTypeI = Horizon.OperationResponseTypeI;
 
-        interface BaseOperationRecord<T extends OperationResponseType = OperationResponseType,
+		interface BaseOperationRecord<T extends OperationResponseType = OperationResponseType,
             TI extends OperationResponseTypeI = OperationResponseTypeI,
             > extends Horizon.BaseOperationResponse<T, TI> {
             self: CallFunction<OperationRecord>;
