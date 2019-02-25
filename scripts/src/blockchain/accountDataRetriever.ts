@@ -52,6 +52,7 @@ export class AccountDataRetriever {
 		for (let accountBalance of accountData.balances) {
 			if (accountBalance.assetType === "native") {
 				balance = accountBalance.balance;
+				break;
 			}
 		}
 		return balance;
