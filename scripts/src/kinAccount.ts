@@ -13,11 +13,11 @@ export class KinAccount {
 	}
 
 	async getBalance(): Promise<Balance> {
-		return Promise.resolve(new Balance());
+		return Promise.resolve(0);
 	}
 
-	async getData(): Promise<AccountData> {
-		return Promise.resolve(false);
+	async getData(): Promise<AccountData | null> {
+		return Promise.resolve(null);
 	}
 
 	async getStatus(): Promise<KinClientConfig> {

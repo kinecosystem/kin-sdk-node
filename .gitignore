@@ -2,3 +2,7 @@
 .vscode
 scripts/bin
 node_modules
+coverage
+tests/src/*.js
+tests/src/*.js.map
+tests/src/*.d.ts

@@ -9,7 +9,8 @@
     "lint": "./node_modules/.bin/tslint -p ./scripts",
     "build": "npm-run-all clean transpile",
     "transpile-tests": "tsc -p tests",
-    "test": "jest --forceExit --runInBand --detectOpenHandles"
+    "test": "npm-run-all transpile transpile-tests jest",
+    "jest": "jest --forceExit --runInBand --detectOpenHandles --coverage"
   },
   "repository": {
     "type": "git",
@@ -28,7 +29,9 @@
   "homepage": "https://github.com/kinecosystem/kin-sdk-node#readme",
   "devDependencies": {
     "@types/jest": "^24.0.4",
+    "@types/nock": "^9.3.1",
     "jest": "^24.1.0",
+    "nock": "^10.0.6",
     "npm-run-all": "^4.1.5",
     "ts-jest": "^23.10.5",
     "tslint": "^5.12.1",
@@ -44,6 +47,7 @@
       "tsx",
       "js"
     ],
+    "testEnvironment": "node",
     "transform": {
       "^.+\\.(ts|tsx)$": "<rootDir>/tests/preprocessor.js"
     },
