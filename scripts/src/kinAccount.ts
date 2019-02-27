@@ -2,6 +2,7 @@ import {KinClient} from "./kinClient";
 import {AccountData, Balance} from "./blockchain/horizonModels";
 import {KinClientConfig} from "./KinClientConfig";
 import {TransactionBuilder} from "./blockchain/transactionBuilder";
+import {ANON_APP_ID} from "./config";
 
 export class KinAccount {
 	private _publicAddress: string = "";

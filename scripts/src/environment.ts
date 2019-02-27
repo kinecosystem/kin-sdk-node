@@ -17,5 +17,6 @@ export class Environment {
 		"https://friendbot-testnet.kininfrastructure.com"
 	);
 
-	private constructor(readonly name: string, readonly url: string, readonly passphrase: string, friendbotUrl?: string) {}
+	private constructor(readonly name: string, readonly url: string, readonly passphrase: string, readonly friendbotUrl?: string) {
+	}
 }

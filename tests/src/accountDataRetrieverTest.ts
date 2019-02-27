@@ -3,6 +3,7 @@ import {Server} from "@kinecosystem/kin-sdk";
 import {AccountData} from "../../scripts/bin/blockchain/horizonModels";
 import * as nock from "nock";
 import {AccountNotFoundError, ServerError} from "../../scripts/bin/errors";
+import {InvalidAddress} from "../../scripts/src/errors";
 
 const fakeUrl = "http://horizon.com";
 const publicAddress = "GDAVCZIOYRGV74ROE344CMRLPZYSZVRHNTRFGOUSAQBILJ7M5ES25KOZ";
@@ -11,6 +12,16 @@ let accountDataRetriever: AccountDataRetriever;
 describe("AccountDataRetreiver.fetchAccountData", async () => {
 	beforeAll(async () => {
 		accountDataRetriever = new AccountDataRetriever(new Server(fakeUrl, {allowHttp: true}));
+	});
+
+	test("too long address, expect InvalidAddressError", async () => {
+		await expect(accountDataRetriever.fetchAccountData(publicAddress + "A"))
+			.rejects.toEqual(new InvalidAddress());
+	});
+
+	test("invalid address, expect InvalidAddressError", async () => {
+		await expect(accountDataRetriever.fetchAccountData("GDAVCZIOYRGV74ROE344CMRLPZYSZVRHNTRFGOUSAQBILJ7M5ES25KOB"))
+			.rejects.toEqual(new InvalidAddress());
 	});
 
 	test("returned AccountData object matches network data", async () => {
@@ -79,6 +90,16 @@ describe("AccountDataRetreiver.fetchKinBalance", async () => {
 		accountDataRetriever = new AccountDataRetriever(new Server(fakeUrl, {allowHttp: true}));
 	});
 
+	test("too long address, expect InvalidAddressError", async () => {
+		await expect(accountDataRetriever.fetchKinBalance(publicAddress + "A"))
+			.rejects.toEqual(new InvalidAddress());
+	});
+
+	test("invalid address, expect InvalidAddressError", async () => {
+		await expect(accountDataRetriever.fetchKinBalance("GDAVCZIOYRGV74ROE344CMRLPZYSZVRHNTRFGOUSAQBILJ7M5ES25KOB"))
+			.rejects.toEqual(new InvalidAddress());
+	});
+
 	test("balance should match network balance", async () => {
 		mockAccountNetworkResponse();
 
@@ -109,6 +130,16 @@ describe("AccountDataRetreiver.fetchKinBalance", async () => {
 describe("AccountDataRetreiver.isAccountExisting", async () => {
 	beforeAll(async () => {
 		accountDataRetriever = new AccountDataRetriever(new Server(fakeUrl, {allowHttp: true}));
+	});
+
+	test("too long address, expect InvalidAddressError", async () => {
+		await expect(accountDataRetriever.isAccountExisting(publicAddress + "A"))
+			.rejects.toEqual(new InvalidAddress());
+	});
+
+	test("invalid address, expect InvalidAddressError", async () => {
+		await expect(accountDataRetriever.isAccountExisting("GDAVCZIOYRGV74ROE344CMRLPZYSZVRHNTRFGOUSAQBILJ7M5ES25KOB"))
+			.rejects.toEqual(new InvalidAddress());
 	});
 
 	test("account exists, should return true", async () => {

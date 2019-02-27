@@ -1,18 +1,28 @@
 import {Horizon, Server} from "@kinecosystem/kin-sdk";
 import {AccountData, Balance} from "./horizonModels";
 import {AccountNotFoundError, KinSdkError, NetworkError, ServerError} from "../errors"
+import {Utils} from "../utils";
 import BalanceLineAsset = Horizon.BalanceLineAsset;
 import BalanceLine = Horizon.BalanceLine;
 
-export class AccountDataRetriever {
+export interface IAccountDataRetriever {
+	fetchAccountData(address: string): Promise<AccountData>;
+
+	fetchKinBalance(address: string): Promise<Balance>;
+
+	isAccountExisting(address: string): Promise<boolean>
+}
+
+export class AccountDataRetriever implements IAccountDataRetriever {
 
 	constructor(private readonly server: Server) {
 		this.server = server;
 	}
 
-	public async fetchAccountData(accountId: string): Promise<AccountData> {
+	public async fetchAccountData(address: string): Promise<AccountData> {
+		await Utils.verifyValidAddressParam(address);
 		try {
-			const accountResponse = await this.server.loadAccount(accountId);
+			const accountResponse = await this.server.loadAccount(address);
 
 			return {
 				id: accountResponse.id,
@@ -36,7 +46,7 @@ export class AccountDataRetriever {
 		} catch (e) {
 			if (e.response) {
 				if (e.response.status === 404) {
-					throw new AccountNotFoundError(accountId);
+					throw new AccountNotFoundError(address);
 				} else {
 					throw new ServerError(e.response.status);
 				}
@@ -46,9 +56,9 @@ export class AccountDataRetriever {
 		}
 	}
 
-	public async fetchKinBalance(accountId: string): Promise<Balance> {
+	public async fetchKinBalance(address: string): Promise<Balance> {
 		let balance = 0;
-		const accountData = await this.fetchAccountData(accountId);
+		const accountData = await this.fetchAccountData(address);
 		for (let accountBalance of accountData.balances) {
 			if (accountBalance.assetType === "native") {
 				balance = accountBalance.balance;
@@ -58,9 +68,9 @@ export class AccountDataRetriever {
 		return balance;
 	}
 
-	public async isAccountExisting(accountId: string): Promise<boolean> {
+	public async isAccountExisting(address: string): Promise<boolean> {
 		try {
-			await this.fetchAccountData(accountId);
+			await this.fetchAccountData(address);
 			return true;
 		} catch (e) {
 			if ((e as KinSdkError).errorCode === 404) {
