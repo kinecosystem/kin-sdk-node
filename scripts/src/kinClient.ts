@@ -8,12 +8,14 @@ import {Network} from "@kinecosystem/kin-base";
 import {AccountDataRetriever} from "./blockchain/accountDataRetriever";
 import {Friendbot} from "./friendbot";
 import {ANON_APP_ID} from "./config";
+import {BlockchainInfoRetriever} from "./blockchain/blockchainInfoRetriever";
 
 export class KinClient {
 
 	private readonly server: Server;
 	private readonly accountDataRetriever: AccountDataRetriever;
-	private friendbotHandler: Friendbot | undefined;
+	private readonly friendbotHandler: Friendbot | undefined;
+	private readonly blockchainInfoRetriever: BlockchainInfoRetriever;
 
 	constructor(readonly environment: Environment) {
 		this.environment = environment;
@@ -21,6 +23,7 @@ export class KinClient {
 		Network.use(new Network(environment.passphrase));
 		this.accountDataRetriever = new AccountDataRetriever(this.server);
 		this.friendbotHandler = environment.friendbotUrl ? new Friendbot(environment.friendbotUrl, this.accountDataRetriever) : undefined;
+		this.blockchainInfoRetriever = new BlockchainInfoRetriever(this.server);
 	}
 
 	async getConfig(): Promise<KinClientConfig> {
@@ -31,8 +34,12 @@ export class KinClient {
 		return new KinAccount(seed, this, app_id, channelSecretKeys);
 	}
 
+	/**
+	 * Get the current minimum fee that the network charges per operation.
+	 * @returns The fee expressed in stroops.
+	 */
 	getMinimumFee(): Promise<number> {
-		return Promise.resolve(0);
+		return this.blockchainInfoRetriever.getMinimumFee();
 	}
 
 	/**
