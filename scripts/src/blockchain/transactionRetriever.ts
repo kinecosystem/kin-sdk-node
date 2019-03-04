@@ -33,7 +33,7 @@ export class TransactionRetriever implements ITransactionRetriever {
 		}
 	}
 
-	public async fetchTransactionsHistory(params: TransactionHistoryParams): Promise<Transaction[]> {
+	public async fetchTransactionHistory(params: TransactionHistoryParams): Promise<Transaction[]> {
 		try {
 			const transactionCallBuilder = this.server.transactions().forAccount(params.address)
 				.limit(params.limit ? params.limit : 10)

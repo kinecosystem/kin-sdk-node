@@ -78,7 +78,7 @@ export class KinClient {
 	 * @param params parameters for retrieving transactions
 	 */
 	async getTransactionHistory(params: TransactionHistoryParams): Promise<Transaction[]> {
-		return this.transactionRetriever.fetchTransactionsHistory(params);
+		return this.transactionRetriever.fetchTransactionHistory(params);
 	}
 
 	/**
