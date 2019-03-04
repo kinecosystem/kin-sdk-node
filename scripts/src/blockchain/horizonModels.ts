@@ -1,3 +1,5 @@
+import {Memo, Operation, xdr} from "@kinecosystem/kin-base";
+
 export type Balance = number;
 
 type AssetType = 'native' | 'credit_alphanum4' | 'credit_alphanum12';
@@ -5,7 +7,7 @@ type AssetType = 'native' | 'credit_alphanum4' | 'credit_alphanum12';
 export interface AccountData {
 	readonly id: string;
 	readonly accountId: string;
-	readonly sequenceNumber: string;
+	readonly sequenceNumber: number;
 	readonly pagingToken: string;
 	readonly subentryCount: number;
 	readonly thresholds: AccountData.Thresholds;
@@ -42,4 +44,31 @@ export namespace AccountData {
 		readonly medThreshold: number;
 		readonly highThreshold: number;
 	}
+}
+
+export type Transaction = PaymentTransaction | CreateAccountTransaction | RawTransaction;
+
+export interface TransactionBase {
+	fee: number;
+	hash: string;
+	sequence: number;
+	source: string;
+	signatures: xdr.DecoratedSignature[];
+}
+
+export interface PaymentTransaction extends TransactionBase {
+	amount: number;
+	destination: string;
+	memo?: string;
+}
+
+export interface CreateAccountTransaction extends TransactionBase {
+	destination: string;
+	startingBalance: number;
+	memo?: string;
+}
+
+export interface RawTransaction extends TransactionBase {
+	memo?: Memo;
+	operations: Operation[];
 }

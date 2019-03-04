@@ -3,6 +3,7 @@ import axios, {AxiosResponse} from "axios";
 import {FriendbotError} from "./errors";
 import {NetworkError} from "../src/errors";
 import {Utils} from "./utils";
+import {Address, TransactionId} from "./types";
 
 export class Friendbot {
 

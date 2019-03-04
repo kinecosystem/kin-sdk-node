@@ -1,6 +1,7 @@
 import {StrKey} from "@kinecosystem/kin-sdk";
 import {InvalidAddress} from "./errors";
 import {ADDRESS_LENGTH} from "./config";
+import {Address} from "./types";
 
 export namespace Utils {
 

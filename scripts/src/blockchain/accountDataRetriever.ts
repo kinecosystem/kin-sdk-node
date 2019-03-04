@@ -2,15 +2,16 @@ import {Horizon, Server} from "@kinecosystem/kin-sdk";
 import {AccountData, Balance} from "./horizonModels";
 import {AccountNotFoundError, KinSdkError, NetworkError, ServerError} from "../errors"
 import {Utils} from "../utils";
+import {Address} from "../types";
 import BalanceLineAsset = Horizon.BalanceLineAsset;
 import BalanceLine = Horizon.BalanceLine;
 
 export interface IAccountDataRetriever {
-	fetchAccountData(address: string): Promise<AccountData>;
+	fetchAccountData(address: Address): Promise<AccountData>;
 
-	fetchKinBalance(address: string): Promise<Balance>;
+	fetchKinBalance(address: Address): Promise<Balance>;
 
-	isAccountExisting(address: string): Promise<boolean>
+	isAccountExisting(address: Address): Promise<boolean>
 }
 
 export class AccountDataRetriever implements IAccountDataRetriever {
@@ -19,7 +20,7 @@ export class AccountDataRetriever implements IAccountDataRetriever {
 		this.server = server;
 	}
 
-	public async fetchAccountData(address: string): Promise<AccountData> {
+	public async fetchAccountData(address: Address): Promise<AccountData> {
 		await Utils.verifyValidAddressParam(address);
 		try {
 			const accountResponse = await this.server.loadAccount(address);
@@ -27,7 +28,7 @@ export class AccountDataRetriever implements IAccountDataRetriever {
 			return {
 				id: accountResponse.id,
 				accountId: accountResponse.account_id,
-				sequenceNumber: accountResponse.sequenceNumber(),
+				sequenceNumber: parseInt(accountResponse.sequenceNumber()),
 				pagingToken: accountResponse.paging_token,
 				subentryCount: accountResponse.subentry_count,
 				thresholds: {
@@ -48,7 +49,7 @@ export class AccountDataRetriever implements IAccountDataRetriever {
 				if (e.response.status === 404) {
 					throw new AccountNotFoundError(address);
 				} else {
-					throw new ServerError(e.response.status);
+					throw new ServerError(e.response.status, e.response);
 				}
 			} else {
 				throw new NetworkError(e.message);

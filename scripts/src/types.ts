@@ -1,2 +1,2 @@
-type Address = string;
-type TransactionId = string;
+export type Address = string;
+export type TransactionId = string;

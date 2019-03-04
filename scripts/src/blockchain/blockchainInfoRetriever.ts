@@ -17,7 +17,7 @@ export class BlockchainInfoRetriever implements IBlockchainInfoRetriever {
 			return ledgers.records[0].base_fee_in_stroops;
 		} catch (e) {
 			if (e.response) {
-				throw new ServerError(e.response.status);
+				throw new ServerError(e.response.status, e.response);
 			} else {
 				throw new NetworkError(e.message);
 			}

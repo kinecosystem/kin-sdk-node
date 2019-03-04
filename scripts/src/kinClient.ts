@@ -1,14 +1,14 @@
 import {Environment} from "./environment";
 import {KinAccount} from "./kinAccount";
-import {KinClientConfig} from "./KinClientConfig";
-import {AccountData, Balance} from "./blockchain/horizonModels";
-import {RawTransaction, SimplifiedTransaction} from "./transaction";
+import {AccountData, Balance, Transaction} from "./blockchain/horizonModels";
 import {Server} from "@kinecosystem/kin-sdk";
 import {Network} from "@kinecosystem/kin-base";
 import {AccountDataRetriever} from "./blockchain/accountDataRetriever";
 import {Friendbot} from "./friendbot";
 import {ANON_APP_ID} from "./config";
 import {BlockchainInfoRetriever} from "./blockchain/blockchainInfoRetriever";
+import {TransactionRetriever} from "./blockchain/transactionRetriever";
+import {Address, TransactionId} from "./types";
 
 export class KinClient {
 
@@ -16,6 +16,7 @@ export class KinClient {
 	private readonly accountDataRetriever: AccountDataRetriever;
 	private readonly friendbotHandler: Friendbot | undefined;
 	private readonly blockchainInfoRetriever: BlockchainInfoRetriever;
+	private readonly transactionRetriever: TransactionRetriever;
 
 	constructor(readonly environment: Environment) {
 		this.environment = environment;
@@ -24,10 +25,7 @@ export class KinClient {
 		this.accountDataRetriever = new AccountDataRetriever(this.server);
 		this.friendbotHandler = environment.friendbotUrl ? new Friendbot(environment.friendbotUrl, this.accountDataRetriever) : undefined;
 		this.blockchainInfoRetriever = new BlockchainInfoRetriever(this.server);
-	}
-
-	async getConfig(): Promise<KinClientConfig> {
-		return new KinClientConfig();
+		this.transactionRetriever = new TransactionRetriever(this.server);
 	}
 
 	createKinAccount(seed: string, app_id: string = ANON_APP_ID, channelSecretKeys?: [string]): KinAccount {
@@ -67,8 +65,20 @@ export class KinClient {
 		return await this.accountDataRetriever.fetchAccountData(address);
 	}
 
-	async getTransactionData(txHash: string): Promise<SimplifiedTransaction | RawTransaction> {
-		return Promise.resolve({});
+	/**
+	 * Get transaction data by transaction id from kin blockchain.
+	 * @param transactionId transaction id (hash)
+	 */
+	async getTransactionData(transactionId: TransactionId): Promise<Transaction> {
+		return this.transactionRetriever.fetchTransaction(transactionId);
+	}
+
+	/**
+	 * Get transaction history for a single account from kin blockchain.
+	 * @param params parameters for retrieving transactions
+	 */
+	async getTransactionHistory(params: TransactionHistoryParams): Promise<Transaction[]> {
+		return this.transactionRetriever.fetchTransactionsHistory(params);
 	}
 
 	/**
@@ -84,4 +94,27 @@ export class KinClient {
 		}
 		return this.friendbotHandler.createOrFund(address, amount);
 	}
+}
+
+/**
+ * Parameters for getting transaction history
+ */
+export interface TransactionHistoryParams {
+
+	/**
+	 * Target account address for getting the history for.
+	 */
+	address: Address;
+	/**
+	 * Maximum count of transactions to retrieve.
+	 */
+	limit?: number;
+	/**
+	 * Order based on timestamp
+	 */
+	order?: "asc" | "desc";
+	/**
+	 * Optional cursor
+	 */
+	cursor?: string;
 }

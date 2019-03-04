@@ -44,7 +44,7 @@ describe("AccountDataRetreiver.fetchAccountData", async () => {
 			balance: 2.96005
 		};
 		expect(accountData.balances[1]).toEqual(balance1);
-		expect(accountData.sequenceNumber).toEqual("9357771665313568");
+		expect(accountData.sequenceNumber).toEqual(9357771665313568);
 		expect(accountData.data).toEqual({});
 		expect(accountData.flags).toEqual({
 			authRequired: false,
