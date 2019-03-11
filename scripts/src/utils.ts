@@ -12,7 +12,13 @@ export namespace Utils {
 		return StrKey.isValidEd25519PublicKey(address);
 	}
 
-	export async function verifyValidAddressParam(address: Address) {
+	export async function verifyValidAddressParamAsync(address: Address) {
+		if (!isValidAddress(address)) {
+			throw new InvalidAddress();
+		}
+	}
+
+	export function verifyValidAddressParam(address: Address) {
 		if (!isValidAddress(address)) {
 			throw new InvalidAddress();
 		}

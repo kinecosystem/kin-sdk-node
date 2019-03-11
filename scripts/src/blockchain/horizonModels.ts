@@ -1,4 +1,5 @@
 import {Memo, Operation, xdr} from "@kinecosystem/kin-base";
+import {Address} from "../types";
 
 export type Balance = number;
 
@@ -72,3 +73,10 @@ export interface RawTransaction extends TransactionBase {
 	memo?: Memo;
 	operations: Operation[];
 }
+
+export interface PaymentListener {
+	addAddress: (address: Address) => void;
+	close: () => void;
+}
+
+export type OnPaymentListener = (payment: PaymentTransaction) => void;

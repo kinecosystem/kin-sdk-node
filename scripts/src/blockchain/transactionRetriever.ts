@@ -76,6 +76,7 @@ export class TransactionRetriever implements ITransactionRetriever {
 			if (operation.type == "payment") {
 				return <PaymentTransaction>{
 					...transactionBase,
+					source: operation.source ? operation.source : transactionRecord.source_account,
 					destination: operation.destination,
 					amount: parseFloat(operation.amount),
 					memo: transactionRecord.memo
@@ -83,6 +84,7 @@ export class TransactionRetriever implements ITransactionRetriever {
 			} else if (operation.type == "createAccount") {
 				return <CreateAccountTransaction>{
 					...transactionBase,
+					source: operation.source ? operation.source : transactionRecord.source_account,
 					destination: operation.destination,
 					startingBalance: parseFloat(operation.startingBalance),
 					memo: transactionRecord.memo

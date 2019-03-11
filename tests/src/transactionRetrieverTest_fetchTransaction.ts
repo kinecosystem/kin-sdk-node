@@ -70,7 +70,7 @@ describe("TransactionRetriever.fetchTransaction", async () => {
 			);
 
 		const transaction = await transactionRetriever.fetchTransaction(transactionId) as CreateAccountTransaction;
-		expect(transaction.source).toEqual('GA444BDKREVBHVB3KOTD7DBV4EYOUD7KBOTZDCP76IK7QNRFBNQ4QEQU');
+		expect(transaction.source).toEqual('GARY2346NSTEI2WGYTC3ULQDJGJJ4EPP3IPTYLM7QWNWEPCEGA2EQJK5'); //equals to operation source account, and not the tx source account
 		expect(transaction.fee).toEqual(100);
 		expect(transaction.destination).toEqual('GBM6RMP5MXFDFGNOX4QJ3JQHAQESRXS62POPQJY533LV5EVAWQQILWEE');
 		expect(transaction.startingBalance).toEqual(0);
