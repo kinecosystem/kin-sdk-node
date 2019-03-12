@@ -1,8 +1,7 @@
 import {IAccountDataRetriever} from "../../scripts/bin/blockchain/accountDataRetriever";
 import {Friendbot} from "../../scripts/bin/friendbot";
 import * as nock from "nock";
-import {FriendbotError, NetworkError} from "../../scripts/bin/errors";
-import {InvalidAddress} from "../../scripts/src/errors";
+import {FriendbotError, InvalidAddress, NetworkError} from "../../scripts/bin/errors";
 
 const fakeUrl = "http://horizon.com";
 const publicAddress = "GDAVCZIOYRGV74ROE344CMRLPZYSZVRHNTRFGOUSAQBILJ7M5ES25KOZ";

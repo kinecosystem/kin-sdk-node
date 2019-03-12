@@ -1,7 +1,6 @@
 import {IAccountDataRetriever} from "./blockchain/accountDataRetriever";
 import axios, {AxiosResponse} from "axios";
-import {FriendbotError} from "./errors";
-import {NetworkError} from "../src/errors";
+import {FriendbotError, NetworkError} from "./errors";
 import {Utils} from "./utils";
 import {Address, TransactionId} from "./types";
 

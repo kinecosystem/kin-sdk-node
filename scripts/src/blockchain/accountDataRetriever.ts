@@ -74,7 +74,7 @@ export class AccountDataRetriever implements IAccountDataRetriever {
 			await this.fetchAccountData(address);
 			return true;
 		} catch (e) {
-			if ((e as KinSdkError).errorCode === 404) {
+			if ((e as KinSdkError).type === 'AccountNotFoundError') {
 				return false;
 			} else {
 				throw e;

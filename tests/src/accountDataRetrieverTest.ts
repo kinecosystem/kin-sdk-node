@@ -2,8 +2,7 @@ import {AccountDataRetriever} from "../../scripts/bin/blockchain/accountDataRetr
 import {Server} from "@kinecosystem/kin-sdk";
 import {AccountData} from "../../scripts/bin/blockchain/horizonModels";
 import * as nock from "nock";
-import {AccountNotFoundError, ServerError} from "../../scripts/bin/errors";
-import {InvalidAddress} from "../../scripts/src/errors";
+import {AccountNotFoundError, InvalidAddress, ServerError} from "../../scripts/bin/errors";
 
 const fakeUrl = "http://horizon.com";
 const publicAddress = "GDAVCZIOYRGV74ROE344CMRLPZYSZVRHNTRFGOUSAQBILJ7M5ES25KOZ";
