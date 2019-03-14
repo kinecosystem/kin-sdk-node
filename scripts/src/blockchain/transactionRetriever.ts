@@ -11,6 +11,9 @@ export interface ITransactionRetriever {
 
 export class TransactionRetriever implements ITransactionRetriever {
 
+	private readonly DEFAULT_ORDER = 'desc';
+	private readonly DEFAULT_LIMIT = 10;
+
 	constructor(private readonly server: Server) {
 		this.server = server;
 	}
@@ -36,8 +39,8 @@ export class TransactionRetriever implements ITransactionRetriever {
 	public async fetchTransactionHistory(params: TransactionHistoryParams): Promise<Transaction[]> {
 		try {
 			const transactionCallBuilder = this.server.transactions().forAccount(params.address)
-				.limit(params.limit ? params.limit : 10)
-				.order(params.order ? params.order : 'desc');
+				.limit(params.limit ? params.limit : this.DEFAULT_LIMIT)
+				.order(params.order ? params.order : this.DEFAULT_ORDER);
 			if (params.cursor) {
 				transactionCallBuilder.cursor(params.cursor);
 			}
