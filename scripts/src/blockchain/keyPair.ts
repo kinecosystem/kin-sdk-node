@@ -27,17 +27,15 @@ export class KeyPair {
 	/**
 	 * Creates KeyPair from an input seed.
 	 * @param seed The secret seed of an account.
-	 * @param hint An optional custom identifier for this key pair.
 	 */
-	public static fromSeed(seed: string, hint?: string): KeyPair {
+	public static fromSeed(seed: string): KeyPair {
 		return new KeyPair(seed, undefined);
 	}
 
 	/**
 	 * Generate a new, random KeyPair.
-	 * @param hint An optional custom identifier for this key pair.
 	 */
-	public static generate(hint?: string): KeyPair {
+	public static generate(): KeyPair {
 		return new KeyPair(undefined, undefined);
 	}
 
@@ -45,7 +43,6 @@ export class KeyPair {
 	 * Generate a highly deterministic seed from a base seed and a salt.
 	 * @param baseSeed The base seed to generate a seed from.
 	 * @param salt A unique string that will be used to generate the seed.
-	 * @param hint An optional custom identifier for this key pair.
 	 */
 	public static generateHDSeed(baseSeed: string, salt: string): KeyPair {
 		const hash = crypto.createHash('sha256').update(baseSeed + salt).digest();
