@@ -21,7 +21,7 @@ export class AccountDataRetriever implements IAccountDataRetriever {
 	}
 
 	public async fetchAccountData(address: Address): Promise<AccountData> {
-		await Utils.verifyValidAddressParam(address);
+		await Utils.verifyValidAddressParamAsync(address);
 		try {
 			const accountResponse = await this.server.loadAccount(address);
 

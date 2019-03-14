@@ -1,6 +1,6 @@
 import {Environment} from "./environment";
 import {KinAccount} from "./kinAccount";
-import {AccountData, Balance, Transaction} from "./blockchain/horizonModels";
+import {AccountData, Balance, OnPaymentListener, PaymentListener, Transaction} from "./blockchain/horizonModels";
 import {Server} from "@kinecosystem/kin-sdk";
 import {Network} from "@kinecosystem/kin-base";
 import {AccountDataRetriever} from "./blockchain/accountDataRetriever";
@@ -9,6 +9,7 @@ import {ANON_APP_ID} from "./config";
 import {BlockchainInfoRetriever} from "./blockchain/blockchainInfoRetriever";
 import {TransactionRetriever} from "./blockchain/transactionRetriever";
 import {Address, TransactionId} from "./types";
+import {BlockchainListener} from "./blockchain/blockchainListeners";
 
 export class KinClient {
 
@@ -17,6 +18,7 @@ export class KinClient {
 	private readonly friendbotHandler: Friendbot | undefined;
 	private readonly blockchainInfoRetriever: BlockchainInfoRetriever;
 	private readonly transactionRetriever: TransactionRetriever;
+	private readonly blockchainListener: BlockchainListener;
 
 	constructor(readonly environment: Environment) {
 		this.environment = environment;
@@ -26,6 +28,7 @@ export class KinClient {
 		this.friendbotHandler = environment.friendbotUrl ? new Friendbot(environment.friendbotUrl, this.accountDataRetriever) : undefined;
 		this.blockchainInfoRetriever = new BlockchainInfoRetriever(this.server);
 		this.transactionRetriever = new TransactionRetriever(this.server);
+		this.blockchainListener = new BlockchainListener(this.server);
 	}
 
 	createKinAccount(seed: string, app_id: string = ANON_APP_ID, channelSecretKeys?: [string]): KinAccount {
@@ -79,6 +82,16 @@ export class KinClient {
 	 */
 	async getTransactionHistory(params: TransactionHistoryParams): Promise<Transaction[]> {
 		return this.transactionRetriever.fetchTransactionHistory(params);
+	}
+
+	/**
+	 * Creates a payment listener for the given addresses.
+	 * @param onPayment payment callback listener, will be triggered when payment was happened.
+	 * @param addresses addresses to listen, address can be added using PaymentListener
+	 * @return PaymentListener listener object, call `close` to stop listener, `addAddress` to add additional address to listen to
+	 */
+	createPaymentListener(onPayment: OnPaymentListener, ...addresses: Address[]): PaymentListener {
+		return this.blockchainListener.createPaymentsListener(onPayment, ...addresses);
 	}
 
 	/**

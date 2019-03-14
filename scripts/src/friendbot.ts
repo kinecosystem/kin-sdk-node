@@ -12,7 +12,7 @@ export class Friendbot {
 	}
 
 	public async createOrFund(address: Address, amount: number): Promise<TransactionId> {
-		await Utils.verifyValidAddressParam(address);
+		await Utils.verifyValidAddressParamAsync(address);
 		const isAccountExisting = await this.accountDataRetriever.isAccountExisting(address);
 		const requestUrl = isAccountExisting ? this.fundUrl(address, amount) : this.createAccountUrl(address, amount);
 
