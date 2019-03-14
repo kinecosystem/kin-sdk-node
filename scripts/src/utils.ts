@@ -1,5 +1,20 @@
-export function pick<T, K extends keyof T>(obj: T, ...props: K[]): Pick<T, K> {
-	const newObj = {} as Pick<T, K>;
-	props.forEach(name => newObj[name] = obj[name]);
-	return newObj;
+import {StrKey} from "@kinecosystem/kin-sdk";
+import {InvalidAddress} from "./errors";
+import {ADDRESS_LENGTH} from "./config";
+import {Address} from "./types";
+
+export namespace Utils {
+
+	export function isValidAddress(address: Address): boolean {
+		if (address.length !== ADDRESS_LENGTH) {
+			return false;
+		}
+		return StrKey.isValidEd25519PublicKey(address);
+	}
+
+	export async function verifyValidAddressParam(address: Address) {
+		if (!isValidAddress(address)) {
+			throw new InvalidAddress();
+		}
+	}
 }
