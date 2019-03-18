@@ -1,7 +1,7 @@
 import {TransactionId} from "./types";
 
 export type ErrorType = 'AccountNotFoundError' | 'TransactionNotFoundError' | 'NetworkError' | 'ServerError'
-	| 'FriendbotError' | 'InvalidAddress' | 'TransactionFailedError' ;
+	| 'FriendbotError' | 'InvalidAddressError' | 'TransactionFailedError' | 'ChannelBusyError';
 
 export interface KinSdkError extends Error {
 	readonly type: ErrorType;
@@ -68,10 +68,18 @@ export class FriendbotError extends Error implements KinSdkError {
 	}
 }
 
-export class InvalidAddress extends Error implements KinSdkError {
-	readonly type: ErrorType = 'InvalidAddress';
+export class InvalidAddressError extends Error implements KinSdkError {
+	readonly type: ErrorType = 'InvalidAddressError';
 
 	constructor() {
-		super('invalid wallet address.');
+		super('Invalid wallet address.');
+	}
+}
+
+export class ChannelBusyError extends Error implements KinSdkError {
+	readonly type: ErrorType = 'ChannelBusyError';
+
+	constructor() {
+		super('Cannot acquire a free channel.');
 	}
 }
