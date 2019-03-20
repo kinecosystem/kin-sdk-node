@@ -6,6 +6,11 @@ export class KeyPair {
 
 	private keypair: Keypair;
 
+
+	public get seed(): string {
+		return this.keypair.secret();
+	}
+
 	public get publicAddress(): Address {
 		return this.keypair.publicKey();
 	}

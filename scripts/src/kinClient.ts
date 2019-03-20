@@ -20,7 +20,7 @@ export class KinClient {
 	private readonly transactionRetriever: TransactionRetriever;
 	private readonly blockchainListener: BlockchainListener;
 
-	constructor(readonly environment: Environment) {
+	constructor(private readonly environment: Environment) {
 		this.environment = environment;
 		this.server = new Server(environment.url);
 		Network.use(new Network(environment.passphrase));
@@ -32,7 +32,7 @@ export class KinClient {
 	}
 
 	createKinAccount(seed: string, app_id: string = ANON_APP_ID, channelSecretKeys?: [string]): KinAccount {
-		return new KinAccount(seed, this, app_id, channelSecretKeys);
+		return new KinAccount(this.environment, seed, this.accountDataRetriever, this.server, app_id, channelSecretKeys);
 	}
 
 	/**
