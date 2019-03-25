@@ -3,19 +3,35 @@ import {AccountData, Balance} from "./blockchain/horizonModels";
 import {Server, Account} from "@kinecosystem/kin-sdk";
 import {AccountDataRetriever} from "./blockchain/accountDataRetriever";
 import {TxSender} from "./blockchain/TxSender";
-import {Address} from "./types";
+import {Address, IWhitelistPair} from "./types";
 import * as config from "./config";
 import {KeyPair} from "./blockchain/keyPair";
-import {Network, Transaction, TransactionBuilder} from "@kinecosystem/kin-base";
+import {
+	Network,
+	Transaction,
+	TransactionBuilder,
+	Transaction as XdrTransaction,
+	Keypair
+} from "@kinecosystem/kin-base";
 import {KinTransactionBuilder} from "./blockchain/transactionBuilder";
 import {Environment} from "./environment";
+import {InvalidDataError, NetworkMismatchedError} from "./errors";
+import {UTF8_ENCODING} from "./config";
+
+interface IWhitelistPairTemp {
+	// The android stellar sdk spells 'envelope' as 'envelop'
+	envelop: string,
+	envelope?: string,
+	networkId: string
+}
 
 export class KinAccount {
-	private keypair: KeyPair;
-	private txSender: TxSender;
+	private readonly keypair: KeyPair;
+	private readonly txSender: TxSender;
 
 	private _publicAddress: string = "";
-	constructor(readonly environment: Environment, private seed: string, private accountDataRetriever: AccountDataRetriever, private server: Server, private appId: string = config.ANON_APP_ID, private channelSecretKeys?: [string]) {
+
+	constructor(private readonly seed: string, private readonly accountDataRetriever: AccountDataRetriever, private readonly server: Server, private readonly appId: string = config.ANON_APP_ID, private readonly channelSecretKeys?: string[]) {
 		if (!config.APP_ID_REGEX.test(appId)) {
 			throw new Error("Invalid app id: " + appId);
 		}
@@ -28,8 +44,6 @@ export class KinAccount {
 
 		this._publicAddress = this.keypair.publicAddress;
 		this.txSender = new TxSender(this.keypair, this.appId, this.server);
-		Network.use(new Network(environment.passphrase));
-		return this;
 	}
 
 	publicAddress(): Address {
@@ -53,22 +67,46 @@ export class KinAccount {
 		return new KinTransactionBuilder(sourceAccount, options);
 	}
 
-	public async buildCreateAccount(address: Address, startingBalance: string, fee: number, memoText: string = ""): Promise<Transaction> {
-		return this.txSender.createAccount(address, startingBalance, fee, memoText);
-		// take care of errors!!
+	public async buildCreateAccount(address: Address, startingBalance: number, fee: number, memoText: string = ""): Promise<Transaction> {
+		return this.txSender.buildCreateAccount(address, startingBalance, fee, memoText);
 	}
 
-	async buildSendKin(address: Address, amount: string, fee: number, memoText: string): Promise<Transaction> {
-		return this.txSender.sendKin(address, amount, fee, memoText);
+	async buildSendKin(address: Address, amount: number, fee: number, memoText: string): Promise<Transaction> {
+		return this.txSender.buildSendKin(address, amount, fee, memoText);
 	}
 
 	async submitTx(tx: Transaction): Promise<Server.TransactionRecord> {
-		return this.txSender.signTx(tx);
+		return this.txSender.submitTx(tx);
 	}
 
-	whitelistTransaction(payload: string): string {
+	whitelistTransaction(payload: string | IWhitelistPair): string {
+		let txPair: IWhitelistPair | IWhitelistPairTemp;
+		if (typeof payload === "string") {
+			let tx = JSON.parse(payload);
+			if (tx.envelop != null) {
+				txPair = JSON.parse(payload) as IWhitelistPairTemp;
+				txPair.envelope = txPair.envelop;
+			} else {
+				txPair = JSON.parse(payload) as IWhitelistPair;
+			}
+		} else {
+			txPair = payload;
+		}
 
+		if (typeof txPair.envelope !== "string") {
+			throw new InvalidDataError();
+		}
 
-		return "";
+		let networkId = Network.current().networkId();
+		if (networkId != txPair.networkId) {
+			throw new NetworkMismatchedError();
+		}
+
+		const xdrTransaction = new XdrTransaction(txPair.envelope);
+		xdrTransaction.sign(Keypair.fromSecret(this.keypair.seed));
+		let envelope = xdrTransaction.toEnvelope();
+		let buffer = envelope.toXDR(UTF8_ENCODING);
+
+		return buffer.toString();
 	}
 }

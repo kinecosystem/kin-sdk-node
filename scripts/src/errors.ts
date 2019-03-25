@@ -1,7 +1,8 @@
 import {TransactionId} from "./types";
+import * as axios from "axios";
 
 export type ErrorType = 'AccountNotFoundError' | 'TransactionNotFoundError' | 'NetworkError' | 'ServerError'
-	| 'FriendbotError' | 'InvalidAddress' | 'TransactionFailedError' ;
+	| 'FriendbotError' | 'InvalidAddress' | 'TransactionFailedError' | 'NetworkMismatchedError' | 'InvalidDataError';
 
 export interface KinSdkError extends Error {
 	readonly type: ErrorType;
@@ -31,6 +32,20 @@ export class TransactionNotFoundError extends Error implements KinSdkError {
 
 export class NetworkError extends Error implements KinSdkError {
 	readonly type = 'NetworkError';
+}
+
+export class NetworkMismatchedError extends Error implements KinSdkError {
+	readonly type = 'NetworkMismatchedError';
+	constructor() {
+		super(`Unable to sign whitelist transaction, network type is mismatched`)
+	}
+}
+
+export class InvalidDataError extends Error implements KinSdkError {
+	readonly type = 'InvalidDataError';
+	constructor() {
+		super(`Unable to sign whitelist transaction, invalid data`)
+	}
 }
 
 export class ServerError extends Error implements KinSdkError {

@@ -6,13 +6,13 @@ const PartialTransactionBuilder = TransactionBuilder as PartialTransactionBuilde
 export class KinTransactionBuilder extends PartialTransactionBuilder {
 
 	public addFee(fee: number): this {
-		if (fee > 0 )
-		(this as any).baseFee = fee;
+		if (fee > 0 ) {
+			(this as any).baseFee = fee;
+		}
 		return this;
 	}
 
 	public addMemo(memo: string): this {
-		// if (fee > 0 && )
 		(this as any).memo =  memo;
 		return this;
 	}

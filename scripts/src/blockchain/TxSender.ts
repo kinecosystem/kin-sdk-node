@@ -4,7 +4,7 @@ import {Asset, Keypair, Memo, Operation, Transaction, TransactionBuilder} from "
 import {KeyPair} from "./keyPair";
 import {KinTransactionBuilder} from "./transactionBuilder";
 import {AccountNotFoundError, NetworkError, ServerError} from "../errors";
-import {TransactionNotFoundError} from "../../bin/errors";
+import {TransactionNotFoundError} from "../../src/errors";
 
 export class TxSender {
 	constructor(private readonly keypair: KeyPair, private readonly appId: string, private readonly server: Server) {
@@ -13,28 +13,28 @@ export class TxSender {
 		this.server = server;
 	}
 
-	public async createAccount(address: Address, startingBalance: string, fee: number, memoText: string = ""): Promise<Transaction> {
+	public async buildCreateAccount(address: Address, startingBalance: number, fee: number, memoText: string = ""): Promise<Transaction> {
 		const response: Server.AccountResponse = await this.server.loadAccount(this.keypair.publicAddress);
 		return new KinTransactionBuilder(response, {fee: fee, memo: Memo.text(memoText)})
 					.setTimeout(0)
 					.addOperation(Operation.createAccount({
 						destination: address,
-						startingBalance: startingBalance
+						startingBalance: startingBalance.toString()
 					})).build();
 	}
 
-	public async sendKin(address: Address, amount: string, fee: number, memoText: string): Promise<Transaction> {
+	public async buildSendKin(address: Address, amount: number, fee: number, memoText: string): Promise<Transaction> {
 		const response: Server.AccountResponse = await this.server.loadAccount(this.keypair.publicAddress);
 		return new KinTransactionBuilder(response, {fee: fee, memo: Memo.text(memoText)})
 					.setTimeout(0)
 					.addOperation(Operation.payment({
 						destination: address,
 						asset: Asset.native(),
-						amount: amount
+						amount: amount.toString()
 					})).build();
 	}
 
-	public async signTx(tx: Transaction): Promise<Server.TransactionRecord> {
+	public async submitTx(tx: Transaction): Promise<Server.TransactionRecord> {
 		try {
 			tx.sign(Keypair.fromSecret(this.keypair.seed));
 			return this.server.submitTransaction(tx);

@@ -2,36 +2,32 @@ import {Keypair, Server} from "@kinecosystem/kin-sdk";
 import * as nock from "nock";
 import {KinAccount} from "../../scripts/src/KinAccount";
 import {AccountDataRetriever} from "../../scripts/src/blockchain/accountDataRetriever";
-import {AccountNotFoundError} from "../../scripts/bin/errors";
 import {Environment} from "../../scripts/bin/environment";
+import {Network} from "@kinecosystem/kin-base";
 
 const fakeUrl = "http://horizon.com";
 const server = new Server(fakeUrl, {allowHttp: true});
 const accountDataRetriever = new AccountDataRetriever(server);
-const secretAddress = "SBVYIBM6UTDHMN7RN6VVEFKABRQBW3YB7W7RYFZFTBD6YX3IDFLS7NGW";
-const matchedPublicAddress = "GBXTJ57DEEMZ6NVNDGWKCQGGKZMRAGOIYZO3C5T5P23GSM7MVYUHZK65";
-const publicAddress = "GDE76CCWBSBKEFJPMJWYOMU4HPWQQQFHI3YGDDIUG75AMMUHJ5JI67MV";
+const senderSeed = "SBVYIBM6UTDHMN7RN6VVEFKABRQBW3YB7W7RYFZFTBD6YX3IDFLS7NGW";
+const senderPublic = "GBXTJ57DEEMZ6NVNDGWKCQGGKZMRAGOIYZO3C5T5P23GSM7MVYUHZK65";
+const receiverPublic = "GDE76CCWBSBKEFJPMJWYOMU4HPWQQQFHI3YGDDIUG75AMMUHJ5JI67MV";
 const appId = "aaaa";
-const startingBalance = "10000";
+const startingBalance = 10000;
 const fee = 1;
 let kinAccount: KinAccount;
 
 
 describe("KinAccount.createAccount", async () => {
 	beforeAll(async () => {
-		kinAccount = new KinAccount(Environment.Testnet, secretAddress, accountDataRetriever, server, appId);
+		Network.use(new Network(Environment.Testnet.passphrase));
+		kinAccount = new KinAccount(senderSeed, accountDataRetriever, server, appId);
 	});
-
-	// test("init kinAccount", async () => {
-	// 	kinAccount = new KinAccount(secretAddress, accountDataRetriever, server, appId);
-	// 	expect(kinAccount.publicAddress()).toBe(publicAddress);
-	// });
 
 	test("account created", async () => {
 		mockLoadAccountResponse()
 		mockCreateAccountResponse()
 
-		const txBuilder = await kinAccount.buildCreateAccount(publicAddress, startingBalance, fee, "bla bla");
+		const txBuilder = await kinAccount.buildCreateAccount(receiverPublic, startingBalance, fee, "bla bla");
 		await expect(kinAccount.submitTx(txBuilder)).toBeDefined();
 	});
 
@@ -39,7 +35,7 @@ describe("KinAccount.createAccount", async () => {
 		mockLoadAccountResponse()
 		mock404AccountResponse()
 
-		const txBuilder = await kinAccount.buildCreateAccount(publicAddress, startingBalance, fee, "bla bla");
+		const txBuilder = await kinAccount.buildCreateAccount(receiverPublic, startingBalance, fee, "bla bla");
 		await expect(kinAccount.submitTx(txBuilder)).rejects.toEqual("[Error: Request failed with status code 400]");
 	});
 
@@ -47,7 +43,7 @@ describe("KinAccount.createAccount", async () => {
 		mockLoadAccountResponse()
 		mockSendKinResponse()
 
-		const txBuilder = await kinAccount.buildSendKin(publicAddress, startingBalance, fee, "bla bla");
+		const txBuilder = await kinAccount.buildSendKin(receiverPublic, startingBalance, fee, "bla bla");
 		await expect(kinAccount.submitTx(txBuilder)).toBeDefined();
 	});
 
@@ -55,13 +51,13 @@ describe("KinAccount.createAccount", async () => {
 		mockLoadAccountResponse()
 		mock404SendKinResponse()
 
-		const txBuilder = await kinAccount.buildSendKin(publicAddress, startingBalance, fee, "bla bla");
+		const txBuilder = await kinAccount.buildSendKin(receiverPublic, startingBalance, fee, "bla bla");
 		await expect(kinAccount.submitTx(txBuilder)).rejects.toEqual("[Error: Request failed with status code 400]");
 	});
 
 	function mockLoadAccountResponse() {
 		nock(fakeUrl)
-			.get(url => url.includes(matchedPublicAddress))
+			.get(url => url.includes(senderPublic))
 			.reply(200,
 				{
 					"_links": {
