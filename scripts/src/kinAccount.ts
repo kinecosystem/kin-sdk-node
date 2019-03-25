@@ -1,6 +1,5 @@
-import {KinClient} from "./kinClient";
 import {AccountData, Balance} from "./blockchain/horizonModels";
-import {Server, Account} from "@kinecosystem/kin-sdk";
+import {Account, Server} from "@kinecosystem/kin-sdk";
 import {AccountDataRetriever} from "./blockchain/accountDataRetriever";
 import {TxSender} from "./blockchain/TxSender";
 import {Address} from "./types";
@@ -15,7 +14,8 @@ export class KinAccount {
 	private txSender: TxSender;
 
 	private _publicAddress: string = "";
-	constructor(readonly environment: Environment, private seed: string, private accountDataRetriever: AccountDataRetriever, private server: Server, private appId: string = config.ANON_APP_ID, private channelSecretKeys?: [string]) {
+
+	constructor(readonly environment: Environment, private seed: string, private accountDataRetriever: AccountDataRetriever, private server: Server, private appId: string = config.ANON_APP_ID, private channelSecretKeys?: string[]) {
 		if (!config.APP_ID_REGEX.test(appId)) {
 			throw new Error("Invalid app id: " + appId);
 		}
@@ -32,17 +32,17 @@ export class KinAccount {
 		return this;
 	}
 
-	publicAddress(): Address {
+	get publicAddress(): Address {
 		return this.keypair.publicAddress;
 	}
 
 	async getBalance(): Promise<Balance> {
 
-		return Promise.resolve(this.accountDataRetriever.fetchKinBalance(this.publicAddress()));
+		return Promise.resolve(this.accountDataRetriever.fetchKinBalance(this.publicAddress));
 	}
 
 	async getData(): Promise<AccountData> {
-		return Promise.resolve(this.accountDataRetriever.fetchAccountData(this.publicAddress()));
+		return Promise.resolve(this.accountDataRetriever.fetchAccountData(this.publicAddress));
 	}
 
 	getAppId(): string {
@@ -53,16 +53,16 @@ export class KinAccount {
 		return new KinTransactionBuilder(sourceAccount, options);
 	}
 
-	public async buildCreateAccount(address: Address, startingBalance: string, fee: number, memoText: string = ""): Promise<Transaction> {
-		return this.txSender.createAccount(address, startingBalance, fee, memoText);
+	public async buildCreateAccount(params: CreateAccountParams): Promise<Transaction> {
+		return this.txSender.createAccount(params.address, params.startingBalance, params.fee, params.memoText);
 		// take care of errors!!
 	}
 
-	async buildSendKin(address: Address, amount: string, fee: number, memoText: string): Promise<Transaction> {
-		return this.txSender.sendKin(address, amount, fee, memoText);
+	async buildSendKin(params: SendKinParams): Promise<Transaction> {
+		return this.txSender.sendKin(params.address, params.amount, params.fee, params.memoText);
 	}
 
-	async submitTx(tx: Transaction): Promise<Server.TransactionRecord> {
+	async submitTransaction(tx: Transaction): Promise<Server.TransactionRecord> {
 		return this.txSender.signTx(tx);
 	}
 
@@ -71,4 +71,46 @@ export class KinAccount {
 
 		return "";
 	}
+}
+
+export interface CreateAccountParams {
+
+	/**
+	 * Target account address to create.
+	 */
+	address: Address;
+	/**
+	 * The starting balance of the created account.
+	 */
+	startingBalance: string;
+	/**
+	 * Fee to be deducted for the transaction.
+	 */
+	fee: number;
+
+	/**
+	 * Optional text to put into transaction memo, up to 21 chars.
+	 */
+	memoText?: string;
+}
+
+export interface SendKinParams {
+
+	/**
+	 * Target account address to create.
+	 */
+	address: Address;
+	/**
+	 * The amount in kin to send.
+	 */
+	amount: string;
+	/**
+	 * Fee to be deducted for the transaction.
+	 */
+	fee: number;
+
+	/**
+	 * Optional text to put into transaction memo, up to 21 chars.
+	 */
+	memoText?: string;
 }

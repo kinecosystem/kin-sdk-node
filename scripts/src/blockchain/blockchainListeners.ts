@@ -10,7 +10,7 @@ export class BlockchainListener {
 		this.server = server;
 	}
 
-	createPaymentsListener(onPayment: OnPaymentListener, ...addresses: Address[]): PaymentListener {
+	createPaymentsListener(onPayment: OnPaymentListener, addresses: Address[]): PaymentListener {
 		return new MultiAccountsListener(this.server, onPayment, addresses);
 	}
 }
@@ -43,7 +43,12 @@ class MultiAccountsListener implements PaymentListener {
 		this.addresses.add(address);
 	}
 
+	removeAddress(address: Address) {
+		Utils.verifyValidAddressParam(address);
+		this.addresses.delete(address);
+	}
+
 	close() {
-		this.stream.close();
+		this.stream();
 	}
 }

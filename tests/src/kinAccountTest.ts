@@ -1,9 +1,7 @@
 import {Keypair, Server} from "@kinecosystem/kin-sdk";
 import * as nock from "nock";
-import {KinAccount} from "../../scripts/src/KinAccount";
-import {AccountDataRetriever} from "../../scripts/src/blockchain/accountDataRetriever";
-import {AccountNotFoundError} from "../../scripts/bin/errors";
-import {Environment} from "../../scripts/bin/environment";
+import {Environment, KinAccount} from "../../scripts/bin";
+import {AccountDataRetriever} from "../../scripts/bin/blockchain/accountDataRetriever";
 
 const fakeUrl = "http://horizon.com";
 const server = new Server(fakeUrl, {allowHttp: true});
@@ -13,6 +11,7 @@ const matchedPublicAddress = "GBXTJ57DEEMZ6NVNDGWKCQGGKZMRAGOIYZO3C5T5P23GSM7MVY
 const publicAddress = "GDE76CCWBSBKEFJPMJWYOMU4HPWQQQFHI3YGDDIUG75AMMUHJ5JI67MV";
 const appId = "aaaa";
 const startingBalance = "10000";
+const amount = "10000";
 const fee = 1;
 let kinAccount: KinAccount;
 
@@ -31,32 +30,52 @@ describe("KinAccount.createAccount", async () => {
 		mockLoadAccountResponse()
 		mockCreateAccountResponse()
 
-		const txBuilder = await kinAccount.buildCreateAccount(publicAddress, startingBalance, fee, "bla bla");
-		await expect(kinAccount.submitTx(txBuilder)).toBeDefined();
+		const txBuilder = await kinAccount.buildCreateAccount({
+			address: publicAddress,
+			startingBalance: startingBalance,
+			fee: fee,
+			memoText: "bla bla"
+		});
+		await expect(kinAccount.submitTransaction(txBuilder)).toBeDefined();
 	});
 
 	test("create account, error expect 400 ServerError", async () => {
 		mockLoadAccountResponse()
 		mock404AccountResponse()
 
-		const txBuilder = await kinAccount.buildCreateAccount(publicAddress, startingBalance, fee, "bla bla");
-		await expect(kinAccount.submitTx(txBuilder)).rejects.toEqual("[Error: Request failed with status code 400]");
+		const txBuilder = await kinAccount.buildCreateAccount({
+			address: publicAddress,
+			startingBalance: startingBalance,
+			fee: fee,
+			memoText: "bla bla"
+		});
+		await expect(kinAccount.submitTransaction(txBuilder)).rejects.toEqual("[Error: Request failed with status code 400]");
 	});
 
 	test("send kin", async () => {
 		mockLoadAccountResponse()
 		mockSendKinResponse()
 
-		const txBuilder = await kinAccount.buildSendKin(publicAddress, startingBalance, fee, "bla bla");
-		await expect(kinAccount.submitTx(txBuilder)).toBeDefined();
+		const txBuilder = await kinAccount.buildSendKin({
+			address: publicAddress,
+			amount: amount,
+			fee: fee,
+			memoText: "bla bla"
+		});
+		await expect(kinAccount.submitTransaction(txBuilder)).toBeDefined();
 	});
 
 	test("send kinb, error expect 400 ServerError", async () => {
 		mockLoadAccountResponse()
 		mock404SendKinResponse()
 
-		const txBuilder = await kinAccount.buildSendKin(publicAddress, startingBalance, fee, "bla bla");
-		await expect(kinAccount.submitTx(txBuilder)).rejects.toEqual("[Error: Request failed with status code 400]");
+		const txBuilder = await kinAccount.buildSendKin({
+			address: publicAddress,
+			amount: amount,
+			fee: fee,
+			memoText: "bla bla"
+		});
+		await expect(kinAccount.submitTransaction(txBuilder)).rejects.toEqual("[Error: Request failed with status code 400]");
 	});
 
 	function mockLoadAccountResponse() {

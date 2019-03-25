@@ -5,7 +5,6 @@ import {Server} from "@kinecosystem/kin-sdk";
 import {Network} from "@kinecosystem/kin-base";
 import {AccountDataRetriever} from "./blockchain/accountDataRetriever";
 import {Friendbot} from "./friendbot";
-import {ANON_APP_ID} from "./config";
 import {BlockchainInfoRetriever} from "./blockchain/blockchainInfoRetriever";
 import {TransactionRetriever} from "./blockchain/transactionRetriever";
 import {Address, TransactionId} from "./types";
@@ -31,8 +30,8 @@ export class KinClient {
 		this.blockchainListener = new BlockchainListener(this.server);
 	}
 
-	createKinAccount(seed: string, app_id: string = ANON_APP_ID, channelSecretKeys?: [string]): KinAccount {
-		return new KinAccount(this.environment, seed, this.accountDataRetriever, this.server, app_id, channelSecretKeys);
+	createKinAccount(params: CreateKinAccountParams): KinAccount {
+		return new KinAccount(this.environment, params.seed, this.accountDataRetriever, this.server, params.appId, params.channelSecretKeys);
 	}
 
 	/**
@@ -86,26 +85,22 @@ export class KinClient {
 
 	/**
 	 * Creates a payment listener for the given addresses.
-	 * @param onPayment payment callback listener, will be triggered when payment was happened.
-	 * @param addresses addresses to listen, address can be added using PaymentListener
 	 * @return PaymentListener listener object, call `close` to stop listener, `addAddress` to add additional address to listen to
 	 */
-	createPaymentListener(onPayment: OnPaymentListener, ...addresses: Address[]): PaymentListener {
-		return this.blockchainListener.createPaymentsListener(onPayment, ...addresses);
+	createPaymentListener(params: PaymentListenerParams): PaymentListener {
+		return this.blockchainListener.createPaymentsListener(params.onPayment, params.addresses);
 	}
 
 	/**
 	 * Create or fund an account on playground network.
 	 * If account already exists it will be funded, o.w. the account will be created with the input amount as starting
 	 * balance
-	 * @param address wallet address (public key) to be created/funded
-	 * @param amount kin amount to fund with
 	 */
-	async friendbot(address: Address, amount: number): Promise<TransactionId> {
+	async friendbot(params: FriendBotParams): Promise<TransactionId> {
 		if (!this.friendbotHandler) {
 			throw Error("Friendbot url not defined, friendbot is not available on production environment");
 		}
-		return this.friendbotHandler.createOrFund(address, amount);
+		return this.friendbotHandler.createOrFund(params.address, params.amount);
 	}
 }
 
@@ -130,4 +125,34 @@ export interface TransactionHistoryParams {
 	 * Optional cursor
 	 */
 	cursor?: string;
+}
+
+export interface PaymentListenerParams {
+
+	/**
+	 * Payment callback listener method, will be triggered when payment was happened.
+	 */
+	onPayment: OnPaymentListener;
+
+	/**
+	 * List of addresses to listen for payments.
+	 */
+	addresses: Address[]
+}
+
+export interface CreateKinAccountParams {
+	seed: string;
+	appId?: string;
+	channelSecretKeys?: string[];
+}
+
+export interface FriendBotParams {
+	/**
+	 * A wallet address to create or fund.
+	 */
+	address: Address;
+	/**
+	 * An account starting balance or an amount of kin to fund in case of an existing account.
+	 */
+	amount: number
 }

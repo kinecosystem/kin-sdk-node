@@ -2,7 +2,8 @@
   "name": "kin-sdk-node",
   "version": "1.0.0",
   "description": "Kin SDK for the Node runtime",
-  "main": "index.js",
+  "main": "scripts/bin/index.js",
+  "types": "scripts/bin/index.d.ts",
   "scripts": {
     "clean": "rimraf scripts/bin",
     "transpile": "tsc -p scripts",
@@ -40,7 +41,8 @@
     "typescript": "^3.3.3"
   },
   "dependencies": {
-    "@kinecosystem/kin-sdk": "^0.20.0"
+    "@kinecosystem/kin-base": "^0.20.1",
+    "@kinecosystem/kin-sdk": "^0.20.1"
   },
   "jest": {
     "moduleFileExtensions": [
