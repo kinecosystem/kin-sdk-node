@@ -2,9 +2,10 @@ import {Keypair, Server} from "@kinecosystem/kin-sdk";
 import * as nock from "nock";
 import {KinAccount} from "../../scripts/src/KinAccount";
 import {AccountDataRetriever} from "../../scripts/src/blockchain/accountDataRetriever";
+import {TransactionNotFoundError} from "../../scripts/src/errors";
+import {IWhitelistPair} from "../../scripts/src/types";
 import {Environment} from "../../scripts/bin/environment";
 import {Network} from "@kinecosystem/kin-base";
-
 const fakeUrl = "http://horizon.com";
 const server = new Server(fakeUrl, {allowHttp: true});
 const accountDataRetriever = new AccountDataRetriever(server);
@@ -14,6 +15,7 @@ const receiverPublic = "GDE76CCWBSBKEFJPMJWYOMU4HPWQQQFHI3YGDDIUG75AMMUHJ5JI67MV
 const appId = "aaaa";
 const startingBalance = 10000;
 const fee = 1;
+const whitelistFee = 0;
 let kinAccount: KinAccount;
 
 
@@ -33,10 +35,10 @@ describe("KinAccount.createAccount", async () => {
 
 	test("create account, error expect 400 ServerError", async () => {
 		mockLoadAccountResponse()
-		mock404AccountResponse()
+		mock400AccountResponse()
 
 		const txBuilder = await kinAccount.buildCreateAccount(receiverPublic, startingBalance, fee, "bla bla");
-		await expect(kinAccount.submitTx(txBuilder)).rejects.toEqual("[Error: Request failed with status code 400]");
+		await expect(kinAccount.submitTx(txBuilder)).rejects.toEqual(new TransactionNotFoundError(senderPublic));
 	});
 
 	test("send kin", async () => {
@@ -49,10 +51,16 @@ describe("KinAccount.createAccount", async () => {
 
 	test("send kinb, error expect 400 ServerError", async () => {
 		mockLoadAccountResponse()
-		mock404SendKinResponse()
+		mock400SendKinResponse()
 
 		const txBuilder = await kinAccount.buildSendKin(receiverPublic, startingBalance, fee, "bla bla");
-		await expect(kinAccount.submitTx(txBuilder)).rejects.toEqual("[Error: Request failed with status code 400]");
+		await expect(kinAccount.submitTx(txBuilder)).rejects.toEqual(new TransactionNotFoundError(senderPublic));
+	});
+
+	test("whitelist transaction - send kin", async () => {
+		let envelope = "AAAAAG809+MhGZ82rRmsoUDGVlkQGcjGXbF2fX62aTPsrih8AAAAAAAXi3wAAAABAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAABAAAAB2JsYSBibGEAAAAAAQAAAAAAAAABAAAAAMn/CFYMgqIVL2JthzKcO+0IQKdG8GGNFDf6BjKHT1KPAAAAAAAAAAAF9eEAAAAAAAAAAAA=";
+		const txPair: IWhitelistPair = {envelope: envelope, networkId: Network.current().networkPassphrase()};
+		await expect(kinAccount.whitelistTransaction(txPair)).toEqual("AAAAAG809+MhGZ82rRmsoUDGVlkQGcjGXbF2fX62aTPsrih8AAAAAAAXi3wAAAABAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAABAAAAB2JsYSBibGEAAAAAAQAAAAAAAAABAAAAAMn/CFYMgqIVL2JthzKcO+0IQKdG8GGNFDf6BjKHT1KPAAAAAAAAAAAF9eEAAAAAAAAAAAHsrih8AAAAQEp6EC/3dO8zMeY33USui59MPIxxLaXsiYWxSVaIX7MwNaocb+NyoR5++eT/GPynxbPKQptftf/JPv2FNev2VwU=");
 	});
 
 	function mockLoadAccountResponse() {
@@ -164,7 +172,7 @@ describe("KinAccount.createAccount", async () => {
 				});
 	}
 
-	function mock404AccountResponse() {
+	function mock400AccountResponse() {
 		nock(fakeUrl)
 			.post(url => url.includes("/transactions"), /tx=\w+/gi)
 			.reply(400,
@@ -183,7 +191,7 @@ describe("KinAccount.createAccount", async () => {
 				});
 	}
 
-	function mock404SendKinResponse() {
+	function mock400SendKinResponse() {
 		nock(fakeUrl)
 			.post(url => url.includes("/transactions"), /tx=\w+/gi)
 			.reply(400,

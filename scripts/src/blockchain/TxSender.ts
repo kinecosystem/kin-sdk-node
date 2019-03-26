@@ -37,7 +37,7 @@ export class TxSender {
 	public async submitTx(tx: Transaction): Promise<Server.TransactionRecord> {
 		try {
 			tx.sign(Keypair.fromSecret(this.keypair.seed));
-			return this.server.submitTransaction(tx);
+			return await this.server.submitTransaction(tx);
 		} catch (e) {
 			if (e.response) {
 				if (e.response.status === 400) {

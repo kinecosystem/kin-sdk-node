@@ -1,4 +1,3 @@
-import {KinClient} from "./kinClient";
 import {AccountData, Balance} from "./blockchain/horizonModels";
 import {Server, Account} from "@kinecosystem/kin-sdk";
 import {AccountDataRetriever} from "./blockchain/accountDataRetriever";
@@ -14,9 +13,9 @@ import {
 	Keypair
 } from "@kinecosystem/kin-base";
 import {KinTransactionBuilder} from "./blockchain/transactionBuilder";
-import {Environment} from "./environment";
 import {InvalidDataError, NetworkMismatchedError} from "./errors";
 import {UTF8_ENCODING} from "./config";
+import {Environment} from "../bin/environment";
 
 interface IWhitelistPairTemp {
 	// The android stellar sdk spells 'envelope' as 'envelop'
@@ -97,15 +96,15 @@ export class KinAccount {
 			throw new InvalidDataError();
 		}
 
-		let networkId = Network.current().networkId();
-		if (networkId != txPair.networkId) {
+		let networkPassphrase = Network.current().networkPassphrase();
+		if (networkPassphrase != txPair.networkId) {
 			throw new NetworkMismatchedError();
 		}
 
 		const xdrTransaction = new XdrTransaction(txPair.envelope);
 		xdrTransaction.sign(Keypair.fromSecret(this.keypair.seed));
 		let envelope = xdrTransaction.toEnvelope();
-		let buffer = envelope.toXDR(UTF8_ENCODING);
+		let buffer = envelope.toXDR('base64');
 
 		return buffer.toString();
 	}
