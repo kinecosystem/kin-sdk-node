@@ -1,9 +1,9 @@
-import {Keypair, Server} from "@kinecosystem/kin-sdk";
+import {Server} from "@kinecosystem/kin-sdk";
 import * as nock from "nock";
-import {KinAccount} from "../../scripts/src/KinAccount";
-import {AccountDataRetriever} from "../../scripts/src/blockchain/accountDataRetriever";
-import {TransactionNotFoundError} from "../../scripts/src/errors";
-import {IWhitelistPair} from "../../scripts/src/types";
+import {KinAccount} from "../../scripts/bin/KinAccount";
+import {AccountDataRetriever} from "../../scripts/bin/blockchain/accountDataRetriever";
+import {TransactionNotFoundError} from "../../scripts/bin/errors";
+import {IWhitelistPair} from "../../scripts/bin/types";
 import {Environment} from "../../scripts/bin/environment";
 import {Network} from "@kinecosystem/kin-base";
 const fakeUrl = "http://horizon.com";
@@ -15,8 +15,9 @@ const receiverPublic = "GDE76CCWBSBKEFJPMJWYOMU4HPWQQQFHI3YGDDIUG75AMMUHJ5JI67MV
 const appId = "aaaa";
 const startingBalance = 10000;
 const fee = 1;
-const whitelistFee = 0;
+const sequence = "6319125253062658";
 let kinAccount: KinAccount;
+
 
 
 describe("KinAccount.createAccount", async () => {
@@ -25,36 +26,45 @@ describe("KinAccount.createAccount", async () => {
 		kinAccount = new KinAccount(senderSeed, accountDataRetriever, server, appId);
 	});
 
-	test("account created", async () => {
-		mockLoadAccountResponse()
-		mockCreateAccountResponse()
+	test("account created build transaction", async () => {
+		mockLoadAccountResponse();
 
 		const txBuilder = await kinAccount.buildCreateAccount(receiverPublic, startingBalance, fee, "bla bla");
-		await expect(kinAccount.submitTx(txBuilder)).toBeDefined();
+		expect((txBuilder as any)._transactionBuilder.baseFee).toEqual(1);
+		expect((txBuilder as any)._transactionBuilder.memo._value).toEqual("bla bla");
+		expect((txBuilder as any)._transactionBuilder.source.id).toEqual(senderPublic);
+		expect((txBuilder as any)._transactionBuilder.source.sequence).toEqual(sequence);
+	});
+
+	test("account created sign transaction", async () => {
+		mockCreateAccountResponse();
+
+		const txBuilder = await kinAccount.buildCreateAccount(receiverPublic, startingBalance, fee, "bla bla");
+		await expect(kinAccount.submitTransaction(txBuilder)).toEqual("AAAAAG809+MhGZ82rRmsoUDGVlkQGcjGXbF2fX62aTPsrih8AAAAAQAXi3wAAAABAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAABAAAAB2JsYSBibGEAAAAAAQAAAAAAAAAAAAAAAMn/CFYMgqIVL2JthzKcO+0IQKdG8GGNFDf6BjKHT1KPAAAAADuaygAAAAAAAAAAAeyuKHwAAABADlsqlE5NTldymr9Noi5TMesuvNdxKlBbeJPpeUX5rFjpn2KSQPOGDioXJZbsp8Az5CUzuXGF4Z6/qorJGzLEBg==");
 	});
 
 	test("create account, error expect 400 ServerError", async () => {
-		mockLoadAccountResponse()
-		mock400AccountResponse()
+		mockLoadAccountResponse();
+		mock400AccountResponse();
 
 		const txBuilder = await kinAccount.buildCreateAccount(receiverPublic, startingBalance, fee, "bla bla");
-		await expect(kinAccount.submitTx(txBuilder)).rejects.toEqual(new TransactionNotFoundError(senderPublic));
+		await expect(kinAccount.submitTransaction(txBuilder)).rejects.toEqual(new TransactionNotFoundError(senderPublic));
 	});
 
 	test("send kin", async () => {
-		mockLoadAccountResponse()
-		mockSendKinResponse()
+		mockLoadAccountResponse();
+		mockSendKinResponse();
 
 		const txBuilder = await kinAccount.buildSendKin(receiverPublic, startingBalance, fee, "bla bla");
-		await expect(kinAccount.submitTx(txBuilder)).toBeDefined();
+		await expect(kinAccount.submitTransaction(txBuilder)).toBeDefined();
 	});
 
-	test("send kinb, error expect 400 ServerError", async () => {
-		mockLoadAccountResponse()
-		mock400SendKinResponse()
+	test("send kin, error expect 400 ServerError", async () => {
+		mockLoadAccountResponse();
+		mock400SendKinResponse();
 
 		const txBuilder = await kinAccount.buildSendKin(receiverPublic, startingBalance, fee, "bla bla");
-		await expect(kinAccount.submitTx(txBuilder)).rejects.toEqual(new TransactionNotFoundError(senderPublic));
+		await expect(kinAccount.submitTransaction(txBuilder)).rejects.toEqual(new TransactionNotFoundError(senderPublic));
 	});
 
 	test("whitelist transaction - send kin", async () => {
@@ -104,7 +114,7 @@ describe("KinAccount.createAccount", async () => {
 					"id": "GBXTJ57DEEMZ6NVNDGWKCQGGKZMRAGOIYZO3C5T5P23GSM7MVYUHZK65",
 					"paging_token": "",
 					"account_id": "GBXTJ57DEEMZ6NVNDGWKCQGGKZMRAGOIYZO3C5T5P23GSM7MVYUHZK65",
-					"sequence": "6627289156550656",
+					"sequence": sequence,
 					"subentry_count": 0,
 					"thresholds": {
 						"low_threshold": 0,

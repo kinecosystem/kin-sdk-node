@@ -1,47 +1,60 @@
-import {Address} from "../types";
+import {Address, IWhitelistPair} from "../types";
 import {Server} from "@kinecosystem/kin-sdk";
-import {Asset, Keypair, Memo, Operation, Transaction, TransactionBuilder} from "@kinecosystem/kin-base";
+import {Asset, Keypair, Memo, Network, Operation, Transaction as XdrTransaction} from "@kinecosystem/kin-base";
 import {KeyPair} from "./keyPair";
-import {KinTransactionBuilder} from "./transactionBuilder";
-import {AccountNotFoundError, NetworkError, ServerError} from "../errors";
+import {TransactionBuilder} from "./transactionBuilder";
+import {InvalidDataError, NetworkError, NetworkMismatchedError, ServerError} from "../errors";
 import {TransactionNotFoundError} from "../../src/errors";
 
+interface IWhitelistPairTemp {
+	// The android stellar sdk spells 'envelope' as 'envelop'
+	envelop: string,
+	envelope?: string,
+	networkId: string
+}
+
 export class TxSender {
-	constructor(private readonly keypair: KeyPair, private readonly appId: string, private readonly server: Server) {
-		this.keypair = keypair;
-		this.appId = appId;
-		this.server = server;
+	constructor(private readonly _keypair: KeyPair, private readonly _appId: string, private readonly _server: Server) {
+		this._keypair = _keypair;
+		this._appId = _appId;
+		this._server = _server;
 	}
 
-	public async buildCreateAccount(address: Address, startingBalance: number, fee: number, memoText: string = ""): Promise<Transaction> {
-		const response: Server.AccountResponse = await this.server.loadAccount(this.keypair.publicAddress);
-		return new KinTransactionBuilder(response, {fee: fee, memo: Memo.text(memoText)})
-					.setTimeout(0)
-					.addOperation(Operation.createAccount({
-						destination: address,
-						startingBalance: startingBalance.toString()
-					})).build();
+	public async getTransactionBuilder(fee: number): Promise<TransactionBuilder> {
+		const response: Server.AccountResponse = await this._server.loadAccount(this._keypair.publicAddress);
+		return new TransactionBuilder(response, {fee: fee}).setTimeout(0);
 	}
 
-	public async buildSendKin(address: Address, amount: number, fee: number, memoText: string): Promise<Transaction> {
-		const response: Server.AccountResponse = await this.server.loadAccount(this.keypair.publicAddress);
-		return new KinTransactionBuilder(response, {fee: fee, memo: Memo.text(memoText)})
-					.setTimeout(0)
-					.addOperation(Operation.payment({
-						destination: address,
-						asset: Asset.native(),
-						amount: amount.toString()
-					})).build();
+	public async buildCreateAccount(address: Address, startingBalance: number, fee: number, memoText: string = ""): Promise<TransactionBuilder> {
+		const response: Server.AccountResponse = await this._server.loadAccount(this._keypair.publicAddress);
+		return new TransactionBuilder(response, {fee: fee, memo: Memo.text(memoText)})
+			.setTimeout(0)
+			.addOperation(Operation.createAccount({
+				destination: address,
+				startingBalance: startingBalance.toString()
+			}));
 	}
 
-	public async submitTx(tx: Transaction): Promise<Server.TransactionRecord> {
+	public async buildSendKin(address: Address, amount: number, fee: number, memoText: string): Promise<TransactionBuilder> {
+		const response: Server.AccountResponse = await this._server.loadAccount(this._keypair.publicAddress);
+		return new TransactionBuilder(response, {fee: fee, memo: Memo.text(memoText)})
+			.setTimeout(0)
+			.addOperation(Operation.payment({
+				destination: address,
+				asset: Asset.native(),
+				amount: amount.toString()
+			}));
+	}
+
+	public async submitTransaction(builder: TransactionBuilder): Promise<Server.TransactionRecord> {
 		try {
-			tx.sign(Keypair.fromSecret(this.keypair.seed));
-			return await this.server.submitTransaction(tx);
+			let tx = builder.build();
+			tx.sign(Keypair.fromSecret(this._keypair.seed));
+			return await this._server.submitTransaction(tx);
 		} catch (e) {
 			if (e.response) {
 				if (e.response.status === 400) {
-					throw new TransactionNotFoundError(this.keypair.publicAddress);
+					throw new TransactionNotFoundError(this._keypair.publicAddress);
 				} else {
 					throw new ServerError(e.response.status, e.response);
 				}
@@ -49,5 +62,36 @@ export class TxSender {
 				throw new NetworkError(e.message);
 			}
 		}
+	}
+
+	public whitelistTransaction(payload: string | IWhitelistPair): string {
+		let txPair: IWhitelistPair | IWhitelistPairTemp;
+		if (typeof payload === "string") {
+			let tx = JSON.parse(payload);
+			if (tx.envelop != null) {
+				txPair = JSON.parse(payload) as IWhitelistPairTemp;
+				txPair.envelope = txPair.envelop;
+			} else {
+				txPair = JSON.parse(payload) as IWhitelistPair;
+			}
+		} else {
+			txPair = payload;
+		}
+
+		if (typeof txPair.envelope !== "string") {
+			throw new InvalidDataError();
+		}
+
+		let networkPassphrase = Network.current().networkPassphrase();
+		if (networkPassphrase != txPair.networkId) {
+			throw new NetworkMismatchedError();
+		}
+
+		const xdrTransaction = new XdrTransaction(txPair.envelope);
+		xdrTransaction.sign(Keypair.fromSecret(this._keypair.seed));
+		let envelope = xdrTransaction.toEnvelope();
+		let buffer = envelope.toXDR('base64');
+
+		return buffer.toString();
 	}
 }

@@ -1,111 +1,67 @@
 import {AccountData, Balance} from "./blockchain/horizonModels";
-import {Server, Account} from "@kinecosystem/kin-sdk";
+import {Server} from "@kinecosystem/kin-sdk";
 import {AccountDataRetriever} from "./blockchain/accountDataRetriever";
 import {TxSender} from "./blockchain/TxSender";
 import {Address, IWhitelistPair} from "./types";
 import * as config from "./config";
 import {KeyPair} from "./blockchain/keyPair";
-import {
-	Network,
-	Transaction,
-	TransactionBuilder,
-	Transaction as XdrTransaction,
-	Keypair
-} from "@kinecosystem/kin-base";
-import {KinTransactionBuilder} from "./blockchain/transactionBuilder";
-import {InvalidDataError, NetworkMismatchedError} from "./errors";
-import {UTF8_ENCODING} from "./config";
-import {Environment} from "../bin/environment";
-
-interface IWhitelistPairTemp {
-	// The android stellar sdk spells 'envelope' as 'envelop'
-	envelop: string,
-	envelope?: string,
-	networkId: string
-}
+import {TransactionBuilder} from "./blockchain/transactionBuilder";
 
 export class KinAccount {
-	private readonly keypair: KeyPair;
-	private readonly txSender: TxSender;
+	private readonly _keypair: KeyPair;
+	private readonly _txSender: TxSender;
 
 	private _publicAddress: string = "";
 
-	constructor(private readonly seed: string, private readonly accountDataRetriever: AccountDataRetriever, private readonly server: Server, private readonly appId: string = config.ANON_APP_ID, private readonly channelSecretKeys?: string[]) {
-		if (!config.APP_ID_REGEX.test(appId)) {
-			throw new Error("Invalid app id: " + appId);
-		}
-		// ToDo: fix the hint with real value
-		this.keypair = KeyPair.fromSeed(seed);
-
-		if (!this.accountDataRetriever.isAccountExisting(this.keypair.publicAddress)) {
-			throw new Error("Account not found: " + this.keypair.publicAddress);
+	constructor(private readonly _seed: string, private readonly _accountDataRetriever: AccountDataRetriever, private readonly _server: Server, private readonly _appId: string = config.ANON_APP_ID, private readonly _channelSecretKeys?: string[]) {
+		if (!config.APP_ID_REGEX.test(_appId)) {
+			throw new Error("Invalid app id: " + _appId);
 		}
 
-		this._publicAddress = this.keypair.publicAddress;
-		this.txSender = new TxSender(this.keypair, this.appId, this.server);
+		this._keypair = KeyPair.fromSeed(_seed);
+
+		if (!this._accountDataRetriever.isAccountExisting(this._keypair.publicAddress)) {
+			throw new Error("Account not found: " + this._keypair.publicAddress);
+		}
+
+		this._publicAddress = this._keypair.publicAddress;
+		this._txSender = new TxSender(this._keypair, this._appId, this._server);
 	}
 
 	publicAddress(): Address {
-		return this.keypair.publicAddress;
+		return this._keypair.publicAddress;
 	}
 
 	async getBalance(): Promise<Balance> {
 
-		return Promise.resolve(this.accountDataRetriever.fetchKinBalance(this.publicAddress()));
+		return Promise.resolve(this._accountDataRetriever.fetchKinBalance(this.publicAddress()));
 	}
 
 	async getData(): Promise<AccountData> {
-		return Promise.resolve(this.accountDataRetriever.fetchAccountData(this.publicAddress()));
+		return Promise.resolve(this._accountDataRetriever.fetchAccountData(this.publicAddress()));
 	}
 
 	getAppId(): string {
-		return this.appId;
+		return this._appId;
 	}
 
-	getTransactionBuilder(sourceAccount: Account, options?: TransactionBuilder.TransactionBuilderOptions): KinTransactionBuilder {
-		return new KinTransactionBuilder(sourceAccount, options);
+	public async getTransactionBuilder(fee: number ): Promise<TransactionBuilder> {
+		return await this._txSender.getTransactionBuilder(fee);
 	}
 
-	public async buildCreateAccount(address: Address, startingBalance: number, fee: number, memoText: string = ""): Promise<Transaction> {
-		return this.txSender.buildCreateAccount(address, startingBalance, fee, memoText);
+	public async buildCreateAccount(address: Address, startingBalance: number, fee: number, memoText: string = ""): Promise<TransactionBuilder> {
+		return await this._txSender.buildCreateAccount(address, startingBalance, fee, memoText);
 	}
 
-	async buildSendKin(address: Address, amount: number, fee: number, memoText: string): Promise<Transaction> {
-		return this.txSender.buildSendKin(address, amount, fee, memoText);
+	async buildSendKin(address: Address, amount: number, fee: number, memoText: string): Promise<TransactionBuilder> {
+		return await this._txSender.buildSendKin(address, amount, fee, memoText);
 	}
 
-	async submitTx(tx: Transaction): Promise<Server.TransactionRecord> {
-		return this.txSender.submitTx(tx);
+	async submitTransaction(transactionBuilder: TransactionBuilder): Promise<Server.TransactionRecord> {
+		return await this._txSender.submitTransaction(transactionBuilder);
 	}
 
 	whitelistTransaction(payload: string | IWhitelistPair): string {
-		let txPair: IWhitelistPair | IWhitelistPairTemp;
-		if (typeof payload === "string") {
-			let tx = JSON.parse(payload);
-			if (tx.envelop != null) {
-				txPair = JSON.parse(payload) as IWhitelistPairTemp;
-				txPair.envelope = txPair.envelop;
-			} else {
-				txPair = JSON.parse(payload) as IWhitelistPair;
-			}
-		} else {
-			txPair = payload;
-		}
-
-		if (typeof txPair.envelope !== "string") {
-			throw new InvalidDataError();
-		}
-
-		let networkPassphrase = Network.current().networkPassphrase();
-		if (networkPassphrase != txPair.networkId) {
-			throw new NetworkMismatchedError();
-		}
-
-		const xdrTransaction = new XdrTransaction(txPair.envelope);
-		xdrTransaction.sign(Keypair.fromSecret(this.keypair.seed));
-		let envelope = xdrTransaction.toEnvelope();
-		let buffer = envelope.toXDR('base64');
-
-		return buffer.toString();
+		return this._txSender.whitelistTransaction(payload);
 	}
 }

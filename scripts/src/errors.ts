@@ -60,15 +60,15 @@ export class ServerError extends Error implements KinSdkError {
 
 export class TransactionFailedError extends ServerError {
 
-	private readonly resultTransactionCode?: string;
-	private readonly resultOperationsCode?: string[];
+	private readonly _resultTransactionCode?: string;
+	private readonly _resultOperationsCode?: string[];
 	readonly type: ErrorType = 'TransactionFailedError';
 
 	constructor(readonly errorCode: number, readonly errorBody?: any) {
 		super(errorCode, errorBody);
 		if (errorBody && errorBody.extras) {
-			this.resultTransactionCode = errorBody.extras.result_codes.transaction;
-			this.resultOperationsCode = errorBody.extras.result_codes.operations;
+			this._resultTransactionCode = errorBody.extras.result_codes.transaction;
+			this._resultOperationsCode = errorBody.extras.result_codes.operations;
 		}
 	}
 }
