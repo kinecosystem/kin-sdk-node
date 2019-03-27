@@ -41,8 +41,8 @@
     "typescript": "^3.3.3"
   },
   "dependencies": {
-    "@kinecosystem/kin-base": "^0.20.1",
-    "@kinecosystem/kin-sdk": "^0.20.1"
+    "@kinecosystem/kin-base": "0.20.1",
+    "@kinecosystem/kin-sdk": "0.20.1"
   },
   "jest": {
     "moduleFileExtensions": [
