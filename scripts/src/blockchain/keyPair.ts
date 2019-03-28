@@ -4,24 +4,29 @@ import * as crypto from "crypto";
 
 export class KeyPair {
 
-	private keypair: Keypair;
+	private _keypair: Keypair;
+
+
+	public get seed(): string {
+		return this._keypair.secret();
+	}
 
 	public get publicAddress(): Address {
-		return this.keypair.publicKey();
+		return this._keypair.publicKey();
 	}
 
 	private constructor(seed?: string, seedBuffer?: Buffer) {
 		if (seed) {
-			this.keypair = Keypair.fromSecret(seed);
+			this._keypair = Keypair.fromSecret(seed);
 		} else if (seedBuffer) {
-			this.keypair = Keypair.fromRawEd25519Seed(seedBuffer);
+			this._keypair = Keypair.fromRawEd25519Seed(seedBuffer);
 		} else {
-			this.keypair = Keypair.random();
+			this._keypair = Keypair.random();
 		}
 	}
 
 	public sign(data: Buffer) {
-		this.keypair.sign(data);
+		this._keypair.sign(data);
 	}
 
 	/**

@@ -1,57 +1,67 @@
-import {KinClient} from "./kinClient";
 import {AccountData, Balance} from "./blockchain/horizonModels";
-import {KinClientConfig} from "./KinClientConfig";
+import {Server} from "@kinecosystem/kin-sdk";
+import {AccountDataRetriever} from "./blockchain/accountDataRetriever";
+import {TxSender} from "./blockchain/TxSender";
+import {Address, IWhitelistPair} from "./types";
+import * as config from "./config";
+import {KeyPair} from "./blockchain/keyPair";
 import {TransactionBuilder} from "./blockchain/transactionBuilder";
-import {ANON_APP_ID} from "./config";
-import {Address} from "./types";
 
 export class KinAccount {
-	private _publicAddress: string = "";
-	constructor(seed: string, client: KinClient, app_id: string = ANON_APP_ID, channelSecretKeys?: [string]) {
+	private readonly _keypair: KeyPair;
+	private readonly _txSender: TxSender;
 
+	private _publicAddress: string = "";
+
+	constructor(private readonly _seed: string, private readonly _accountDataRetriever: AccountDataRetriever, private readonly _server: Server, private readonly _appId: string = config.ANON_APP_ID, private readonly _channelSecretKeys?: string[]) {
+		if (!config.APP_ID_REGEX.test(_appId)) {
+			throw new Error("Invalid app id: " + _appId);
+		}
+
+		this._keypair = KeyPair.fromSeed(_seed);
+
+		if (!this._accountDataRetriever.isAccountExisting(this._keypair.publicAddress)) {
+			throw new Error("Account not found: " + this._keypair.publicAddress);
+		}
+
+		this._publicAddress = this._keypair.publicAddress;
+		this._txSender = new TxSender(this._keypair, this._appId, this._server);
 	}
-	get publicAddress(): string {
-		return this._publicAddress;
+
+	publicAddress(): Address {
+		return this._keypair.publicAddress;
 	}
 
 	async getBalance(): Promise<Balance> {
-		return Promise.resolve(0);
+
+		return Promise.resolve(this._accountDataRetriever.fetchKinBalance(this.publicAddress()));
 	}
 
-	async getData(): Promise<AccountData | null> {
-		return Promise.resolve(null);
+	async getData(): Promise<AccountData> {
+		return Promise.resolve(this._accountDataRetriever.fetchAccountData(this.publicAddress()));
 	}
 
-	async getStatus(): Promise<KinClientConfig> {
-		return Promise.resolve(new KinClientConfig());
+	getAppId(): string {
+		return this._appId;
 	}
 
-	getTransactionBuilder(fee: number): TransactionBuilder {
-		return new TransactionBuilder();
+	public async getTransactionBuilder(fee: number ): Promise<TransactionBuilder> {
+		return await this._txSender.getTransactionBuilder(fee);
 	}
 
-	async createAccount(address: Address, startingBalance: number, fee: number, memoText: string): Promise<string> {
-		return Promise.resolve("");
+	public async buildCreateAccount(address: Address, startingBalance: number, fee: number, memoText: string = ""): Promise<TransactionBuilder> {
+		return await this._txSender.buildCreateAccount(address, startingBalance, fee, memoText);
 	}
 
-	async sendKin(address: Address, amount: number, fee: number, memoText: string): Promise<string> {
-		return Promise.resolve("");
+	async buildSendKin(address: Address, amount: number, fee: number, memoText: string): Promise<TransactionBuilder> {
+		return await this._txSender.buildSendKin(address, amount, fee, memoText);
 	}
 
-	getCreateAccountBuilder(address: Address, startingBalance:number, fee: number, memoText: string): TransactionBuilder {
-		return Promise.resolve(new TransactionBuilder());
+	async submitTransaction(transactionBuilder: TransactionBuilder): Promise<Server.TransactionRecord> {
+		return await this._txSender.submitTransaction(transactionBuilder);
 	}
 
-	submitTransaction(txBuilder: TransactionBuilder): string {
-		return "";
+	whitelistTransaction(payload: string | IWhitelistPair): string {
+		return this._txSender.whitelistTransaction(payload);
 	}
-
-	whitelistTransaction(payload: string): string {
-		return "";
-	}
-
-	protected topUp(address: Address): void {
-
-	}
-
 }

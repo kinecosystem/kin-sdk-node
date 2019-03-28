@@ -16,14 +16,14 @@ export interface IAccountDataRetriever {
 
 export class AccountDataRetriever implements IAccountDataRetriever {
 
-	constructor(private readonly server: Server) {
-		this.server = server;
+	constructor(private readonly _server: Server) {
+		this._server = _server;
 	}
 
 	public async fetchAccountData(address: Address): Promise<AccountData> {
 		await Utils.verifyValidAddressParamAsync(address);
 		try {
-			const accountResponse = await this.server.loadAccount(address);
+			const accountResponse = await this._server.loadAccount(address);
 
 			return {
 				id: accountResponse.id,
