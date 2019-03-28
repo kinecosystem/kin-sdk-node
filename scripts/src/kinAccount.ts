@@ -1,8 +1,8 @@
 import {AccountData, Balance} from "./blockchain/horizonModels";
 import {Server} from "@kinecosystem/kin-sdk";
 import {AccountDataRetriever} from "./blockchain/accountDataRetriever";
-import {TxSender} from "./blockchain/TxSender";
-import {Address, IWhitelistPair} from "./types";
+import {TxSender} from "./blockchain/txSender";
+import {Address, WhitelistPayload, TransactionId} from "./types";
 import * as config from "./config";
 import {KeyPair} from "./blockchain/keyPair";
 import {TransactionBuilder} from "./blockchain/transactionBuilder";
@@ -28,20 +28,20 @@ export class KinAccount {
 		this._txSender = new TxSender(this._keypair, this._appId, this._server);
 	}
 
-	publicAddress(): Address {
+	get publicAddress(): Address {
 		return this._keypair.publicAddress;
 	}
 
 	async getBalance(): Promise<Balance> {
 
-		return Promise.resolve(this._accountDataRetriever.fetchKinBalance(this.publicAddress()));
+		return Promise.resolve(this._accountDataRetriever.fetchKinBalance(this.publicAddress));
 	}
 
 	async getData(): Promise<AccountData> {
-		return Promise.resolve(this._accountDataRetriever.fetchAccountData(this.publicAddress()));
+		return Promise.resolve(this._accountDataRetriever.fetchAccountData(this.publicAddress));
 	}
 
-	getAppId(): string {
+	get appId(): string {
 		return this._appId;
 	}
 
@@ -57,11 +57,11 @@ export class KinAccount {
 		return await this._txSender.buildSendKin(address, amount, fee, memoText);
 	}
 
-	async submitTransaction(transactionBuilder: TransactionBuilder): Promise<Server.TransactionRecord> {
+	async submitTransaction(transactionBuilder: TransactionBuilder): Promise<TransactionId> {
 		return await this._txSender.submitTransaction(transactionBuilder);
 	}
 
-	whitelistTransaction(payload: string | IWhitelistPair): string {
+	whitelistTransaction(payload: string | WhitelistPayload): string {
 		return this._txSender.whitelistTransaction(payload);
 	}
 }

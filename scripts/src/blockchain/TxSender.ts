@@ -1,4 +1,4 @@
-import {Address, IWhitelistPair} from "../types";
+import {Address, WhitelistPayload, TransactionId} from "../types";
 import {Server} from "@kinecosystem/kin-sdk";
 import {Asset, Keypair, Memo, Network, Operation, Transaction as XdrTransaction} from "@kinecosystem/kin-base";
 import {KeyPair} from "./keyPair";
@@ -6,7 +6,7 @@ import {TransactionBuilder} from "./transactionBuilder";
 import {InvalidDataError, NetworkError, NetworkMismatchedError, ServerError} from "../errors";
 import {TransactionNotFoundError} from "../../src/errors";
 
-interface IWhitelistPairTemp {
+interface WhitelistPayloadTemp {
 	// The android stellar sdk spells 'envelope' as 'envelop'
 	envelop: string,
 	envelope?: string,
@@ -46,11 +46,12 @@ export class TxSender {
 			}));
 	}
 
-	public async submitTransaction(builder: TransactionBuilder): Promise<Server.TransactionRecord> {
+	public async submitTransaction(builder: TransactionBuilder): Promise<TransactionId> {
 		try {
 			let tx = builder.build();
 			tx.sign(Keypair.fromSecret(this._keypair.seed));
-			return await this._server.submitTransaction(tx);
+			let transactionResponse = await this._server.submitTransaction(tx);
+			return transactionResponse.hash;
 		} catch (e) {
 			if (e.response) {
 				if (e.response.status === 400) {
@@ -64,26 +65,26 @@ export class TxSender {
 		}
 	}
 
-	public whitelistTransaction(payload: string | IWhitelistPair): string {
-		let txPair: IWhitelistPair | IWhitelistPairTemp;
+	public whitelistTransaction(payload: string | WhitelistPayload): string {
+		let txPair: WhitelistPayload | WhitelistPayloadTemp;
 		if (typeof payload === "string") {
 			let tx = JSON.parse(payload);
 			if (tx.envelop != null) {
-				txPair = JSON.parse(payload) as IWhitelistPairTemp;
+				txPair = tx as WhitelistPayloadTemp;
 				txPair.envelope = txPair.envelop;
 			} else {
-				txPair = JSON.parse(payload) as IWhitelistPair;
+				txPair = tx as WhitelistPayload;
 			}
 		} else {
 			txPair = payload;
 		}
 
 		if (typeof txPair.envelope !== "string") {
-			throw new InvalidDataError();
+			throw new TypeError("'envelope' must be type of string");
 		}
 
 		let networkPassphrase = Network.current().networkPassphrase();
-		if (networkPassphrase != txPair.networkId) {
+		if (networkPassphrase !== txPair.networkId) {
 			throw new NetworkMismatchedError();
 		}
 
