@@ -20,15 +20,19 @@ export class KinClient {
 	private readonly _transactionRetriever: TransactionRetriever;
 	private readonly _blockchainListener: BlockchainListener;
 
-	constructor(readonly environment: Environment) {
-		this.environment = environment;
-		this._server = new Server(environment.url);
-		Network.use(new Network(environment.passphrase));
+	constructor(private readonly _environment: Environment) {
+		this._environment = _environment;
+		this._server = new Server(_environment.url);
+		Network.use(new Network(_environment.passphrase));
 		this._accountDataRetriever = new AccountDataRetriever(this._server);
-		this._friendbotHandler = environment.friendbotUrl ? new Friendbot(environment.friendbotUrl, this._accountDataRetriever) : undefined;
+		this._friendbotHandler = _environment.friendbotUrl ? new Friendbot(_environment.friendbotUrl, this._accountDataRetriever) : undefined;
 		this._blockchainInfoRetriever = new BlockchainInfoRetriever(this._server);
 		this._transactionRetriever = new TransactionRetriever(this._server);
 		this._blockchainListener = new BlockchainListener(this._server);
+	}
+
+	get environment() {
+		return this._environment
 	}
 
 	createKinAccount(seed: string, app_id: string = ANON_APP_ID, channelSecretKeys?: [string]): KinAccount {
