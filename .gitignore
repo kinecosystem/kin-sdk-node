@@ -6,3 +6,4 @@ coverage
 tests/src/*.js
 tests/src/*.js.map
 tests/src/*.d.ts
+tests/src/kinAccount.ts
