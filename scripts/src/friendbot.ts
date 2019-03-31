@@ -6,14 +6,14 @@ import {Address, TransactionId} from "./types";
 
 export class Friendbot {
 
-	constructor(private readonly url: string, private readonly accountDataRetriever: IAccountDataRetriever) {
-		this.url = url;
-		this.accountDataRetriever = accountDataRetriever;
+	constructor(private readonly _url: string, private readonly _accountDataRetriever: IAccountDataRetriever) {
+		this._url = _url;
+		this._accountDataRetriever = _accountDataRetriever;
 	}
 
 	public async createOrFund(address: Address, amount: number): Promise<TransactionId> {
 		await Utils.verifyValidAddressParamAsync(address);
-		const isAccountExisting = await this.accountDataRetriever.isAccountExisting(address);
+		const isAccountExisting = await this._accountDataRetriever.isAccountExisting(address);
 		const requestUrl = isAccountExisting ? this.fundUrl(address, amount) : this.createAccountUrl(address, amount);
 
 		let response: AxiosResponse<any>;
@@ -39,10 +39,10 @@ export class Friendbot {
 	}
 
 	private fundUrl(address: Address, amount: number) {
-		return `${this.url}/fund?addr=${address}&amount=${amount}`;
+		return `${this._url}/fund?addr=${address}&amount=${amount}`;
 	}
 
 	private createAccountUrl(address: Address, amount: number) {
-		return `${this.url}/?addr=${address}&amount=${amount}`;
+		return `${this._url}/?addr=${address}&amount=${amount}`;
 	}
 }

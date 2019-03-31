@@ -1,7 +1,8 @@
 import {TransactionId} from "./types";
+import * as axios from "axios";
 
 export type ErrorType = 'AccountNotFoundError' | 'TransactionNotFoundError' | 'NetworkError' | 'ServerError'
-	| 'FriendbotError' | 'InvalidAddress' | 'TransactionFailedError' ;
+	| 'FriendbotError' | 'InvalidAddress' | 'TransactionFailedError' | 'NetworkMismatchedError' | 'InvalidDataError';
 
 export interface KinSdkError extends Error {
 	readonly type: ErrorType;
@@ -33,6 +34,20 @@ export class NetworkError extends Error implements KinSdkError {
 	readonly type = 'NetworkError';
 }
 
+export class NetworkMismatchedError extends Error implements KinSdkError {
+	readonly type = 'NetworkMismatchedError';
+	constructor() {
+		super(`Unable to sign whitelist transaction, network type is mismatched`)
+	}
+}
+
+export class InvalidDataError extends Error implements KinSdkError {
+	readonly type = 'InvalidDataError';
+	constructor() {
+		super(`Unable to sign whitelist transaction, invalid data`)
+	}
+}
+
 export class ServerError extends Error implements KinSdkError {
 	readonly type: ErrorType = 'ServerError';
 
@@ -45,15 +60,15 @@ export class ServerError extends Error implements KinSdkError {
 
 export class TransactionFailedError extends ServerError {
 
-	private readonly resultTransactionCode?: string;
-	private readonly resultOperationsCode?: string[];
+	private readonly _resultTransactionCode?: string;
+	private readonly _resultOperationsCode?: string[];
 	readonly type: ErrorType = 'TransactionFailedError';
 
 	constructor(readonly errorCode: number, readonly errorBody?: any) {
 		super(errorCode, errorBody);
 		if (errorBody && errorBody.extras) {
-			this.resultTransactionCode = errorBody.extras.result_codes.transaction;
-			this.resultOperationsCode = errorBody.extras.result_codes.operations;
+			this._resultTransactionCode = errorBody.extras.result_codes.transaction;
+			this._resultOperationsCode = errorBody.extras.result_codes.operations;
 		}
 	}
 }
