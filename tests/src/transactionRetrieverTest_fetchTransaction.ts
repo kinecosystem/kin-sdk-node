@@ -255,7 +255,7 @@ describe("TransactionRetriever.fetchTransaction", async () => {
 			.get(url => url.includes(transactionId))
 			.replyWithError({code: 'ETIMEDOUT'});
 		await expect(transactionRetriever.fetchTransaction(transactionId))
-			.toBeDefined();
+			.rejects.toHaveProperty('type', 'NetworkError');
 	});
 
 });

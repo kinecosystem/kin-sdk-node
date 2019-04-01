@@ -79,7 +79,7 @@ describe("AccountDataRetreiver.fetchAccountData", async () => {
 		mockTimeoutNetworkReponse();
 		//TODO check stellar sdk for exposing network errors up
 		await expect(accountDataRetriever.fetchAccountData(publicAddress))
-			.rejects.toBeDefined();
+			.rejects.toHaveProperty('type', 'NetworkError');
 	});
 
 });
@@ -121,7 +121,7 @@ describe("AccountDataRetreiver.fetchKinBalance", async () => {
 		mockTimeoutNetworkReponse();
 		//TODO check stellar sdk for exposing network errors up
 		await expect(accountDataRetriever.fetchKinBalance(publicAddress))
-			.rejects.toBeDefined();
+			.rejects.toHaveProperty('type', 'NetworkError');
 	});
 
 });
@@ -162,7 +162,7 @@ describe("AccountDataRetreiver.isAccountExisting", async () => {
 		mockTimeoutNetworkReponse();
 		//TODO check stellar sdk for exposing network errors up
 		await expect(accountDataRetriever.isAccountExisting(publicAddress))
-			.rejects.toBeDefined();
+			.rejects.toHaveProperty('type', 'NetworkError');
 	});
 
 });

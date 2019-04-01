@@ -94,7 +94,7 @@ describe("BlockchainInfoRetriever.getMinimumFee", async () => {
 			.replyWithError({code: 'ETIMEDOUT'});
 
 		await expect(blockchainInfoRetriever.getMinimumFee())
-			.rejects.toBeDefined();
+			.rejects.toHaveProperty('type', 'NetworkError');
 	});
 
 });
