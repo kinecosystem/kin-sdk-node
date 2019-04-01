@@ -29,7 +29,13 @@ describe("KinAccount.createAccount", async () => {
 	test("account created build transaction", async () => {
 		mockLoadAccountResponse("6319125253062661");
 
-		const txBuilder = await kinAccount.buildCreateAccount(receiverPublic, 10000, fee, memo);
+		const txBuilder = await kinAccount.buildCreateAccount(
+			{
+				address: receiverPublic,
+				startingBalance: 10000,
+				fee: fee,
+				memoText: memo
+			});
 		expect((txBuilder as any)._transactionBuilder.baseFee).toEqual(fee);
 		expect((txBuilder as any)._transactionBuilder.memo._value).toEqual(memo);
 		expect((txBuilder as any)._transactionBuilder.source.id).toEqual(senderPublic);
@@ -41,8 +47,12 @@ describe("KinAccount.createAccount", async () => {
 		mockLoadAccountResponse("6319125253062661");
 		mockCreateAccountResponse();
 
-		const txBuilder = await kinAccount.buildCreateAccount('GBW3U6FTJQ3JAZXSS46NHX7WF4SG2J5D6HKDBVDFHNVAKZRM672F2GDP',
-			10, fee, memo);
+		const txBuilder = await kinAccount.buildCreateAccount({
+			address: 'GBW3U6FTJQ3JAZXSS46NHX7WF4SG2J5D6HKDBVDFHNVAKZRM672F2GDP',
+			startingBalance: 10,
+			fee: fee,
+			memoText: memo
+		});
 		expect(await kinAccount.submitTransaction(txBuilder)).toEqual("6ab7034086be38c62fbbabd09349d8cc49d59bfe0f7ad3ef6cf89c5a573eee95");
 	});
 
@@ -50,7 +60,12 @@ describe("KinAccount.createAccount", async () => {
 		mockLoadAccountResponse("6319125253062657");
 		mock400AccountResponse();
 
-		const txBuilder = await kinAccount.buildCreateAccount(receiverPublic, 10, fee, memo);
+		const txBuilder = await kinAccount.buildCreateAccount({
+			address: receiverPublic,
+			startingBalance: 10,
+			fee: fee,
+			memoText: memo
+		});
 		await expect(kinAccount.submitTransaction(txBuilder)).rejects.toEqual(new TransactionNotFoundError(senderPublic));
 	});
 
@@ -58,7 +73,12 @@ describe("KinAccount.createAccount", async () => {
 		mockLoadAccountResponse("6319125253062662");
 		mockSendKinResponse();
 
-		const txBuilder = await kinAccount.buildSendKin(receiverPublic, 23.3, fee, memo);
+		const txBuilder = await kinAccount.buildSendKin({
+			address: receiverPublic,
+			amount: 23.3,
+			fee: fee,
+			memoText: memo
+		});
 		expect(await kinAccount.submitTransaction(txBuilder)).toEqual("708ebb9e3c8890333daca3faa6707b89dc0155f2578314e302f39e7387d2d07c");
 	});
 
@@ -66,7 +86,12 @@ describe("KinAccount.createAccount", async () => {
 		mockLoadAccountResponse("6319125253062657");
 		mock400SendKinResponse();
 
-		const txBuilder = await kinAccount.buildSendKin(receiverPublic, 10, fee, memo);
+		const txBuilder = await kinAccount.buildSendKin({
+			address: receiverPublic,
+			amount: 10,
+			fee: fee,
+			memoText: memo
+		});
 		await expect(kinAccount.submitTransaction(txBuilder)).rejects.toEqual(new TransactionNotFoundError(senderPublic));
 	});
 

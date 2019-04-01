@@ -1,4 +1,4 @@
-import {AssetType, Horizon, Server} from "@kinecosystem/kin-sdk";
+import {Horizon, Server, AssetType} from "@kinecosystem/kin-sdk";
 import {AccountData, Balance} from "./horizonModels";
 import {AccountNotFoundError, KinSdkError, NetworkError, ServerError} from "../errors"
 import {Utils} from "../utils";

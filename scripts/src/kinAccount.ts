@@ -49,16 +49,16 @@ export class KinAccount {
 		return await this._accountDataRetriever.fetchAccountData(this.publicAddress);
 	}
 
-	public async getTransactionBuilder(fee: number, channel?: Channel): Promise<TransactionBuilder> {
-		return await this._txSender.getTransactionBuilder(fee, channel);
+	public async getTransactionBuilder(param: GetTransactionParams): Promise<TransactionBuilder> {
+		return await this._txSender.getTransactionBuilder(param.fee, param.channel);
 	}
 
-	public async buildCreateAccount(address: Address, startingBalance: number, fee: number, memoText: string = "", channel?: Channel): Promise<TransactionBuilder> {
-		return await this._txSender.buildCreateAccount(address, startingBalance, fee, memoText, channel);
+	public async buildCreateAccount(params: CreateAccountParams): Promise<TransactionBuilder> {
+		return await this._txSender.buildCreateAccount(params.address, params.startingBalance, params.fee, params.memoText, params.channel);
 	}
 
-	async buildSendKin(address: Address, amount: number, fee: number, memoText: string, channel?: Channel): Promise<TransactionBuilder> {
-		return await this._txSender.buildSendKin(address, amount, fee, memoText, channel);
+	async buildSendKin(params: SendKinParams): Promise<TransactionBuilder> {
+		return await this._txSender.buildSendKin(params.address, params.amount, params.fee, params.memoText, params.channel);
 	}
 
 	async submitTransaction(transactionBuilder: TransactionBuilder): Promise<TransactionId> {
@@ -68,4 +68,69 @@ export class KinAccount {
 	whitelistTransaction(payload: string | WhitelistPayload): string {
 		return this._txSender.whitelistTransaction(payload);
 	}
+}
+
+export interface CreateAccountParams {
+
+	/**
+	 * Target account address to create.
+	 */
+	address: Address;
+	/**
+	 * The starting balance of the created account.
+	 */
+	startingBalance: number;
+	/**
+	 * Fee to be deducted for the transaction.
+	 */
+	fee: number;
+
+	/**
+	 * Optional text to put into transaction memo, up to 21 chars.
+	 */
+	memoText?: string;
+
+	/**
+	 * Optional channel to build the transaction with
+	 */
+	channel?: Channel;
+}
+
+export interface SendKinParams {
+
+	/**
+	 * Target account address to create.
+	 */
+	address: Address;
+	/**
+	 * The amount in kin to send.
+	 */
+	amount: number;
+	/**
+	 * Fee to be deducted for the transaction.
+	 */
+	fee: number;
+
+	/**
+	 * Optional text to put into transaction memo, up to 21 chars.
+	 */
+	memoText?: string;
+
+	/**
+	 * Optional channel to build the transaction with
+	 */
+	channel?: Channel;
+}
+
+export interface GetTransactionParams {
+
+	/**
+	 * Fee to be deducted for the transaction.
+	 */
+	fee: number;
+
+	/**
+	 * Optional channel to build the transaction with
+	 */
+	channel?: Channel;
 }
