@@ -20,7 +20,8 @@ Track the development of this SDK on [GitHub](https://github.com/kinecosystem/ki
 
 ### Usage with TypeScript
 
-Kin SDK for node is written in TypeScript, thus typing are available out of the box and will be maintained.
+Kin SDK for node is written in TypeScript, thus typing are available out of the box and will be maintained.  
+Of course, Kin SDK can be used from vanilla JS as well.
 
 ### Using Promises
 
