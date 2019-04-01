@@ -1,12 +1,12 @@
 import {Server} from "@kinecosystem/kin-sdk";
 import * as nock from "nock";
-import {KinAccount} from "../../scripts/bin/KinAccount";
+import {KinAccount} from "../../scripts/bin/kinAccount";
 import {AccountDataRetriever} from "../../scripts/bin/blockchain/accountDataRetriever";
 import {TransactionNotFoundError} from "../../scripts/bin/errors";
-import {IWhitelistPair} from "../../scripts/bin/types";
 import {Environment} from "../../scripts/bin/environment";
 import {Network} from "@kinecosystem/kin-base";
-import {escapeRegExp} from "tslint/lib/utils";
+import {WhitelistPayload} from "../../scripts/bin/types";
+import {BlockchainInfoRetriever} from "../../scripts/bin/blockchain/blockchainInfoRetriever";
 
 const fakeUrl = "http://horizon.com";
 const server = new Server(fakeUrl, {allowHttp: true});
@@ -23,26 +23,27 @@ let kinAccount: KinAccount;
 describe("KinAccount.createAccount", async () => {
 	beforeAll(async () => {
 		Network.use(new Network(Environment.Testnet.passphrase));
-		kinAccount = new KinAccount(senderSeed, accountDataRetriever, server, appId);
+		kinAccount = new KinAccount(senderSeed, accountDataRetriever, server, new BlockchainInfoRetriever(server), appId);
 	});
 
 	test("account created build transaction", async () => {
-		mockLoadAccountResponse("6319125253062657");
+		mockLoadAccountResponse("6319125253062661");
 
 		const txBuilder = await kinAccount.buildCreateAccount(receiverPublic, 10000, fee, memo);
 		expect((txBuilder as any)._transactionBuilder.baseFee).toEqual(fee);
 		expect((txBuilder as any)._transactionBuilder.memo._value).toEqual(memo);
 		expect((txBuilder as any)._transactionBuilder.source.id).toEqual(senderPublic);
-		expect((txBuilder as any)._transactionBuilder.source.sequence).toEqual("6319125253062657");
-		expect(txBuilder.build().toEnvelope().toXDR('base64')).toEqual("AAAAAG809+MhGZ82rRmsoUDGVlkQGcjGXbF2fX62aTPsrih8AAAAZAAWczYAAAACAAAAAAAAAAEAAAAJdGVzdCBtZW1vAAAAAAAAAQAAAAAAAAAAAAAAAEtbu5NHd2hUIi5N8XMqeV/cel5m3ZZMdQToeEvrvGy7AAAAADuaygAAAAAAAAAAAA==");
+		expect((txBuilder as any)._transactionBuilder.source.sequence).toEqual("6319125253062661");
+		expect(txBuilder.build().toEnvelope().toXDR('base64')).toEqual("AAAAAG809+MhGZ82rRmsoUDGVlkQGcjGXbF2fX62aTPsrih8AAAAZAAWczYAAAAGAAAAAAAAAAEAAAAJdGVzdCBtZW1vAAAAAAAAAQAAAAEAAAAAbzT34yEZnzatGayhQMZWWRAZyMZdsXZ9frZpM+yuKHwAAAAAAAAAAEtbu5NHd2hUIi5N8XMqeV/cel5m3ZZMdQToeEvrvGy7AAAAADuaygAAAAAAAAAAAA==");
 	});
 
-	test("account created sign transaction", async () => {
-		mockLoadAccountResponse("6319125253062658");
+	test("create account, send transaction succeed", async () => {
+		mockLoadAccountResponse("6319125253062661");
 		mockCreateAccountResponse();
 
-		const txBuilder = await kinAccount.buildCreateAccount(receiverPublic, 10, fee, memo);
-		expect(await kinAccount.submitTransaction(txBuilder)).toEqual("f83c4fcf4501912bee69f1adef7f574e387e5b649f8eea17caf5f53220fa04d8");
+		const txBuilder = await kinAccount.buildCreateAccount('GBW3U6FTJQ3JAZXSS46NHX7WF4SG2J5D6HKDBVDFHNVAKZRM672F2GDP',
+			10, fee, memo);
+		expect(await kinAccount.submitTransaction(txBuilder)).toEqual("6ab7034086be38c62fbbabd09349d8cc49d59bfe0f7ad3ef6cf89c5a573eee95");
 	});
 
 	test("create account, error expect 400 ServerError", async () => {
@@ -54,11 +55,11 @@ describe("KinAccount.createAccount", async () => {
 	});
 
 	test("send kin", async () => {
-		mockLoadAccountResponse("6319125253062659");
+		mockLoadAccountResponse("6319125253062662");
 		mockSendKinResponse();
 
 		const txBuilder = await kinAccount.buildSendKin(receiverPublic, 23.3, fee, memo);
-		expect(await kinAccount.submitTransaction(txBuilder)).toEqual("4802a3cddcc9eb9a031d420b4b12f8facfe12af43338290cde9fbfad97edf6ff");
+		expect(await kinAccount.submitTransaction(txBuilder)).toEqual("708ebb9e3c8890333daca3faa6707b89dc0155f2578314e302f39e7387d2d07c");
 	});
 
 	test("send kin, error expect 400 ServerError", async () => {
@@ -71,7 +72,7 @@ describe("KinAccount.createAccount", async () => {
 
 	test("whitelist transaction - send kin", async () => {
 		let envelope = "AAAAAG809+MhGZ82rRmsoUDGVlkQGcjGXbF2fX62aTPsrih8AAAAAAAXi3wAAAABAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAABAAAAB2JsYSBibGEAAAAAAQAAAAAAAAABAAAAAMn/CFYMgqIVL2JthzKcO+0IQKdG8GGNFDf6BjKHT1KPAAAAAAAAAAAF9eEAAAAAAAAAAAA=";
-		const txPair: IWhitelistPair = {envelope: envelope, networkId: Network.current().networkPassphrase()};
+		const txPair: WhitelistPayload = {envelope: envelope, networkId: Network.current().networkPassphrase()};
 		await expect(kinAccount.whitelistTransaction(txPair)).toEqual("AAAAAG809+MhGZ82rRmsoUDGVlkQGcjGXbF2fX62aTPsrih8AAAAAAAXi3wAAAABAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAABAAAAB2JsYSBibGEAAAAAAQAAAAAAAAABAAAAAMn/CFYMgqIVL2JthzKcO+0IQKdG8GGNFDf6BjKHT1KPAAAAAAAAAAAF9eEAAAAAAAAAAAHsrih8AAAAQEp6EC/3dO8zMeY33USui59MPIxxLaXsiYWxSVaIX7MwNaocb+NyoR5++eT/GPynxbPKQptftf/JPv2FNev2VwU=");
 	});
 
@@ -151,37 +152,37 @@ describe("KinAccount.createAccount", async () => {
 
 	function mockCreateAccountResponse() {
 		nock(fakeUrl)
-			.post(url => url.includes("/transactions"), "tx=AAAAAG809%2BMhGZ82rRmsoUDGVlkQGcjGXbF2fX62aTPsrih8AAAAZAAWczYAAAADAAAAAAAAAAEAAAAJdGVzdCBtZW1vAAAAAAAAAQAAAAAAAAAAAAAAAEtbu5NHd2hUIi5N8XMqeV%2Fcel5m3ZZMdQToeEvrvGy7AAAAAAAPQkAAAAAAAAAAAeyuKHwAAABAVMacSioEy6ZhZrI0OYns9GgHziu9Rqv%2BMm0ZtJnViHtPEn0aznGAqm2Enyv0Xqw5613Lwpzh1SJx3crFrP59DQ%3D%3D")
+			.post(url => url.includes("/transactions"), "tx=AAAAAG809%2BMhGZ82rRmsoUDGVlkQGcjGXbF2fX62aTPsrih8AAAAZAAWczYAAAAGAAAAAAAAAAEAAAAJdGVzdCBtZW1vAAAAAAAAAQAAAAEAAAAAbzT34yEZnzatGayhQMZWWRAZyMZdsXZ9frZpM%2ByuKHwAAAAAAAAAAG26eLNMNpBm8pc809%2F2LyRtJ6Px1DDUZTtqBWYs9%2FRdAAAAAAAPQkAAAAAAAAAAAeyuKHwAAABAR1kR5lr0GnNYwajx4JJ7W1dnO3Pjl8soKjgKH6AK6c8MgKLEeyh24TJkOKPrxFmnYnr3uhXTPy%2BhJTQv7R6ZCg%3D%3D")
 			.reply(200,
 				{
 					"_links": {
 						"transaction": {
-							"href": "https://horizon-testnet.kininfrastructure.com/transactions/f83c4fcf4501912bee69f1adef7f574e387e5b649f8eea17caf5f53220fa04d8"
+							"href": "https://horizon-testnet.kininfrastructure.com/transactions/6ab7034086be38c62fbbabd09349d8cc49d59bfe0f7ad3ef6cf89c5a573eee95"
 						}
 					},
-					"hash": "f83c4fcf4501912bee69f1adef7f574e387e5b649f8eea17caf5f53220fa04d8",
-					"ledger": 1712287,
-					"envelope_xdr": "AAAAAG809+MhGZ82rRmsoUDGVlkQGcjGXbF2fX62aTPsrih8AAAAZAAWczYAAAADAAAAAAAAAAEAAAAJdGVzdCBtZW1vAAAAAAAAAQAAAAAAAAAAAAAAAEtbu5NHd2hUIi5N8XMqeV/cel5m3ZZMdQToeEvrvGy7AAAAAAAPQkAAAAAAAAAAAeyuKHwAAABAVMacSioEy6ZhZrI0OYns9GgHziu9Rqv+Mm0ZtJnViHtPEn0aznGAqm2Enyv0Xqw5613Lwpzh1SJx3crFrP59DQ==",
+					"hash": "6ab7034086be38c62fbbabd09349d8cc49d59bfe0f7ad3ef6cf89c5a573eee95",
+					"ledger": 1761292,
+					"envelope_xdr": "AAAAAG809+MhGZ82rRmsoUDGVlkQGcjGXbF2fX62aTPsrih8AAAAZAAWczYAAAAGAAAAAAAAAAEAAAAJdGVzdCBtZW1vAAAAAAAAAQAAAAEAAAAAbzT34yEZnzatGayhQMZWWRAZyMZdsXZ9frZpM+yuKHwAAAAAAAAAAG26eLNMNpBm8pc809/2LyRtJ6Px1DDUZTtqBWYs9/RdAAAAAAAPQkAAAAAAAAAAAeyuKHwAAABAR1kR5lr0GnNYwajx4JJ7W1dnO3Pjl8soKjgKH6AK6c8MgKLEeyh24TJkOKPrxFmnYnr3uhXTPy+hJTQv7R6ZCg==",
 					"result_xdr": "AAAAAAAAAGQAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAA=",
-					"result_meta_xdr": "AAAAAAAAAAEAAAADAAAAAAAaIJ8AAAAAAAAAAEtbu5NHd2hUIi5N8XMqeV/cel5m3ZZMdQToeEvrvGy7AAAAAAAPQkAAGiCfAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAwAaIJ8AAAAAAAAAAG809+MhGZ82rRmsoUDGVlkQGcjGXbF2fX62aTPsrih8AAAAAHac/FQAFnM2AAAAAwAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAQAaIJ8AAAAAAAAAAG809+MhGZ82rRmsoUDGVlkQGcjGXbF2fX62aTPsrih8AAAAAHaNuhQAFnM2AAAAAwAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAA"
+					"result_meta_xdr": "AAAAAAAAAAEAAAADAAAAAAAa4AwAAAAAAAAAAG26eLNMNpBm8pc809/2LyRtJ6Px1DDUZTtqBWYs9/RdAAAAAAAPQkAAGuAMAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAwAa4AwAAAAAAAAAAG809+MhGZ82rRmsoUDGVlkQGcjGXbF2fX62aTPsrih8AAAAALHhZ8gAFnM2AAAABgAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAQAa4AwAAAAAAAAAAG809+MhGZ82rRmsoUDGVlkQGcjGXbF2fX62aTPsrih8AAAAALHSJYgAFnM2AAAABgAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAA"
 				});
 	}
 
 	function mockSendKinResponse() {
 		nock(fakeUrl)
-			.post(url => url.includes("/transactions"), "tx=AAAAAG809%2BMhGZ82rRmsoUDGVlkQGcjGXbF2fX62aTPsrih8AAAAZAAWczYAAAAEAAAAAAAAAAEAAAAJdGVzdCBtZW1vAAAAAAAAAQAAAAAAAAABAAAAAEtbu5NHd2hUIi5N8XMqeV%2Fcel5m3ZZMdQToeEvrvGy7AAAAAAAAAAAAI42QAAAAAAAAAAHsrih8AAAAQM6LcQOUrtMHSZCZVnGudCcHMLQ%2BBwAIs%2Bf7LL%2Fr0GuTU5eOudNsUUtX1CasM38CkoyW0eZ8uUpVbctEFsIfJQM%3D")
+			.post(url => url.includes("/transactions"), "tx=AAAAAG809%2BMhGZ82rRmsoUDGVlkQGcjGXbF2fX62aTPsrih8AAAAZAAWczYAAAAHAAAAAAAAAAEAAAAJdGVzdCBtZW1vAAAAAAAAAQAAAAEAAAAAbzT34yEZnzatGayhQMZWWRAZyMZdsXZ9frZpM%2ByuKHwAAAABAAAAAEtbu5NHd2hUIi5N8XMqeV%2Fcel5m3ZZMdQToeEvrvGy7AAAAAAAAAAAAI42QAAAAAAAAAAHsrih8AAAAQMKY%2FBIzE%2BnLdSm27j41TtHb55NgG36Z2wX3cDjAJco9PCxrn7rwoFoq%2FALjdp%2FjLitNfefgA6h0%2BCrGWWEioQE%3D\n")
 			.reply(200,
 				{
 					"_links": {
 						"transaction": {
-							"href": "https://horizon-testnet.kininfrastructure.com/transactions/4802a3cddcc9eb9a031d420b4b12f8facfe12af43338290cde9fbfad97edf6ff"
+							"href": "https://horizon-testnet.kininfrastructure.com/transactions/708ebb9e3c8890333daca3faa6707b89dc0155f2578314e302f39e7387d2d07c"
 						}
 					},
-					"hash": "4802a3cddcc9eb9a031d420b4b12f8facfe12af43338290cde9fbfad97edf6ff",
-					"ledger": 1712380,
-					"envelope_xdr": "AAAAAG809+MhGZ82rRmsoUDGVlkQGcjGXbF2fX62aTPsrih8AAAAZAAWczYAAAAEAAAAAAAAAAEAAAAJdGVzdCBtZW1vAAAAAAAAAQAAAAAAAAABAAAAAEtbu5NHd2hUIi5N8XMqeV/cel5m3ZZMdQToeEvrvGy7AAAAAAAAAAAAI42QAAAAAAAAAAHsrih8AAAAQM6LcQOUrtMHSZCZVnGudCcHMLQ+BwAIs+f7LL/r0GuTU5eOudNsUUtX1CasM38CkoyW0eZ8uUpVbctEFsIfJQM=",
+					"hash": "708ebb9e3c8890333daca3faa6707b89dc0155f2578314e302f39e7387d2d07c",
+					"ledger": 1761321,
+					"envelope_xdr": "AAAAAG809+MhGZ82rRmsoUDGVlkQGcjGXbF2fX62aTPsrih8AAAAZAAWczYAAAAHAAAAAAAAAAEAAAAJdGVzdCBtZW1vAAAAAAAAAQAAAAEAAAAAbzT34yEZnzatGayhQMZWWRAZyMZdsXZ9frZpM+yuKHwAAAABAAAAAEtbu5NHd2hUIi5N8XMqeV/cel5m3ZZMdQToeEvrvGy7AAAAAAAAAAAAI42QAAAAAAAAAAHsrih8AAAAQMKY/BIzE+nLdSm27j41TtHb55NgG36Z2wX3cDjAJco9PCxrn7rwoFoq/ALjdp/jLitNfefgA6h0+CrGWWEioQE=",
 					"result_xdr": "AAAAAAAAAGQAAAAAAAAAAQAAAAAAAAABAAAAAAAAAAA=",
-					"result_meta_xdr": "AAAAAAAAAAEAAAAEAAAAAwAaIJ8AAAAAAAAAAEtbu5NHd2hUIi5N8XMqeV/cel5m3ZZMdQToeEvrvGy7AAAAAAAPQkAAGiCfAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAQAaIPwAAAAAAAAAAEtbu5NHd2hUIi5N8XMqeV/cel5m3ZZMdQToeEvrvGy7AAAAAAAyz9AAGiCfAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAwAaIPwAAAAAAAAAAG809+MhGZ82rRmsoUDGVlkQGcjGXbF2fX62aTPsrih8AAAAAHaNubAAFnM2AAAABAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAQAaIPwAAAAAAAAAAG809+MhGZ82rRmsoUDGVlkQGcjGXbF2fX62aTPsrih8AAAAAHZqLCAAFnM2AAAABAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAA"
+					"result_meta_xdr": "AAAAAAAAAAEAAAAEAAAAAwAaK2EAAAAAAAAAAEtbu5NHd2hUIi5N8XMqeV/cel5m3ZZMdQToeEvrvGy7AAAAAABWXWAAGiCfAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAQAa4CkAAAAAAAAAAEtbu5NHd2hUIi5N8XMqeV/cel5m3ZZMdQToeEvrvGy7AAAAAAB56vAAGiCfAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAwAa4CkAAAAAAAAAAG809+MhGZ82rRmsoUDGVlkQGcjGXbF2fX62aTPsrih8AAAAALHSJSQAFnM2AAAABwAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAQAa4CkAAAAAAAAAAG809+MhGZ82rRmsoUDGVlkQGcjGXbF2fX62aTPsrih8AAAAALGul5QAFnM2AAAABwAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAA"
 				});
 	}
 

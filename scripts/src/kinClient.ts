@@ -36,7 +36,7 @@ export class KinClient {
 	}
 
 	createKinAccount(seed: string, app_id: string = ANON_APP_ID, channelSecretKeys?: [string]): KinAccount {
-		return new KinAccount(seed, this._accountDataRetriever, this._server, app_id, channelSecretKeys);
+		return new KinAccount(seed, this._accountDataRetriever, this._server, this._blockchainInfoRetriever, app_id, channelSecretKeys);
 	}
 
 	/**

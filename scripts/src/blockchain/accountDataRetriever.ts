@@ -1,4 +1,4 @@
-import {Horizon, Server} from "@kinecosystem/kin-sdk";
+import {AssetType, Horizon, Server} from "@kinecosystem/kin-sdk";
 import {AccountData, Balance} from "./horizonModels";
 import {AccountNotFoundError, KinSdkError, NetworkError, ServerError} from "../errors"
 import {Utils} from "../utils";
@@ -115,7 +115,7 @@ export class AccountDataRetriever implements IAccountDataRetriever {
 		return balances;
 	}
 
-	private isBalanceLineAsset(balanceLine: BalanceLine): balanceLine is BalanceLineAsset {
+	private isBalanceLineAsset(balanceLine: BalanceLine): balanceLine is BalanceLineAsset<AssetType.credit4> {
 		return (<BalanceLineAsset>balanceLine).asset_issuer !== undefined;
 	}
 }

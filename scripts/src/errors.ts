@@ -1,5 +1,4 @@
 import {TransactionId} from "./types";
-import * as axios from "axios";
 
 export type ErrorType =
 	'AccountNotFoundError'
@@ -81,6 +80,14 @@ export class TransactionFailedError extends ServerError {
 			this._resultTransactionCode = errorBody.extras.result_codes.transaction;
 			this._resultOperationsCode = errorBody.extras.result_codes.operations;
 		}
+	}
+
+	public get resultTransactionCode(): string | undefined {
+		return this._resultTransactionCode;
+	}
+
+	public get resultOperationsCode(): string[] | undefined {
+		return this._resultOperationsCode;
 	}
 }
 

@@ -1,7 +1,7 @@
 import {IAccountDataRetriever} from "../../scripts/bin/blockchain/accountDataRetriever";
 import {Friendbot} from "../../scripts/bin/friendbot";
 import * as nock from "nock";
-import {FriendbotError, InvalidAddress, NetworkError} from "../../scripts/bin/errors";
+import {FriendbotError, InvalidAddressError, NetworkError} from "../../scripts/bin/errors";
 
 const fakeUrl = "http://horizon.com";
 const publicAddress = "GDAVCZIOYRGV74ROE344CMRLPZYSZVRHNTRFGOUSAQBILJ7M5ES25KOZ";
@@ -23,12 +23,12 @@ describe("Friendbot.createOrFund", async () => {
 
 	test("too long address, expect InvalidAddressError", async () => {
 		await expect(friendBot.createOrFund(publicAddress + "A", 30))
-			.rejects.toEqual(new InvalidAddress());
+			.rejects.toEqual(new InvalidAddressError());
 	});
 
 	test("invalid address, expect InvalidAddressError", async () => {
 		await expect(friendBot.createOrFund("GDAVCZIOYRGV74ROE344CMRLPZYSZVRHNTRFGOUSAQBILJ7M5ES25KOB", 30))
-			.rejects.toEqual(new InvalidAddress());
+			.rejects.toEqual(new InvalidAddressError());
 	});
 
 	test('account not exist, should create', async () => {

@@ -2,59 +2,63 @@ import {AccountData, Balance} from "./blockchain/horizonModels";
 import {Server} from "@kinecosystem/kin-sdk";
 import {AccountDataRetriever} from "./blockchain/accountDataRetriever";
 import {TxSender} from "./blockchain/txSender";
-import {Address, WhitelistPayload, TransactionId} from "./types";
+import {Address, TransactionId, WhitelistPayload} from "./types";
 import * as config from "./config";
 import {KeyPair} from "./blockchain/keyPair";
 import {TransactionBuilder} from "./blockchain/transactionBuilder";
+import {Channel, ChannelsPool} from "./blockchain/channelsPool";
+import {IBlockchainInfoRetriever} from "./blockchain/blockchainInfoRetriever";
 
 export class KinAccount {
 	private readonly _keypair: KeyPair;
 	private readonly _txSender: TxSender;
+	private readonly _publicAddress: string;
+	private readonly _channelsPool?: ChannelsPool;
 
-	private _publicAddress: string = "";
-
-	constructor(private readonly _seed: string, private readonly _accountDataRetriever: AccountDataRetriever, private readonly _server: Server, private readonly _appId: string = config.ANON_APP_ID, private readonly _channelSecretKeys?: string[]) {
+	constructor(private readonly _seed: string, private readonly _accountDataRetriever: AccountDataRetriever,
+				server: Server, blockchainInfoRetriever: IBlockchainInfoRetriever,
+				private readonly _appId: string = config.ANON_APP_ID, private readonly _channelSecretKeys?: string[]) {
 		if (!config.APP_ID_REGEX.test(_appId)) {
 			throw new Error("Invalid app id: " + _appId);
 		}
-
-		this._keypair = KeyPair.fromSeed(_seed);
-
-		if (!this._accountDataRetriever.isAccountExisting(this._keypair.publicAddress)) {
-			throw new Error("Account not found: " + this._keypair.publicAddress);
+		if (_channelSecretKeys) {
+			this._channelsPool = new ChannelsPool(_channelSecretKeys);
 		}
-
+		this._keypair = KeyPair.fromSeed(_seed);
 		this._publicAddress = this._keypair.publicAddress;
-		this._txSender = new TxSender(this._keypair, this._appId, this._server);
+		this._txSender = new TxSender(this._keypair, this._appId, server, blockchainInfoRetriever);
 	}
 
 	get publicAddress(): Address {
 		return this._keypair.publicAddress;
 	}
 
-	async getBalance(): Promise<Balance> {
-
-		return Promise.resolve(this._accountDataRetriever.fetchKinBalance(this.publicAddress));
-	}
-
-	async getData(): Promise<AccountData> {
-		return Promise.resolve(this._accountDataRetriever.fetchAccountData(this.publicAddress));
-	}
-
 	get appId(): string {
 		return this._appId;
 	}
 
-	public async getTransactionBuilder(fee: number ): Promise<TransactionBuilder> {
-		return await this._txSender.getTransactionBuilder(fee);
+	get channelsPool(): ChannelsPool | undefined {
+		return this._channelsPool;
 	}
 
-	public async buildCreateAccount(address: Address, startingBalance: number, fee: number, memoText: string = ""): Promise<TransactionBuilder> {
-		return await this._txSender.buildCreateAccount(address, startingBalance, fee, memoText);
+	async getBalance(): Promise<Balance> {
+		return await this._accountDataRetriever.fetchKinBalance(this.publicAddress);
 	}
 
-	async buildSendKin(address: Address, amount: number, fee: number, memoText: string): Promise<TransactionBuilder> {
-		return await this._txSender.buildSendKin(address, amount, fee, memoText);
+	async getData(): Promise<AccountData> {
+		return await this._accountDataRetriever.fetchAccountData(this.publicAddress);
+	}
+
+	public async getTransactionBuilder(fee: number, channel?: Channel): Promise<TransactionBuilder> {
+		return await this._txSender.getTransactionBuilder(fee, channel);
+	}
+
+	public async buildCreateAccount(address: Address, startingBalance: number, fee: number, memoText: string = "", channel?: Channel): Promise<TransactionBuilder> {
+		return await this._txSender.buildCreateAccount(address, startingBalance, fee, memoText, channel);
+	}
+
+	async buildSendKin(address: Address, amount: number, fee: number, memoText: string, channel?: Channel): Promise<TransactionBuilder> {
+		return await this._txSender.buildSendKin(address, amount, fee, memoText, channel);
 	}
 
 	async submitTransaction(transactionBuilder: TransactionBuilder): Promise<TransactionId> {
