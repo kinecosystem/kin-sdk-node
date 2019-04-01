@@ -1,6 +1,6 @@
 import {KeyPair} from "./keyPair";
 import * as crypto from "crypto";
-import {TxSender} from "./TxSender";
+import {TxSender} from "./txSender";
 import {Network, Operation} from "@kinecosystem/kin-base";
 import {Environment} from "../environment";
 import {Server} from "@kinecosystem/kin-sdk";
