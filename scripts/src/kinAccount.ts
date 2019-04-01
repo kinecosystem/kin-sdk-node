@@ -1,75 +1,68 @@
 import {AccountData, Balance} from "./blockchain/horizonModels";
-import {Account, Server} from "@kinecosystem/kin-sdk";
+import {Server} from "@kinecosystem/kin-sdk";
 import {AccountDataRetriever} from "./blockchain/accountDataRetriever";
-import {TxSender} from "./blockchain/TxSender";
-import {Address} from "./types";
+import {TxSender} from "./blockchain/txSender";
+import {Address, WhitelistPayload, TransactionId} from "./types";
 import * as config from "./config";
 import {KeyPair} from "./blockchain/keyPair";
-import {Network, Transaction, TransactionBuilder} from "@kinecosystem/kin-base";
-import {KinTransactionBuilder} from "./blockchain/transactionBuilder";
-import {Environment} from "./environment";
+import {TransactionBuilder} from "./blockchain/transactionBuilder";
 
 export class KinAccount {
-	private keypair: KeyPair;
-	private txSender: TxSender;
+	private readonly _keypair: KeyPair;
+	private readonly _txSender: TxSender;
 
 	private _publicAddress: string = "";
 
-	constructor(readonly environment: Environment, private seed: string, private accountDataRetriever: AccountDataRetriever, private server: Server, private appId: string = config.ANON_APP_ID, private channelSecretKeys?: string[]) {
-		if (!config.APP_ID_REGEX.test(appId)) {
-			throw new Error("Invalid app id: " + appId);
-		}
-		// ToDo: fix the hint with real value
-		this.keypair = KeyPair.fromSeed(seed);
-
-		if (!this.accountDataRetriever.isAccountExisting(this.keypair.publicAddress)) {
-			throw new Error("Account not found: " + this.keypair.publicAddress);
+	constructor(private readonly _seed: string, private readonly _accountDataRetriever: AccountDataRetriever, private readonly _server: Server, private readonly _appId: string = config.ANON_APP_ID, private readonly _channelSecretKeys?: string[]) {
+		if (!config.APP_ID_REGEX.test(_appId)) {
+			throw new Error("Invalid app id: " + _appId);
 		}
 
-		this._publicAddress = this.keypair.publicAddress;
-		this.txSender = new TxSender(this.keypair, this.appId, this.server);
-		Network.use(new Network(environment.passphrase));
-		return this;
+		this._keypair = KeyPair.fromSeed(_seed);
+
+		if (!this._accountDataRetriever.isAccountExisting(this._keypair.publicAddress)) {
+			throw new Error("Account not found: " + this._keypair.publicAddress);
+		}
+
+		this._publicAddress = this._keypair.publicAddress;
+		this._txSender = new TxSender(this._keypair, this._appId, this._server);
 	}
 
 	get publicAddress(): Address {
-		return this.keypair.publicAddress;
+		return this._keypair.publicAddress;
 	}
 
 	async getBalance(): Promise<Balance> {
 
-		return Promise.resolve(this.accountDataRetriever.fetchKinBalance(this.publicAddress));
+		return Promise.resolve(this._accountDataRetriever.fetchKinBalance(this.publicAddress));
 	}
 
 	async getData(): Promise<AccountData> {
-		return Promise.resolve(this.accountDataRetriever.fetchAccountData(this.publicAddress));
+		return Promise.resolve(this._accountDataRetriever.fetchAccountData(this.publicAddress));
 	}
 
-	getAppId(): string {
-		return this.appId;
+	get appId(): string {
+		return this._appId;
 	}
 
-	getTransactionBuilder(sourceAccount: Account, options?: TransactionBuilder.TransactionBuilderOptions): KinTransactionBuilder {
-		return new KinTransactionBuilder(sourceAccount, options);
+	public async getTransactionBuilder(fee: number): Promise<TransactionBuilder> {
+		return await this._txSender.getTransactionBuilder(fee);
 	}
 
-	public async buildCreateAccount(params: CreateAccountParams): Promise<Transaction> {
-		return this.txSender.createAccount(params.address, params.startingBalance, params.fee, params.memoText);
-		// take care of errors!!
+	public async buildCreateAccount(params: CreateAccountParams): Promise<TransactionBuilder> {
+		return await this._txSender.buildCreateAccount(params.address, params.startingBalance, params.fee, params.memoText);
 	}
 
-	async buildSendKin(params: SendKinParams): Promise<Transaction> {
-		return this.txSender.sendKin(params.address, params.amount, params.fee, params.memoText);
+	async buildSendKin(params: SendKinParams): Promise<TransactionBuilder> {
+		return await this._txSender.buildSendKin(params.address, params.amount, params.fee, params.memoText);
 	}
 
-	async submitTransaction(tx: Transaction): Promise<Server.TransactionRecord> {
-		return this.txSender.signTx(tx);
+	async submitTransaction(transactionBuilder: TransactionBuilder): Promise<TransactionId> {
+		return await this._txSender.submitTransaction(transactionBuilder);
 	}
 
-	whitelistTransaction(payload: string): string {
-
-
-		return "";
+	whitelistTransaction(payload: string | WhitelistPayload): string {
+		return this._txSender.whitelistTransaction(payload);
 	}
 }
 
@@ -82,7 +75,7 @@ export interface CreateAccountParams {
 	/**
 	 * The starting balance of the created account.
 	 */
-	startingBalance: string;
+	startingBalance: number;
 	/**
 	 * Fee to be deducted for the transaction.
 	 */
@@ -103,7 +96,7 @@ export interface SendKinParams {
 	/**
 	 * The amount in kin to send.
 	 */
-	amount: string;
+	amount: number;
 	/**
 	 * Fee to be deducted for the transaction.
 	 */

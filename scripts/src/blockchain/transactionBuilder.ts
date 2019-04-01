@@ -1,23 +1,45 @@
-import {TransactionBuilder, Memo, Account} from "@kinecosystem/kin-base";
+import {
+	TransactionBuilder as BaseTransactionBuilder,
+	Account,
+	xdr,
+} from "@kinecosystem/kin-base";
 
-type PartialTransactionBuilder = new (sourceAccount: Account, options?: TransactionBuilder.TransactionBuilderOptions)  => { [P in Exclude<keyof TransactionBuilder, 'addMemo'>] : TransactionBuilder[P] };
-const PartialTransactionBuilder = TransactionBuilder as PartialTransactionBuilder;
 
-export class KinTransactionBuilder extends PartialTransactionBuilder {
+export class TransactionBuilder {
+
+	private readonly _transactionBuilder: BaseTransactionBuilder;
+	constructor (sourceAccount: Account, options?: BaseTransactionBuilder.TransactionBuilderOptions) {
+		this._transactionBuilder = new BaseTransactionBuilder(sourceAccount, options);
+	}
+
 
 	public addFee(fee: number): this {
-		if (fee > 0 )
-		(this as any).baseFee = fee;
+		if (fee >= 0 ) {
+			(this as any)._transactionBuilder.baseFee = fee;
+		}
+		return this;
+	}
+
+	public setTimeout(timeout: number) {
+		this._transactionBuilder.setTimeout(timeout);
 		return this;
 	}
 
 	public addMemo(memo: string): this {
-		// if (fee > 0 && )
 		(this as any).memo =  memo;
+		return this;
+	}
+
+	public addOperation(operation: xdr.Operation): this {
+		this._transactionBuilder.addOperation(operation);
 		return this;
 	}
 
 	public addChannels(): this {
 		return this;
+	}
+
+	public build() {
+		return this._transactionBuilder.build();
 	}
 }

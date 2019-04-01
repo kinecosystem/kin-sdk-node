@@ -1,4 +1,4 @@
-import {Horizon, Server} from "@kinecosystem/kin-sdk";
+import {Horizon, Server, AssetType} from "@kinecosystem/kin-sdk";
 import {AccountData, Balance} from "./horizonModels";
 import {AccountNotFoundError, KinSdkError, NetworkError, ServerError} from "../errors"
 import {Utils} from "../utils";
@@ -16,14 +16,14 @@ export interface IAccountDataRetriever {
 
 export class AccountDataRetriever implements IAccountDataRetriever {
 
-	constructor(private readonly server: Server) {
-		this.server = server;
+	constructor(private readonly _server: Server) {
+		this._server = _server;
 	}
 
 	public async fetchAccountData(address: Address): Promise<AccountData> {
 		await Utils.verifyValidAddressParamAsync(address);
 		try {
-			const accountResponse = await this.server.loadAccount(address);
+			const accountResponse = await this._server.loadAccount(address);
 
 			return {
 				id: accountResponse.id,
@@ -115,7 +115,7 @@ export class AccountDataRetriever implements IAccountDataRetriever {
 		return balances;
 	}
 
-	private isBalanceLineAsset(balanceLine: BalanceLine): balanceLine is BalanceLineAsset {
+	private isBalanceLineAsset(balanceLine: BalanceLine): balanceLine is BalanceLineAsset<AssetType.credit4> {
 		return (<BalanceLineAsset>balanceLine).asset_issuer !== undefined;
 	}
 }

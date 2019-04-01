@@ -14,14 +14,14 @@ export class TransactionRetriever implements ITransactionRetriever {
 	private readonly DEFAULT_ORDER = 'desc';
 	private readonly DEFAULT_LIMIT = 10;
 
-	constructor(private readonly server: Server) {
-		this.server = server;
+	constructor(private readonly _server: Server) {
+		this._server = _server;
 	}
 
 	public async fetchTransaction(transactionId: TransactionId): Promise<Transaction> {
 		try {
 			const transactionRecord: Server.TransactionRecord =
-				await this.server.transactions().transaction(transactionId).call() as any;
+				await this._server.transactions().transaction(transactionId).call() as any;
 			return TransactionRetriever.fromStellarTransaction(transactionRecord);
 		} catch (e) {
 			if (e.response) {
@@ -38,7 +38,7 @@ export class TransactionRetriever implements ITransactionRetriever {
 
 	public async fetchTransactionHistory(params: TransactionHistoryParams): Promise<Transaction[]> {
 		try {
-			const transactionCallBuilder = this.server.transactions().forAccount(params.address)
+			const transactionCallBuilder = this._server.transactions().forAccount(params.address)
 				.limit(params.limit ? params.limit : this.DEFAULT_LIMIT)
 				.order(params.order ? params.order : this.DEFAULT_ORDER);
 			if (params.cursor) {

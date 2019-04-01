@@ -6,33 +6,33 @@ import {Utils} from "../utils";
 
 export class BlockchainListener {
 
-	constructor(private readonly server: Server) {
-		this.server = server;
+	constructor(private readonly _server: Server) {
+		this._server = _server;
 	}
 
 	createPaymentsListener(onPayment: OnPaymentListener, addresses: Address[]): PaymentListener {
-		return new MultiAccountsListener(this.server, onPayment, addresses);
+		return new MultiAccountsListener(this._server, onPayment, addresses);
 	}
 }
 
 class MultiAccountsListener implements PaymentListener {
 
-	private readonly addresses: Set<Address> = new Set<Address>();
-	private readonly stream: any;
+	private readonly _addresses: Set<Address> = new Set<Address>();
+	private readonly _stream: any;
 
-	constructor(server: Server, private readonly onPayment: OnPaymentListener, addresses: Address[]) {
+	constructor(server: Server, private readonly _onPayment: OnPaymentListener, addresses: Address[]) {
 		if (addresses) {
 			for (const address of addresses) {
 				Utils.verifyValidAddressParam(address);
-				this.addresses.add(address);
+				this._addresses.add(address);
 			}
 		}
-		this.stream = server.transactions().cursor('now').stream({
+		this._stream = server.transactions().cursor('now').stream({
 			onmessage: (txRecord: Server.TransactionRecord) => {
 				let payment = TransactionRetriever.fromStellarTransaction(txRecord) as PaymentTransaction;
 				if (payment.amount && payment.destination &&
-					(this.addresses.has(payment.source) || this.addresses.has(payment.destination))) {
-					onPayment(payment);
+					(this._addresses.has(payment.source) || this._addresses.has(payment.destination))) {
+					_onPayment(payment);
 				}
 			}
 		});
@@ -40,15 +40,15 @@ class MultiAccountsListener implements PaymentListener {
 
 	addAddress(address: Address) {
 		Utils.verifyValidAddressParam(address);
-		this.addresses.add(address);
+		this._addresses.add(address);
 	}
 
 	removeAddress(address: Address) {
 		Utils.verifyValidAddressParam(address);
-		this.addresses.delete(address);
+		this._addresses.delete(address);
 	}
 
 	close() {
-		this.stream();
+		this._stream();
 	}
 }
