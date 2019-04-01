@@ -141,7 +141,7 @@ export interface PaymentListenerParams {
 	/**
 	 * List of addresses to listen for payments.
 	 */
-	addresses: Address[]
+	addresses: Address[];
 }
 
 export interface CreateKinAccountParams {
@@ -158,5 +158,5 @@ export interface FriendBotParams {
 	/**
 	 * An account starting balance or an amount of kin to fund in case of an existing account.
 	 */
-	amount: number
+	amount: number;
 }
