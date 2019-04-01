@@ -227,28 +227,57 @@ The snippet Transfer Kin will transfer 20 Kin to the recipient account "GDIRGGTB
 
 Step 1: Build the transaction
 ```javascript
- const builder = account.buildSendKin({
+   account.buildCreateAccount({
         address: destination,
-        amount: 1000,
+        startingBalance: 1000,
         fee: 100,
-        memoText: 'tx in 3-steps'
+        memoText: 'tx memo'
+    }).then(builder => {
+        //use the builder
     });
 ```
 
-Step 2: Optional - Update the transaction with a channel
+Step 2: Optional - Create a builder with a channel  
+In this case, you first need to acquire a channel, a channel is a resource that must be released at the end of using. 
+When using channel only within the bounds of the function provided to `acquireChannel` the sdk will take care of releasing back the channel to the channels pool, 
+so it will be available for later use.
 ```javascript
- account.channelManager.acquireChannel(channel => {
-        builder.setChannel(channel);
+account.channelsPool.acquireChannel(channel => {
+        account.buildSendKin({
+            address: destination,
+            amount: 1000,
+            fee: 100,
+            memoText: 'tx memo',
+            channel: channel
+        })
+            .then(builder => account.submitTransaction(builder));
     });
 ```
 Step 3: Send the transaction
 ```javascript
-account.submitTransaction(builder);
+account.buildSendKin({    
+        address: destination,    
+        amount: 1000,    
+        fee: 100,    
+        memoText: 'tx memo',    
+        channel: channel    
+    })    
+        .then(builder => {    
+            return account.submitTransaction(builder)    
+        });    
 
 // Or, with a channel:
-account.channelManager.acquireChannel(channel => {
-        builder.setChannel(channel);
-        account.submitTransaction(builder);
+account.channelsPool.acquireChannel(channel => {
+        account.buildSendKin({
+            address: destination,
+            amount: 1000,
+            fee: 100,
+            memoText: 'tx memo',
+            channel: channel
+        })
+            .then(builder => {
+                return account.submitTransaction(builder)
+            });
     });
 ```
 
@@ -403,27 +432,30 @@ Depending on the nature of your application, here are our recommendations:
 The kin sdk allows you to create HD (highly deterministic) channels based on your seed and a passphrase to be used as a salt. 
 As long as you use the same seed and passphrase, you will always get the same seeds.
 
-```
-const ChannelsManager = require('kin-sdk-node').ChannelsManager;
+`Channels.createChannels` will create those channels on the Kin blockchain, using the base seed account.
 
-const channels = ChannelsManager.createChannels({
+```
+const Channels = require('kin-sdk-node').Channels;
+
+const channels = Channels.createChannels({
         environment: Environment.Testnet,
-        masterSeed: 'master seed',
+        baseSeed : 'base seed',
         salt: 'seed',
-        amount: 'channels amount',
+        channelsCount : 'channels count',
         startingBalance: 'starting balance for each channel'
     });
 ```
 
-`channels` will be a list of seeds the sdk created for you, that can be used when initializing the KinAccount object.
+`channels` will be a list of `KeyPair` objects represents the seeds the sdk created for you, that can be used when initializing the `KinAccount` object.
 
-If you just wish to get the list of the channels generated from your seed + passphrase combination without creating them
+If you just wish to get the list of the channels generated from your seed + passphrase combination without creating them,
+this will return a list of `KeyPair` objects.
 
 ```
-const channels = ChannelsManager.getHDChannele({
+const channels = Channels.generateSeeds({
         masterSeed: 'master seed',
         salt: 'seed',
-        amount: 'channels amount',
+        channelsCount : 'channels count'
     });
 ```
 
