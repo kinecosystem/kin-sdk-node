@@ -1,9 +1,9 @@
 import {Memo, Operation, xdr} from "@kinecosystem/kin-base";
-import {Address} from "../types";
 
 export type Balance = number;
-
-type AssetType = 'native' | 'credit_alphanum4' | 'credit_alphanum12';
+export type Address = string;
+export type TransactionId = string;
+export type AssetType = 'native' | 'credit_alphanum4' | 'credit_alphanum12';
 
 export interface AccountData {
 	readonly id: string;
@@ -76,6 +76,7 @@ export interface RawTransaction extends TransactionBase {
 
 export interface PaymentListener {
 	addAddress: (address: Address) => void;
+	removeAddress: (address: Address) => void;
 	close: () => void;
 }
 

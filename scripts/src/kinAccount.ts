@@ -45,16 +45,16 @@ export class KinAccount {
 		return this._appId;
 	}
 
-	public async getTransactionBuilder(fee: number ): Promise<TransactionBuilder> {
+	public async getTransactionBuilder(fee: number): Promise<TransactionBuilder> {
 		return await this._txSender.getTransactionBuilder(fee);
 	}
 
-	public async buildCreateAccount(address: Address, startingBalance: number, fee: number, memoText: string = ""): Promise<TransactionBuilder> {
-		return await this._txSender.buildCreateAccount(address, startingBalance, fee, memoText);
+	public async buildCreateAccount(params: CreateAccountParams): Promise<TransactionBuilder> {
+		return await this._txSender.buildCreateAccount(params.address, params.startingBalance, params.fee, params.memoText);
 	}
 
-	async buildSendKin(address: Address, amount: number, fee: number, memoText: string): Promise<TransactionBuilder> {
-		return await this._txSender.buildSendKin(address, amount, fee, memoText);
+	async buildSendKin(params: SendKinParams): Promise<TransactionBuilder> {
+		return await this._txSender.buildSendKin(params.address, params.amount, params.fee, params.memoText);
 	}
 
 	async submitTransaction(transactionBuilder: TransactionBuilder): Promise<TransactionId> {
@@ -64,4 +64,46 @@ export class KinAccount {
 	whitelistTransaction(payload: string | WhitelistPayload): string {
 		return this._txSender.whitelistTransaction(payload);
 	}
+}
+
+export interface CreateAccountParams {
+
+	/**
+	 * Target account address to create.
+	 */
+	address: Address;
+	/**
+	 * The starting balance of the created account.
+	 */
+	startingBalance: number;
+	/**
+	 * Fee to be deducted for the transaction.
+	 */
+	fee: number;
+
+	/**
+	 * Optional text to put into transaction memo, up to 21 chars.
+	 */
+	memoText?: string;
+}
+
+export interface SendKinParams {
+
+	/**
+	 * Target account address to create.
+	 */
+	address: Address;
+	/**
+	 * The amount in kin to send.
+	 */
+	amount: number;
+	/**
+	 * Fee to be deducted for the transaction.
+	 */
+	fee: number;
+
+	/**
+	 * Optional text to put into transaction memo, up to 21 chars.
+	 */
+	memoText?: string;
 }

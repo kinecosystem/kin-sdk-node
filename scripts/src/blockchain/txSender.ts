@@ -25,9 +25,12 @@ export class TxSender {
 		return new TransactionBuilder(response, {fee: fee}).setTimeout(0);
 	}
 
-	public async buildCreateAccount(address: Address, startingBalance: number, fee: number, memoText: string = ""): Promise<TransactionBuilder> {
+	public async buildCreateAccount(address: Address, startingBalance: number, fee: number, memoText?: string): Promise<TransactionBuilder> {
 		const response: Server.AccountResponse = await this._server.loadAccount(this._keypair.publicAddress);
-		return new TransactionBuilder(response, {fee: fee, memo: Memo.text(memoText)})
+		return new TransactionBuilder(response, {
+			fee: fee,
+			memo: memoText ? Memo.text(memoText) : Memo.none()
+		})
 			.setTimeout(0)
 			.addOperation(Operation.createAccount({
 				destination: address,
@@ -35,9 +38,12 @@ export class TxSender {
 			}));
 	}
 
-	public async buildSendKin(address: Address, amount: number, fee: number, memoText: string): Promise<TransactionBuilder> {
+	public async buildSendKin(address: Address, amount: number, fee: number, memoText?: string): Promise<TransactionBuilder> {
 		const response: Server.AccountResponse = await this._server.loadAccount(this._keypair.publicAddress);
-		return new TransactionBuilder(response, {fee: fee, memo: Memo.text(memoText)})
+		return new TransactionBuilder(response, {
+			fee: fee,
+			memo: memoText ? Memo.text(memoText) : Memo.none()
+		})
 			.setTimeout(0)
 			.addOperation(Operation.payment({
 				destination: address,
