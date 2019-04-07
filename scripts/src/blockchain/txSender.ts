@@ -12,6 +12,7 @@ import {
 } from "../errors";
 import {Channel} from "./channelsPool";
 import {IBlockchainInfoRetriever} from "./blockchainInfoRetriever";
+import {CHANNEL_TOP_UP_TX_COUNT} from "../config";
 
 interface WhitelistPayloadTemp {
 	// The android stellar sdk spells 'envelope' as 'envelop'
@@ -21,8 +22,6 @@ interface WhitelistPayloadTemp {
 }
 
 export class TxSender {
-	private readonly CHANNEL_TOP_UP_TX_COUNT = 1000;
-
 	constructor(private readonly _keypair: KeyPair, private readonly _appId: string, private readonly _server: Server,
 				private readonly _blockchainInfoRetriever: IBlockchainInfoRetriever) {
 		this._keypair = _keypair;
@@ -114,7 +113,7 @@ export class TxSender {
 	private async topUpChannel(builder: TransactionBuilder) {
 		const channel = builder.channel as Channel;
 		const fee = await this._blockchainInfoRetriever.getMinimumFee();
-		const amount = fee * this.CHANNEL_TOP_UP_TX_COUNT;
+		const amount = fee * CHANNEL_TOP_UP_TX_COUNT;
 		const topUpBuilder = await this.buildSendKin(channel.keyPair.publicAddress, amount, fee);
 		await this.submitTransaction(topUpBuilder);
 	}

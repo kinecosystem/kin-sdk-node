@@ -44,7 +44,7 @@ export class ChannelsPool {
 	}
 }
 
-type ChannelState = 'busy' | 'free';
+export type ChannelState = 'busy' | 'free';
 
 export interface Channel {
 	readonly keyPair: KeyPair;
