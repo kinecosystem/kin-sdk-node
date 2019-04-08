@@ -1,4 +1,4 @@
-import {KeyPair} from "../../scripts/bin/blockchain/keyPair";
+import {KeyPair} from "../../scripts/src/blockchain/keyPair";
 
 describe("KeyPair.fromSeed", async () => {
 

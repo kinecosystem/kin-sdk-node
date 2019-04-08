@@ -1,7 +1,7 @@
 import {Server} from "@kinecosystem/kin-sdk";
 import * as nock from "nock";
-import {ServerError} from "../../scripts/bin/errors";
-import {BlockchainInfoRetriever} from "../../scripts/bin/blockchain/blockchainInfoRetriever";
+import {ServerError} from "../../scripts/src/errors";
+import {BlockchainInfoRetriever} from "../../scripts/src/blockchain/blockchainInfoRetriever";
 
 const fakeUrl = "https://horizon-testnet.kininfrastructure.com";
 let blockchainInfoRetriever: BlockchainInfoRetriever;

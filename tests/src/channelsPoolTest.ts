@@ -1,6 +1,6 @@
-import {KeyPair} from "../../scripts/bin/blockchain/keyPair";
-import {Channel, ChannelsPool} from "../../scripts/bin/blockchain/channelsPool";
-import {ChannelBusyError} from "../../scripts/bin/errors";
+import {KeyPair} from "../../scripts/src/blockchain/keyPair";
+import {Channel, ChannelsPool} from "../../scripts/src/blockchain/channelsPool";
+import {ChannelBusyError} from "../../scripts/src/errors";
 
 describe("ChannelsPool", async () => {
 	let channelsPool: ChannelsPool;

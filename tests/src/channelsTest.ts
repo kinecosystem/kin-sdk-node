@@ -1,11 +1,11 @@
-import {TxSender} from "../../scripts/bin/blockchain/txSender";
-import {KeyPair} from "../../scripts/bin/blockchain/keyPair";
+import {TxSender} from "../../scripts/src/blockchain/txSender";
+import {KeyPair} from "../../scripts/src/blockchain/keyPair";
 import {Memo, Network, Server} from "@kinecosystem/kin-sdk";
-import {IBlockchainInfoRetriever} from "../../scripts/bin/blockchain/blockchainInfoRetriever";
-import {ChannelsPool} from "../../scripts/bin/blockchain/channelsPool";
+import {IBlockchainInfoRetriever} from "../../scripts/src/blockchain/blockchainInfoRetriever";
+import {ChannelsPool} from "../../scripts/src/blockchain/channelsPool";
 import * as nock from "nock";
-import {TransactionBuilder} from "../../scripts/bin/blockchain/transactionBuilder";
-import {Environment} from "../../scripts/bin/environment";
+import {TransactionBuilder} from "../../scripts/src/blockchain/transactionBuilder";
+import {Environment} from "../../scripts/src/environment";
 
 const fakeUrl = "http://horizon.com";
 const senderSeed = "SBVYIBM6UTDHMN7RN6VVEFKABRQBW3YB7W7RYFZFTBD6YX3IDFLS7NGW";
