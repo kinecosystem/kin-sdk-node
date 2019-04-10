@@ -1,7 +1,13 @@
-import {KinClient} from "./kinClient";
-import {KinAccount} from "./kinAccount";
+import {
+	CreateKinAccountParams,
+	FriendBotParams,
+	KinClient,
+	PaymentListenerParams,
+	TransactionHistoryParams
+} from "./kinClient";
+import {CreateAccountParams, GetTransactionParams, KinAccount, SendKinParams} from "./kinAccount";
 import {Environment} from "./environment";
-import {Address, TransactionId} from "./types"
+import {Address, TransactionId, WhitelistPayload} from "./types"
 import {
 	AccountData,
 	AssetType,
@@ -14,6 +20,8 @@ import {
 	Transaction
 } from "./blockchain/horizonModels";
 import {KeyPair} from "./blockchain/keyPair";
+import {Channels, CreateChannelsParams, GenerateSeedsParams} from "./blockchain/channelsGenerator";
+import {Channel, ChannelsPool, ChannelsPoolStatus, ChannelState} from "./blockchain/channelsPool";
 
 export {
 	KinClient,
@@ -30,5 +38,20 @@ export {
 	Address,
 	Balance,
 	TransactionId,
-	KeyPair
+	KeyPair,
+	Channels,
+	CreateChannelsParams,
+	GenerateSeedsParams,
+	CreateKinAccountParams,
+	TransactionHistoryParams,
+	PaymentListenerParams,
+	FriendBotParams,
+	GetTransactionParams,
+	CreateAccountParams,
+	SendKinParams,
+	WhitelistPayload,
+	ChannelsPool,
+	Channel,
+	ChannelsPoolStatus,
+	ChannelState
 };

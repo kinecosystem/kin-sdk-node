@@ -1,8 +1,16 @@
 import {TransactionId} from "./types";
-import * as axios from "axios";
 
-export type ErrorType = 'AccountNotFoundError' | 'TransactionNotFoundError' | 'NetworkError' | 'ServerError'
-	| 'FriendbotError' | 'InvalidAddress' | 'TransactionFailedError' | 'NetworkMismatchedError' | 'InvalidDataError';
+export type ErrorType =
+	'AccountNotFoundError'
+	| 'TransactionNotFoundError'
+	| 'NetworkError'
+	| 'ServerError'
+	| 'FriendbotError'
+	| 'InvalidAddressError'
+	| 'TransactionFailedError'
+	| 'ChannelBusyError'
+	| 'NetworkMismatchedError'
+	| 'InvalidDataError';
 
 export interface KinSdkError extends Error {
 	readonly type: ErrorType;
@@ -36,6 +44,7 @@ export class NetworkError extends Error implements KinSdkError {
 
 export class NetworkMismatchedError extends Error implements KinSdkError {
 	readonly type = 'NetworkMismatchedError';
+
 	constructor() {
 		super(`Unable to sign whitelist transaction, network type is mismatched`)
 	}
@@ -43,6 +52,7 @@ export class NetworkMismatchedError extends Error implements KinSdkError {
 
 export class InvalidDataError extends Error implements KinSdkError {
 	readonly type = 'InvalidDataError';
+
 	constructor() {
 		super(`Unable to sign whitelist transaction, invalid data`)
 	}
@@ -71,6 +81,14 @@ export class TransactionFailedError extends ServerError {
 			this._resultOperationsCode = errorBody.extras.result_codes.operations;
 		}
 	}
+
+	public get resultTransactionCode(): string | undefined {
+		return this._resultTransactionCode;
+	}
+
+	public get resultOperationsCode(): string[] | undefined {
+		return this._resultOperationsCode;
+	}
 }
 
 export class FriendbotError extends Error implements KinSdkError {
@@ -83,10 +101,18 @@ export class FriendbotError extends Error implements KinSdkError {
 	}
 }
 
-export class InvalidAddress extends Error implements KinSdkError {
-	readonly type: ErrorType = 'InvalidAddress';
+export class InvalidAddressError extends Error implements KinSdkError {
+	readonly type: ErrorType = 'InvalidAddressError';
 
 	constructor() {
-		super('invalid wallet address.');
+		super('Invalid wallet address.');
+	}
+}
+
+export class ChannelBusyError extends Error implements KinSdkError {
+	readonly type: ErrorType = 'ChannelBusyError';
+
+	constructor() {
+		super('Cannot acquire a free channel.');
 	}
 }
