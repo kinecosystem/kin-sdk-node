@@ -3,7 +3,7 @@ import {Server} from "@kinecosystem/kin-sdk";
 import {Asset, Keypair, Memo, Network, Operation, Transaction as XdrTransaction} from "@kinecosystem/kin-base";
 import {KeyPair} from "./keyPair";
 import {TransactionBuilder} from "./transactionBuilder";
-import {InvalidDataError, NetworkError, NetworkMismatchedError, ServerError} from "../errors";
+import {NetworkError, NetworkMismatchedError, ServerError} from "../errors";
 import {TransactionNotFoundError} from "../../src/errors";
 
 interface WhitelistPayloadTemp {
@@ -59,15 +59,7 @@ export class TxSender {
 			let transactionResponse = await this._server.submitTransaction(tx);
 			return transactionResponse.hash;
 		} catch (e) {
-			if (e.response) {
-				if (e.response.status === 400) {
-					throw new TransactionNotFoundError(this._keypair.publicAddress);
-				} else {
-					throw new ServerError(e.response.status, e.response);
-				}
-			} else {
-				throw new NetworkError(e.message);
-			}
+			throw new ServerError(e);
 		}
 	}
 

@@ -2,11 +2,28 @@ import {AccountDataRetriever} from "../../scripts/bin/blockchain/accountDataRetr
 import {Server} from "@kinecosystem/kin-sdk";
 import {AccountData} from "../../scripts/bin/blockchain/horizonModels";
 import * as nock from "nock";
-import {AccountNotFoundError, InvalidAddress, ServerError} from "../../scripts/bin/errors";
+import {InvalidAddress, ResourceNotFoundError} from "../../scripts/bin/errors";
+import {ErrorResponse} from "../../scripts/src/errors";
 
 const fakeUrl = "http://horizon.com";
 const publicAddress = "GDAVCZIOYRGV74ROE344CMRLPZYSZVRHNTRFGOUSAQBILJ7M5ES25KOZ";
 let accountDataRetriever: AccountDataRetriever;
+
+const mock404NetworkResponse: ErrorResponse = {
+	"type": "https://stellar.org/horizon-errors/not_found",
+	"title": "Resource Missing",
+	"status": 404,
+	"detail": "The resource at the url requested was not found.  This is usually occurs for one of two reasons:  The url requested is not valid, or no data in our database could be found with the parameters provided."
+}
+
+
+const mock500NetworkResponse: ErrorResponse = {
+	"type": "https://stellar.org/horizon-errors/not_found",
+	"title": "Internal server Error",
+	"status": 500,
+	"detail": "Internal server Error."
+
+}
 
 describe("AccountDataRetreiver.fetchAccountData", async () => {
 	beforeAll(async () => {
@@ -64,15 +81,15 @@ describe("AccountDataRetreiver.fetchAccountData", async () => {
 	});
 
 	test("no account, expect AccountNotFoundError", async () => {
-		mock404NetworkResponse();
+		mockNetworkResponse(mock404NetworkResponse);
 		await expect(accountDataRetriever.fetchAccountData(publicAddress))
-			.rejects.toEqual(new AccountNotFoundError(publicAddress));
+			.rejects.toThrowError(new ResourceNotFoundError(mock404NetworkResponse));
 	});
 
 	test("error 500, expect ServerError", async () => {
-		mock500NetworkResponse();
+		mockNetworkResponse(mock500NetworkResponse);
 		await expect(accountDataRetriever.fetchAccountData(publicAddress))
-			.rejects.toEqual(new ServerError(500));
+			.rejects.toThrowError(new ResourceNotFoundError(mock500NetworkResponse));
 	});
 
 	test("timeout error, expect NetworkError", async () => {
@@ -106,15 +123,15 @@ describe("AccountDataRetreiver.fetchKinBalance", async () => {
 	});
 
 	test("no account, expect AccountNotFoundError", async () => {
-		mock404NetworkResponse();
+		mockNetworkResponse(mock404NetworkResponse);
 		await expect(accountDataRetriever.fetchKinBalance(publicAddress))
-			.rejects.toEqual(new AccountNotFoundError(publicAddress));
+			.rejects.toThrowError(new ResourceNotFoundError(mock404NetworkResponse));
 	});
 
 	test("error 500, expect ServerError", async () => {
-		mock500NetworkResponse();
+		mockNetworkResponse(mock500NetworkResponse);
 		await expect(accountDataRetriever.fetchKinBalance(publicAddress))
-			.rejects.toEqual(new ServerError(500));
+			.rejects.toThrowError(new ResourceNotFoundError(mock500NetworkResponse));
 	});
 
 	test("timeout error, expect NetworkError", async () => {
@@ -148,14 +165,15 @@ describe("AccountDataRetreiver.isAccountExisting", async () => {
 	});
 
 	test("no account, should return false", async () => {
-		mock404NetworkResponse();
-		expect(await accountDataRetriever.isAccountExisting(publicAddress)).toBe(false);
+		mockNetworkResponse(mock404NetworkResponse);
+		await expect(accountDataRetriever.isAccountExisting(publicAddress))
+			.rejects.toThrowError(new ResourceNotFoundError(mock404NetworkResponse));
 	});
 
 	test("error 500, expect ServerError", async () => {
-		mock500NetworkResponse();
+		mockNetworkResponse(mock500NetworkResponse);
 		await expect(accountDataRetriever.isAccountExisting(publicAddress))
-			.rejects.toEqual(new ServerError(500));
+			.rejects.toThrowError(new ResourceNotFoundError(mock500NetworkResponse));
 	});
 
 	test("timeout error, expect NetworkError", async () => {
@@ -166,6 +184,18 @@ describe("AccountDataRetreiver.isAccountExisting", async () => {
 	});
 
 });
+
+function mockNetworkResponse(response: ErrorResponse) {
+	nock(fakeUrl)
+		.get(url => url.includes(publicAddress))
+		.reply(response.status, response);
+}
+
+function mockTimeoutNetworkReponse() {
+	nock(fakeUrl)
+		.get(url => url.includes(publicAddress))
+		.replyWithError({code: 'ETIMEDOUT'});
+}
 
 function mockAccountNetworkResponse() {
 	nock(fakeUrl)
@@ -244,35 +274,4 @@ function mockAccountNetworkResponse() {
 			}
 		);
 
-}
-
-function mock404NetworkResponse() {
-	nock(fakeUrl)
-		.get(url => url.includes(publicAddress))
-		.reply(404,
-			{
-				"type": "https://stellar.org/horizon-errors/not_found",
-				"title": "Resource Missing",
-				"status": 404,
-				"detail": "The resource at the url requested was not found.  This is usually occurs for one of two reasons:  The url requested is not valid, or no data in our database could be found with the parameters provided."
-			});
-
-}
-
-function mockTimeoutNetworkReponse() {
-	nock(fakeUrl)
-		.get(url => url.includes(publicAddress))
-		.replyWithError({code: 'ETIMEDOUT'});
-}
-
-function mock500NetworkResponse() {
-	nock(fakeUrl)
-		.get(url => url.includes(publicAddress))
-		.reply(500,
-			{
-				"type": "https://stellar.org/horizon-errors/not_found",
-				"title": "Internal server Error",
-				"status": 500,
-				"detail": "Internal server Error."
-			});
 }

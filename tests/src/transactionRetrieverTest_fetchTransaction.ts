@@ -2,8 +2,9 @@ import {Server} from "@kinecosystem/kin-sdk";
 import {TransactionRetriever} from "../../scripts/bin/blockchain/transactionRetriever";
 import * as nock from "nock";
 import {CreateAccountTransaction, PaymentTransaction, RawTransaction} from "../../scripts/bin/blockchain/horizonModels";
-import {ServerError, TransactionNotFoundError} from "../../scripts/bin/errors";
+import {ErrorResponse, ServerError, TransactionNotFoundError} from "../../scripts/bin/errors";
 import {Memo, Operation} from "@kinecosystem/kin-base";
+import {ResourceNotFoundError} from "../../scripts/src/errors";
 
 // as a workaround, TransactionRetriever was separated to two files due to some jest error when running both fetchTransactionHistory
 // and fetchTransaction tests in the same file
@@ -220,33 +221,33 @@ describe("TransactionRetriever.fetchTransaction", async () => {
 	});
 
 	test("no transaction, expect TransactionNotFoundError", async () => {
-		const transactionId = "cc9a643dde0167401459ca57199ac8eb45bff8f2ab8e21e1073cdbbbb121cfce";
-		nock(fakeUrl)
-			.get(url => url.includes(transactionId))
-			.reply(404,
-				{
+		const response: ErrorResponse = {
 					"type": "https://stellar.org/horizon-errors/not_found",
 					"title": "Resource Missing",
 					"status": 404,
 					"detail": "The resource at the url requested was not found.  This is usually occurs for one of two reasons:  The url requested is not valid, or no data in our database could be found with the parameters provided."
-				});
-		await expect(transactionRetriever.fetchTransaction(transactionId))
-			.rejects.toEqual(new TransactionNotFoundError(transactionId));
-	});
+				};
 
-	test("server error code 500, expect ServerError", async () => {
 		const transactionId = "cc9a643dde0167401459ca57199ac8eb45bff8f2ab8e21e1073cdbbbb121cfce";
 		nock(fakeUrl)
 			.get(url => url.includes(transactionId))
-			.reply(500,
-				{
-					"type": "https://stellar.org/horizon-errors/not_found",
-					"title": "Internal server Error",
-					"status": 500,
-					"detail": "Internal server Error."
-				});
+			.reply(response.status, response);
 		await expect(transactionRetriever.fetchTransaction(transactionId))
-			.rejects.toEqual(new ServerError(500));
+			.rejects.toThrowError(new ResourceNotFoundError(response));
+	});
+
+	test("server error code 500, expect ServerError", async () => {
+		const response: ErrorResponse = {
+			type: "https://stellar.org/horizon-errors/not_found",
+			title: "Internal server Error",
+			status: 500,
+			detail: "Internal server Error."
+		};
+
+		const transactionId = "cc9a643dde0167401459ca57199ac8eb45bff8f2ab8e21e1073cdbbbb121cfce";
+		mockNetworkResponse(response, transactionId);
+		await expect(transactionRetriever.fetchTransaction(transactionId))
+			.rejects.toThrowError(new ResourceNotFoundError(response));
 	});
 
 	test("server error code 500, expect NetworkError", async () => {
@@ -259,3 +260,9 @@ describe("TransactionRetriever.fetchTransaction", async () => {
 	});
 
 });
+
+function mockNetworkResponse(response: ErrorResponse, includes: string) {
+	nock(fakeUrl)
+		.get(url => url.includes(includes))
+		.reply(response.status, response);
+}
