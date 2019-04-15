@@ -1,6 +1,6 @@
 {
-  "name": "kin-sdk-node",
-  "version": "1.0.0",
+  "name": "@kinecosystem/kin-sdk-node",
+  "version": "0.0.1",
   "description": "Kin SDK for the Node runtime",
   "main": "scripts/bin/index.js",
   "types": "scripts/bin/index.d.ts",
@@ -19,15 +19,18 @@
   },
   "keywords": [
     "typescript",
+    "javascript",
     "kin",
-    "node"
+    "node",
+    "blockchain",
+    "cryptocurrency"
   ],
   "author": "Kin Ecosystem",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/kinecosystem/kin-sdk-node/issues"
   },
-  "homepage": "https://github.com/kinecosystem/kin-sdk-node#readme",
+  "homepage": "https://github.com/kinecosystem/kin-sdk-node",
   "devDependencies": {
     "@types/eventsource": "^1.1.0",
     "@types/jest": "^24.0.11",
