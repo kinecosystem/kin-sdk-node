@@ -1,5 +1,5 @@
 import {StrKey} from "@kinecosystem/kin-sdk";
-import {InvalidAddress} from "./errors";
+import {InvalidAddressError} from "./errors";
 import {ADDRESS_LENGTH} from "./config";
 import {Address} from "./types";
 
@@ -14,13 +14,13 @@ export namespace Utils {
 
 	export async function verifyValidAddressParamAsync(address: Address) {
 		if (!isValidAddress(address)) {
-			throw new InvalidAddress();
+			throw new InvalidAddressError();
 		}
 	}
 
 	export function verifyValidAddressParam(address: Address) {
 		if (!isValidAddress(address)) {
-			throw new InvalidAddress();
+			throw new InvalidAddressError();
 		}
 	}
 }

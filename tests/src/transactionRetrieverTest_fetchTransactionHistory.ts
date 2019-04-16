@@ -281,7 +281,7 @@ describe("TransactionRetriever.fetchTransactionHistory", async () => {
 			.get(url => url.includes(address))
 			.replyWithError({code: 'ETIMEDOUT'});
 		await expect(transactionRetriever.fetchTransactionHistory({address: address}))
-			.rejects.toBeDefined();
+			.rejects.toHaveProperty('type', 'NetworkError');
 	});
 
 });

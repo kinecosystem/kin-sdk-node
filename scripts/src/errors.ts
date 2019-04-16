@@ -40,7 +40,8 @@ export type ErrorType =
 	| 'NetworkError'
 	| 'ServerError'
 	| 'FriendbotError'
-	| 'InvalidAddress'
+	| 'InvalidAddressError'
+	| 'ChannelBusyError'
 	| 'TransactionFailedError'
 	| 'NetworkMismatchedError'
 	| 'InvalidDataError'
@@ -60,16 +61,24 @@ export interface KinSdkError extends Error {
 export class HorizonError extends Error implements KinSdkError {
 	readonly type: ErrorType = 'HorizonError';
 
-	readonly resultTransactionCode?: string;
-	readonly resultOperationsCode?: string[];
+	private readonly _resultTransactionCode?: string;
+	private readonly _resultOperationsCode?: string[];
 	readonly errorCode: number;
 
 	constructor(readonly msg: string, readonly errorBody: ErrorResponse, readonly title?: string) {
 		super(`${msg}, error code: ${errorBody.status} ` + ((title ? `title: ${errorBody.title}` : "")));
 		this.errorCode = errorBody.status;
 		this.errorBody = errorBody;
-		this.resultTransactionCode = ErrorUtils.getTransaction(errorBody);
-		this.resultOperationsCode = ErrorUtils.getOperations(errorBody);
+		this._resultTransactionCode = ErrorUtils.getTransaction(errorBody);
+		this._resultOperationsCode = ErrorUtils.getOperations(errorBody);
+	}
+
+		public get resultTransactionCode(): string | undefined {
+		return this._resultTransactionCode;
+	}
+
+	public get resultOperationsCode(): string[] | undefined {
+		return this._resultOperationsCode;
 	}
 }
 
@@ -142,11 +151,19 @@ export class FriendbotError extends Error implements KinSdkError {
 	}
 }
 
-export class InvalidAddress extends Error implements KinSdkError {
-	readonly type: ErrorType = 'InvalidAddress';
+export class InvalidAddressError extends Error implements KinSdkError {
+	readonly type: ErrorType = 'InvalidAddressError';
 
 	constructor() {
-		super('invalid wallet address.');
+		super('Invalid wallet address.');
+	}
+}
+
+export class ChannelBusyError extends Error implements KinSdkError {
+	readonly type: ErrorType = 'ChannelBusyError';
+
+	constructor() {
+		super('Cannot acquire a free channel.');
 	}
 }
 
@@ -205,6 +222,9 @@ export class TranslateError {
 	constructor(readonly errorBody?: any) {
 		if (errorBody && errorBody.response) {
 			errorBody = errorBody.response;
+			if (errorBody.data) {
+				errorBody = errorBody.data;
+			}
 			if (errorBody.type && errorBody.status) {
 				// This is a Horizon error
 				this._resultTransactionCode = ErrorUtils.getTransaction(errorBody);

@@ -9,6 +9,7 @@ import {BlockchainInfoRetriever} from "./blockchain/blockchainInfoRetriever";
 import {TransactionRetriever} from "./blockchain/transactionRetriever";
 import {Address, TransactionId} from "./types";
 import {BlockchainListener} from "./blockchain/blockchainListeners";
+import {ANON_APP_ID} from "./config";
 
 export class KinClient {
 
@@ -35,12 +36,13 @@ export class KinClient {
 	}
 
 	createKinAccount(params: CreateKinAccountParams): KinAccount {
-		return new KinAccount(params.seed, this._accountDataRetriever, this._server, params.appId, params.channelSecretKeys);
+		return new KinAccount(params.seed, this._accountDataRetriever, this._server, this._blockchainInfoRetriever,
+			params.appId ? params.appId : ANON_APP_ID, params.channelSecretKeys);
 	}
 
 	/**
 	 * Get the current minimum fee that the network charges per operation.
-	 * @returns The fee expressed in stroops.
+	 * @returns The fee expressed in Quarks.
 	 */
 	getMinimumFee(): Promise<number> {
 		return this._blockchainInfoRetriever.getMinimumFee();

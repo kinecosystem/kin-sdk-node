@@ -2,8 +2,7 @@ import {AccountDataRetriever} from "../../scripts/bin/blockchain/accountDataRetr
 import {Server} from "@kinecosystem/kin-sdk";
 import {AccountData} from "../../scripts/bin/blockchain/horizonModels";
 import * as nock from "nock";
-import {InvalidAddress, ResourceNotFoundError} from "../../scripts/bin/errors";
-import {ErrorResponse} from "../../scripts/src/errors";
+import {ErrorResponse, InvalidAddressError, ResourceNotFoundError} from "../../scripts/bin/errors";
 
 const fakeUrl = "http://horizon.com";
 const publicAddress = "GDAVCZIOYRGV74ROE344CMRLPZYSZVRHNTRFGOUSAQBILJ7M5ES25KOZ";
@@ -22,7 +21,6 @@ const mock500NetworkResponse: ErrorResponse = {
 	"title": "Internal server Error",
 	"status": 500,
 	"detail": "Internal server Error."
-
 }
 
 describe("AccountDataRetreiver.fetchAccountData", async () => {
@@ -32,12 +30,12 @@ describe("AccountDataRetreiver.fetchAccountData", async () => {
 
 	test("too long address, expect InvalidAddressError", async () => {
 		await expect(accountDataRetriever.fetchAccountData(publicAddress + "A"))
-			.rejects.toEqual(new InvalidAddress());
+			.rejects.toEqual(new InvalidAddressError());
 	});
 
 	test("invalid address, expect InvalidAddressError", async () => {
 		await expect(accountDataRetriever.fetchAccountData("GDAVCZIOYRGV74ROE344CMRLPZYSZVRHNTRFGOUSAQBILJ7M5ES25KOB"))
-			.rejects.toEqual(new InvalidAddress());
+			.rejects.toEqual(new InvalidAddressError());
 	});
 
 	test("returned AccountData object matches network data", async () => {
@@ -96,7 +94,7 @@ describe("AccountDataRetreiver.fetchAccountData", async () => {
 		mockTimeoutNetworkReponse();
 		//TODO check stellar sdk for exposing network errors up
 		await expect(accountDataRetriever.fetchAccountData(publicAddress))
-			.rejects.toBeDefined();
+			.rejects.toHaveProperty('type', 'NetworkError');
 	});
 
 });
@@ -108,12 +106,12 @@ describe("AccountDataRetreiver.fetchKinBalance", async () => {
 
 	test("too long address, expect InvalidAddressError", async () => {
 		await expect(accountDataRetriever.fetchKinBalance(publicAddress + "A"))
-			.rejects.toEqual(new InvalidAddress());
+			.rejects.toEqual(new InvalidAddressError());
 	});
 
 	test("invalid address, expect InvalidAddressError", async () => {
 		await expect(accountDataRetriever.fetchKinBalance("GDAVCZIOYRGV74ROE344CMRLPZYSZVRHNTRFGOUSAQBILJ7M5ES25KOB"))
-			.rejects.toEqual(new InvalidAddress());
+			.rejects.toEqual(new InvalidAddressError());
 	});
 
 	test("balance should match network balance", async () => {
@@ -138,7 +136,7 @@ describe("AccountDataRetreiver.fetchKinBalance", async () => {
 		mockTimeoutNetworkReponse();
 		//TODO check stellar sdk for exposing network errors up
 		await expect(accountDataRetriever.fetchKinBalance(publicAddress))
-			.rejects.toBeDefined();
+			.rejects.toHaveProperty('type', 'NetworkError');
 	});
 
 });
@@ -150,12 +148,12 @@ describe("AccountDataRetreiver.isAccountExisting", async () => {
 
 	test("too long address, expect InvalidAddressError", async () => {
 		await expect(accountDataRetriever.isAccountExisting(publicAddress + "A"))
-			.rejects.toEqual(new InvalidAddress());
+			.rejects.toEqual(new InvalidAddressError());
 	});
 
 	test("invalid address, expect InvalidAddressError", async () => {
 		await expect(accountDataRetriever.isAccountExisting("GDAVCZIOYRGV74ROE344CMRLPZYSZVRHNTRFGOUSAQBILJ7M5ES25KOB"))
-			.rejects.toEqual(new InvalidAddress());
+			.rejects.toEqual(new InvalidAddressError());
 	});
 
 	test("account exists, should return true", async () => {
@@ -180,7 +178,7 @@ describe("AccountDataRetreiver.isAccountExisting", async () => {
 		mockTimeoutNetworkReponse();
 		//TODO check stellar sdk for exposing network errors up
 		await expect(accountDataRetriever.isAccountExisting(publicAddress))
-			.rejects.toBeDefined();
+			.rejects.toHaveProperty('type', 'NetworkError');
 	});
 
 });

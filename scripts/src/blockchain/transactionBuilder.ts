@@ -1,20 +1,20 @@
-import {
-	TransactionBuilder as BaseTransactionBuilder,
-	Account,
-	xdr,
-} from "@kinecosystem/kin-base";
+import {Account, TransactionBuilder as BaseTransactionBuilder, xdr,} from "@kinecosystem/kin-base";
+import {Channel} from "./channelsPool";
+import {Server} from "@kinecosystem/kin-sdk";
 
 
 export class TransactionBuilder {
 
 	private readonly _transactionBuilder: BaseTransactionBuilder;
-	constructor (sourceAccount: Account, options?: BaseTransactionBuilder.TransactionBuilderOptions) {
+	private readonly _channel?: Channel;
+
+	constructor(readonly _server: Server, sourceAccount: Account, options?: BaseTransactionBuilder.TransactionBuilderOptions, channel?: Channel) {
 		this._transactionBuilder = new BaseTransactionBuilder(sourceAccount, options);
+		this._channel = channel;
 	}
 
-
 	public addFee(fee: number): this {
-		if (fee >= 0 ) {
+		if (fee >= 0) {
 			(this as any)._transactionBuilder.baseFee = fee;
 		}
 		return this;
@@ -26,7 +26,7 @@ export class TransactionBuilder {
 	}
 
 	public addMemo(memo: string): this {
-		(this as any).memo =  memo;
+		(this as any).memo = memo;
 		return this;
 	}
 
@@ -35,8 +35,8 @@ export class TransactionBuilder {
 		return this;
 	}
 
-	public addChannels(): this {
-		return this;
+	public get channel(): Channel | undefined {
+		return this._channel;
 	}
 
 	public build() {

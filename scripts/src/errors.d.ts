@@ -6,7 +6,7 @@ export interface ErrorResponse {
     detail?: string;
     extras?: any;
 }
-export declare type ErrorType = 'AccountNotFoundError' | 'HorizonError' | 'TransactionNotFoundError' | 'NetworkError' | 'ServerError' | 'FriendbotError' | 'InvalidAddress' | 'TransactionFailedError' | 'NetworkMismatchedError' | 'InvalidDataError' | 'BadRequestError' | 'InternalError' | 'NoAccountError' | 'AccountExists' | 'LowBalanceError' | 'AccountNotActivatedError' | 'ResourceNotFoundError';
+export declare type ErrorType = 'AccountNotFoundError' | 'TransactionNotFoundError' | 'NetworkError' | 'ServerError' | 'FriendbotError' | 'InvalidAddressError' | 'ChannelBusyError' | 'TransactionFailedError' | 'NetworkMismatchedError' | 'InvalidDataError' | 'BadRequestError' | 'InternalError' | 'NoAccountError' | 'AccountExists' | 'LowBalanceError' | 'AccountNotActivatedError' | 'HorizonError' | 'ResourceNotFoundError';
 export interface KinSdkError extends Error {
     readonly type: ErrorType;
 }
@@ -15,10 +15,12 @@ export declare class HorizonError extends Error implements KinSdkError {
     readonly errorBody: ErrorResponse;
     readonly title?: string | undefined;
     readonly type: ErrorType;
-    readonly resultTransactionCode?: string;
-    readonly resultOperationsCode?: string[];
+    private readonly _resultTransactionCode?;
+    private readonly _resultOperationsCode?;
     readonly errorCode: number;
     constructor(msg: string, errorBody: ErrorResponse, title?: string | undefined);
+    readonly resultTransactionCode: string | undefined;
+    readonly resultOperationsCode: string[] | undefined;
 }
 export declare class AccountNotFoundError extends Error implements KinSdkError {
     readonly accountId?: string | undefined;
@@ -61,7 +63,11 @@ export declare class FriendbotError extends Error implements KinSdkError {
     readonly type: ErrorType;
     constructor(errorCode?: number | undefined, extra?: any, msg?: string | undefined);
 }
-export declare class InvalidAddress extends Error implements KinSdkError {
+export declare class InvalidAddressError extends Error implements KinSdkError {
+    readonly type: ErrorType;
+    constructor();
+}
+export declare class ChannelBusyError extends Error implements KinSdkError {
     readonly type: ErrorType;
     constructor();
 }
