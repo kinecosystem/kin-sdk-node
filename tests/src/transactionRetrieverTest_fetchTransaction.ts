@@ -1,8 +1,8 @@
 import {Server} from "@kinecosystem/kin-sdk";
-import {TransactionRetriever} from "../../scripts/bin/blockchain/transactionRetriever";
+import {TransactionRetriever} from "../../scripts/src/blockchain/transactionRetriever";
 import * as nock from "nock";
-import {CreateAccountTransaction, PaymentTransaction, RawTransaction} from "../../scripts/bin/blockchain/horizonModels";
-import {ServerError, TransactionNotFoundError} from "../../scripts/bin/errors";
+import {CreateAccountTransaction, PaymentTransaction, RawTransaction} from "../../scripts/src/blockchain/horizonModels";
+import {ServerError, TransactionNotFoundError} from "../../scripts/src/errors";
 import {Memo, Operation} from "@kinecosystem/kin-base";
 
 // as a workaround, TransactionRetriever was separated to two files due to some jest error when running both fetchTransactionHistory
@@ -253,7 +253,7 @@ describe("TransactionRetriever.fetchTransaction", async () => {
 		const transactionId = "cc9a643dde0167401459ca57199ac8eb45bff8f2ab8e21e1073cdbbbb121cfce";
 		nock(fakeUrl)
 			.get(url => url.includes(transactionId))
-			.replyWithError({code: 'ETIMEDOUT'});
+			.replyWithError({code: 'scripts/src'});
 		await expect(transactionRetriever.fetchTransaction(transactionId))
 			.rejects.toHaveProperty('type', 'NetworkError');
 	});
