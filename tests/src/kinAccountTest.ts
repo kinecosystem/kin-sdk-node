@@ -4,7 +4,7 @@ import {KinAccount} from "../../scripts/src/kinAccount";
 import {AccountDataRetriever} from "../../scripts/src/blockchain/accountDataRetriever";
 import {TransactionNotFoundError} from "../../scripts/src/errors";
 import {Environment} from "../../scripts/src/environment";
-import {Network} from "@kinecosystem/kin-base";
+import {Network, Memo,  MemoType} from "@kinecosystem/kin-base";
 import {WhitelistPayload} from "../../scripts/src/types";
 import {BlockchainInfoRetriever} from "../../scripts/src/blockchain/blockchainInfoRetriever";
 
@@ -37,10 +37,10 @@ describe("KinAccount.createAccount", async () => {
 				memoText: memo
 			});
 		expect((txBuilder as any)._transactionBuilder.baseFee).toEqual(fee);
-		expect((txBuilder as any)._transactionBuilder.memo._value).toEqual(memo);
+		expect((txBuilder as any)._transactionBuilder.memo._value).toEqual('1-' + appId + '-' + memo);
 		expect((txBuilder as any)._transactionBuilder.source.id).toEqual(senderPublic);
 		expect((txBuilder as any)._transactionBuilder.source.sequence).toEqual("6319125253062661");
-		expect(txBuilder.build().toEnvelope().toXDR('base64')).toEqual("AAAAAG809+MhGZ82rRmsoUDGVlkQGcjGXbF2fX62aTPsrih8AAAAZAAWczYAAAAGAAAAAAAAAAEAAAAJdGVzdCBtZW1vAAAAAAAAAQAAAAEAAAAAbzT34yEZnzatGayhQMZWWRAZyMZdsXZ9frZpM+yuKHwAAAAAAAAAAEtbu5NHd2hUIi5N8XMqeV/cel5m3ZZMdQToeEvrvGy7AAAAADuaygAAAAAAAAAAAA==");
+		expect(txBuilder.build().toEnvelope().toXDR('base64')).toEqual("AAAAAG809+MhGZ82rRmsoUDGVlkQGcjGXbF2fX62aTPsrih8AAAAZAAWczYAAAAGAAAAAAAAAAEAAAAQMS1hYWFhLXRlc3QgbWVtbwAAAAEAAAABAAAAAG809+MhGZ82rRmsoUDGVlkQGcjGXbF2fX62aTPsrih8AAAAAAAAAABLW7uTR3doVCIuTfFzKnlf3HpeZt2WTHUE6HhL67xsuwAAAAA7msoAAAAAAAAAAAA=");
 	});
 
 	test("create account, send transaction succeed", async () => {
@@ -177,7 +177,7 @@ describe("KinAccount.createAccount", async () => {
 
 	function mockCreateAccountResponse() {
 		nock(fakeUrl)
-			.post(url => url.includes("/transactions"), "tx=AAAAAG809%2BMhGZ82rRmsoUDGVlkQGcjGXbF2fX62aTPsrih8AAAAZAAWczYAAAAGAAAAAAAAAAEAAAAJdGVzdCBtZW1vAAAAAAAAAQAAAAEAAAAAbzT34yEZnzatGayhQMZWWRAZyMZdsXZ9frZpM%2ByuKHwAAAAAAAAAAG26eLNMNpBm8pc809%2F2LyRtJ6Px1DDUZTtqBWYs9%2FRdAAAAAAAPQkAAAAAAAAAAAeyuKHwAAABAR1kR5lr0GnNYwajx4JJ7W1dnO3Pjl8soKjgKH6AK6c8MgKLEeyh24TJkOKPrxFmnYnr3uhXTPy%2BhJTQv7R6ZCg%3D%3D")
+			.post(url => url.includes("/transactions"), "tx=AAAAAG809%2BMhGZ82rRmsoUDGVlkQGcjGXbF2fX62aTPsrih8AAAAZAAWczYAAAAGAAAAAAAAAAEAAAAQMS1hYWFhLXRlc3QgbWVtbwAAAAEAAAABAAAAAG809%2BMhGZ82rRmsoUDGVlkQGcjGXbF2fX62aTPsrih8AAAAAAAAAABtunizTDaQZvKXPNPf9i8kbSej8dQw1GU7agVmLPf0XQAAAAAAD0JAAAAAAAAAAAHsrih8AAAAQAcqtM7IY%2FdojHCYDZHlGyU9khht6BmyFnYyffwcXgQXuYRyRbIEZFKawz4jQznYVSgQQnHSoYqHtaO0J%2BVLmwA%3D")
 			.reply(200,
 				{
 					"_links": {
@@ -195,7 +195,7 @@ describe("KinAccount.createAccount", async () => {
 
 	function mockSendKinResponse() {
 		nock(fakeUrl)
-			.post(url => url.includes("/transactions"), "tx=AAAAAG809%2BMhGZ82rRmsoUDGVlkQGcjGXbF2fX62aTPsrih8AAAAZAAWczYAAAAHAAAAAAAAAAEAAAAJdGVzdCBtZW1vAAAAAAAAAQAAAAEAAAAAbzT34yEZnzatGayhQMZWWRAZyMZdsXZ9frZpM%2ByuKHwAAAABAAAAAEtbu5NHd2hUIi5N8XMqeV%2Fcel5m3ZZMdQToeEvrvGy7AAAAAAAAAAAAI42QAAAAAAAAAAHsrih8AAAAQMKY%2FBIzE%2BnLdSm27j41TtHb55NgG36Z2wX3cDjAJco9PCxrn7rwoFoq%2FALjdp%2FjLitNfefgA6h0%2BCrGWWEioQE%3D\n")
+			.post(url => url.includes("/transactions"), "tx=AAAAAG809%2BMhGZ82rRmsoUDGVlkQGcjGXbF2fX62aTPsrih8AAAAZAAWczYAAAAHAAAAAAAAAAEAAAAQMS1hYWFhLXRlc3QgbWVtbwAAAAEAAAABAAAAAG809%2BMhGZ82rRmsoUDGVlkQGcjGXbF2fX62aTPsrih8AAAAAQAAAABLW7uTR3doVCIuTfFzKnlf3HpeZt2WTHUE6HhL67xsuwAAAAAAAAAAACONkAAAAAAAAAAB7K4ofAAAAECVwez0u84Tk%2BNbQbh5srOCmYv4vE81P23nW6uy1oQAhpTuwJ%2Bm0LbprWH9GGUl3zZV%2FZYcM9ghOJBRyZ55glcO")
 			.reply(200,
 				{
 					"_links": {

@@ -1,21 +1,30 @@
-import {Account, TransactionBuilder as BaseTransactionBuilder, xdr,} from "@kinecosystem/kin-base";
+import {Account, TransactionBuilder as BaseTransactionBuilder, xdr, Memo, MemoType} from "@kinecosystem/kin-base";
 import {Channel} from "./channelsPool";
 import {Server} from "@kinecosystem/kin-sdk";
 
+interface TransactionBuilderOptions extends BaseTransactionBuilder.TransactionBuilderOptions {
+	fee: number;
+	appId: string;
+	memo?: Memo<MemoType.Text>
+}
 
 export class TransactionBuilder {
 
 	private readonly _transactionBuilder: BaseTransactionBuilder;
 	private readonly _channel?: Channel;
 
-	constructor(readonly _server: Server, sourceAccount: Account, options?: BaseTransactionBuilder.TransactionBuilderOptions, channel?: Channel) {
+	constructor(readonly _server: Server, sourceAccount: Account, options: TransactionBuilderOptions, channel?: Channel) {
 		this._transactionBuilder = new BaseTransactionBuilder(sourceAccount, options);
-		this._channel = channel;
+		this.addFee(options.fee);
+		this.addMemo(options.memo, options.appId);
+		this.channel = channel;
 	}
 
 	public addFee(fee: number): this {
-		if (fee >= 0) {
+		if (typeof fee === "number" && fee >= 0) {
 			(this as any)._transactionBuilder.baseFee = fee;
+		} else {
+			throw Error('Fee must be a positive number');
 		}
 		return this;
 	}
@@ -25,8 +34,8 @@ export class TransactionBuilder {
 		return this;
 	}
 
-	public addMemo(memo: string): this {
-		(this as any).memo = memo;
+	public addMemo(memo: Memo<MemoType.Text> | undefined, appId: string): this {
+		(this as any)._transactionBuilder.memo = memo ? Memo.text('1-' + appId + '-' + memo.value) : Memo.none();
 		return this;
 	}
 
@@ -35,8 +44,12 @@ export class TransactionBuilder {
 		return this;
 	}
 
+	public set channel(channle: Channel | undefined) {
+		(this as any)._transactionBuilder._channel = channle;
+	}
+
 	public get channel(): Channel | undefined {
-		return this._channel;
+		return (this as any)._transactionBuilder._channel;
 	}
 
 	public build() {
