@@ -1,12 +1,13 @@
 import {Server} from "@kinecosystem/kin-sdk";
 import * as nock from "nock";
-import {KinAccount} from "../../scripts/bin/kinAccount";
-import {AccountDataRetriever} from "../../scripts/bin/blockchain/accountDataRetriever";
-import {ErrorResponse} from "../../scripts/bin/errors";
-import {Environment} from "../../scripts/bin/environment";
+
+import {KinAccount} from "../../scripts/src/kinAccount";
+import {AccountDataRetriever} from "../../scripts/src/blockchain/accountDataRetriever";
+import {ErrorResponse} from "../../scripts/src/errors";
+import {Environment} from "../../scripts/src/environment";
 import {Network} from "@kinecosystem/kin-base";
-import {WhitelistPayload} from "../../scripts/bin/types";
-import {BlockchainInfoRetriever} from "../../scripts/bin/blockchain/blockchainInfoRetriever";
+import {WhitelistPayload} from "../../scripts/src/types";
+import {BlockchainInfoRetriever} from "../../scripts/src/blockchain/blockchainInfoRetriever";
 import {BadRequestError} from "../../scripts/src/errors";
 
 const fakeUrl = "http://horizon.com";

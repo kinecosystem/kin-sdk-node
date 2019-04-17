@@ -1,7 +1,7 @@
-import {IAccountDataRetriever} from "../../scripts/bin/blockchain/accountDataRetriever";
-import {Friendbot} from "../../scripts/bin/friendbot";
+import {IAccountDataRetriever} from "../../scripts/src/blockchain/accountDataRetriever";
+import {Friendbot} from "../../scripts/src/friendbot";
 import * as nock from "nock";
-import {FriendbotError, InvalidAddressError, NetworkError} from "../../scripts/bin/errors";
+import {FriendbotError, InvalidAddressError, NetworkError} from "../../scripts/src/errors";
 
 const fakeUrl = "http://horizon.com";
 const publicAddress = "GDAVCZIOYRGV74ROE344CMRLPZYSZVRHNTRFGOUSAQBILJ7M5ES25KOZ";

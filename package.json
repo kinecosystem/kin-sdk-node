@@ -51,13 +51,14 @@
     ],
     "testEnvironment": "node",
     "transform": {
-      "^.+\\.(ts|tsx)$": "<rootDir>/tests/preprocessor.js"
+      "^.+\\.(ts|tsx)$": "ts-jest"
     },
     "testMatch": [
       "**/tests/src/**.ts"
     ],
     "testPathIgnorePatterns": [
       ".d.ts"
-    ]
+    ],
+    "collectCoverage": true
   }
 }
