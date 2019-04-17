@@ -1,11 +1,11 @@
-import {Address} from "../../scripts/bin/types";
-import {ChannelsGenerator} from "../../scripts/bin/blockchain/channelsGenerator";
-import {KeyPair} from "../../scripts/bin/blockchain/keyPair";
-import {IAccountDataRetriever} from "../../scripts/bin/blockchain/accountDataRetriever";
-import {IBlockchainInfoRetriever} from "../../scripts/bin/blockchain/blockchainInfoRetriever";
-import {TxSender} from "../../scripts/bin/blockchain/txSender";
+import {Address} from "../../scripts/src/types";
+import {ChannelsGenerator} from "../../scripts/src/blockchain/channelsGenerator";
+import {KeyPair} from "../../scripts/src/blockchain/keyPair";
+import {IAccountDataRetriever} from "../../scripts/src/blockchain/accountDataRetriever";
+import {IBlockchainInfoRetriever} from "../../scripts/src/blockchain/blockchainInfoRetriever";
+import {TxSender} from "../../scripts/src/blockchain/txSender";
 import {Network, Server} from "@kinecosystem/kin-sdk";
-import {Environment} from "../../scripts/bin/environment";
+import {Environment} from "../../scripts/src/environment";
 import * as nock from "nock";
 
 const fakeUrl = "http://horizon.com";
