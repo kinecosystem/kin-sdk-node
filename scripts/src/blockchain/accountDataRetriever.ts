@@ -1,6 +1,6 @@
 import {Horizon, Server, AssetType} from "@kinecosystem/kin-sdk";
 import {AccountData, Balance} from "./horizonModels";
-import {TranslateError, KinSdkError, NetworkError} from "../errors"
+import {ErrorDecoder, KinSdkError, NetworkError} from "../errors"
 import {Utils} from "../utils";
 import {Address} from "../types";
 import BalanceLineAsset = Horizon.BalanceLineAsset;
@@ -45,7 +45,7 @@ export class AccountDataRetriever implements IAccountDataRetriever {
 				}
 			}
 		} catch (e) {
-			throw new TranslateError(e);
+			throw ErrorDecoder.translate(e);
 		}
 	}
 

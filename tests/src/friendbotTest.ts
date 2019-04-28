@@ -97,9 +97,10 @@ describe("Friendbot.createOrFund", async () => {
 	});
 
 	test("timeout error, expect NetworkError", async () => {
+		const errorResponseData = {code: 'ETIMEDOUT'};
 		nock(fakeUrl)
 			.get(url => url.includes(publicAddress))
-			.replyWithError({code: 'ETIMEDOUT'});
+			.replyWithError(errorResponseData);
 
 		isAccountExistingFn.mockResolvedValue(false);
 		await expect(friendBot.createOrFund(publicAddress, 30))

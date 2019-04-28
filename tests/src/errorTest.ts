@@ -1,5 +1,5 @@
-import * as Error from "../../scripts/bin/errors";
-import {AccountNotFoundError, BadRequestError, NetworkError} from "../../scripts/bin/errors";
+import * as Error from "../../scripts/src/errors";
+import {AccountNotFoundError, BadRequestError, NetworkError} from "../../scripts/src/errors";
 
 
 describe("Error", async () => {
@@ -29,8 +29,8 @@ describe("Error", async () => {
 		};
 
 		expect(() => {
-			new Error.TranslateError(obj);
-		}).toThrowError(new AccountNotFoundError());
+			throw Error.ErrorDecoder.translate(obj);
+		}).toThrowError(new AccountNotFoundError(obj.response));
 	});
 
 	test("Horizon error", async () => {
@@ -44,7 +44,7 @@ describe("Error", async () => {
 		};
 
 		expect(() => {
-			new Error.TranslateError(obj);
+			throw Error.ErrorDecoder.translate(obj);
 		}).toThrowError(new BadRequestError(obj.response));
 	});
 
@@ -66,7 +66,7 @@ describe("Error", async () => {
 		};
 
 		expect(() => {
-			new Error.TranslateError(obj);
+			throw Error.ErrorDecoder.translate(obj);
 		}).toThrowError(new BadRequestError(obj.response));
 	});
 
@@ -75,8 +75,8 @@ describe("Error", async () => {
 		const obj = {};
 
 		expect(() => {
-			new Error.TranslateError(obj);
-		}).toThrowError(new NetworkError());
+			throw Error.ErrorDecoder.translate(obj);
+		}).toThrowError(new NetworkError(obj));
 	});
 
 

@@ -1,5 +1,5 @@
 import {Server} from "@kinecosystem/kin-sdk";
-import {NetworkError, ServerError, TranslateError} from "../errors";
+import {NetworkError, ServerError, ErrorDecoder} from "../errors";
 
 export interface IBlockchainInfoRetriever {
 	getMinimumFee(): Promise<number>;
@@ -16,7 +16,7 @@ export class BlockchainInfoRetriever implements IBlockchainInfoRetriever {
 			const ledgers = await this._server.ledgers().order('desc').limit(1).call();
 			return ledgers.records[0].base_fee_in_stroops;
 		} catch (e) {
-			throw new TranslateError(e);
+			throw ErrorDecoder.translate(e);
 		}
 	}
 }

@@ -1,5 +1,5 @@
 import {Server} from "@kinecosystem/kin-sdk";
-import {AccountNotFoundError, NetworkError, ServerError, TransactionNotFoundError, TranslateError} from "../errors";
+import {AccountNotFoundError, NetworkError, ServerError, TransactionNotFoundError, ErrorDecoder} from "../errors";
 import {CreateAccountTransaction, PaymentTransaction, RawTransaction, Transaction,} from "./horizonModels";
 import {Transaction as XdrTransaction} from "@kinecosystem/kin-base";
 import {TransactionId} from "../types";
@@ -24,7 +24,7 @@ export class TransactionRetriever implements ITransactionRetriever {
 				await this._server.transactions().transaction(transactionId).call() as any;
 			return TransactionRetriever.fromStellarTransaction(transactionRecord);
 		} catch (e) {
-			throw new TranslateError(e);
+			throw ErrorDecoder.translate(e);
 		}
 	}
 
@@ -43,7 +43,7 @@ export class TransactionRetriever implements ITransactionRetriever {
 			}
 			return transactionHistory;
 		} catch (e) {
-			throw new TranslateError(e);
+			throw ErrorDecoder.translate(e);
 		}
 	}
 

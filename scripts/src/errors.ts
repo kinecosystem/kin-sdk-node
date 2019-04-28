@@ -48,7 +48,7 @@ export type ErrorType =
 	| 'BadRequestError'
 	| 'InternalError'
 	| 'NoAccountError'
-	| 'AccountExists'
+	| 'AccountExistsError'
 	| 'LowBalanceError'
 	| 'AccountNotActivatedError'
 	| 'HorizonError'
@@ -73,7 +73,7 @@ export class HorizonError extends Error implements KinSdkError {
 		this._resultOperationsCode = ErrorUtils.getOperations(errorBody);
 	}
 
-		public get resultTransactionCode(): string | undefined {
+	public get resultTransactionCode(): string | undefined {
 		return this._resultTransactionCode;
 	}
 
@@ -82,14 +82,13 @@ export class HorizonError extends Error implements KinSdkError {
 	}
 }
 
-export class AccountNotFoundError extends Error implements KinSdkError {
+export class AccountNotFoundError extends HorizonError {
 
 	readonly errorCode: number;
 	readonly type: ErrorType = 'AccountNotFoundError';
 
-	constructor(readonly accountId?: string) {
-		// fix the input argument
-		super(`Account '${accountId}' was not found in the network.`);
+	constructor(readonly errorBody: ErrorResponse, readonly title?: string) {
+		super(`Account was not found in the network.`, errorBody, title);
 		this.errorCode = 404;
 	}
 }
@@ -107,13 +106,18 @@ export class TransactionNotFoundError extends Error implements KinSdkError {
 
 export class NetworkError extends Error implements KinSdkError {
 	readonly type = 'NetworkError';
+
+		constructor(readonly error?: any) {
+		super( error && error.message ? error.message : `Network error occurred`);
+		this.error = error;
+	}
 }
 
 export class NetworkMismatchedError extends Error implements KinSdkError {
 	readonly type = 'NetworkMismatchedError';
 
 	constructor() {
-		super(`Unable to sign whitelist transaction, network type is mismatched`)
+		super(`Unable to sign whitelist transaction, network type is mismatched`);
 	}
 }
 
@@ -121,7 +125,7 @@ export class InvalidDataError extends Error implements KinSdkError {
 	readonly type = 'InvalidDataError';
 
 	constructor() {
-		super(`Unable to sign whitelist transaction, invalid data`)
+		super(`Unable to sign whitelist transaction, invalid data`);
 	}
 }
 
@@ -179,15 +183,15 @@ export class InternalError extends HorizonError {
 	readonly type: ErrorType = 'InternalError';
 
 	constructor(readonly errorBody: any, readonly title?: string) {
-		super(`internal error`, errorBody, title ? title : "{'internal_error': 'unknown horizon error'}");
+		super(`Internal error`, errorBody, title ? title : "{'internal_error': 'unknown horizon error'}");
 	}
 }
 
 export class AccountExistsError extends HorizonError {
-	readonly type: ErrorType = 'AccountExists';
+	readonly type: ErrorType = 'AccountExistsError';
 
 	constructor(readonly errorBody: any, readonly title?: string) {
-		super(`account already exists`, errorBody, title);
+		super(`Account already exists`, errorBody, title);
 	}
 }
 
@@ -195,7 +199,7 @@ export class LowBalanceError extends HorizonError {
 	readonly type: ErrorType = 'LowBalanceError';
 
 	constructor(readonly errorBody: ErrorResponse, readonly title?: string) {
-		super(`low balance`, errorBody, title);
+		super(`Low balance`, errorBody, title);
 	}
 }
 
@@ -203,7 +207,7 @@ export class AccountNotActivatedError extends HorizonError {
 	readonly type: ErrorType = 'AccountNotActivatedError';
 
 	constructor(readonly errorBody: ErrorResponse, readonly title?: string) {
-		super(`account not activated`, errorBody, title);
+		super(`Account not activated`, errorBody, title);
 	}
 }
 
@@ -211,15 +215,16 @@ export class ResourceNotFoundError extends HorizonError {
 	readonly type: ErrorType = 'ResourceNotFoundError';
 
 	constructor(readonly errorBody: ErrorResponse, readonly title?: string) {
-		super(`resources not found`, errorBody, title);
+		super(`Resources not found`, errorBody, title);
 	}
 }
 
-export class TranslateError {
-	private readonly _resultTransactionCode?: string;
-	private readonly _resultOperationsCode?: string[];
+export class ErrorDecoder {
 
-	constructor(readonly errorBody?: any) {
+	private static _resultTransactionCode?: string;
+	private static _resultOperationsCode?: string[];
+
+	static translate(errorBody?: any): HorizonError | NetworkError{
 		if (errorBody && errorBody.response) {
 			errorBody = errorBody.response;
 			if (errorBody.data) {
@@ -230,22 +235,22 @@ export class TranslateError {
 				this._resultTransactionCode = ErrorUtils.getTransaction(errorBody);
 				this._resultOperationsCode = ErrorUtils.getOperations(errorBody);
 				if (errorBody.type.includes(HorizonErrorList.TRANSACTION_FAILED)) {
-					this.translateTransactionError(errorBody.status, errorBody);
+					return this.translateTransactionError(errorBody.status, errorBody);
 				} else {
-					this.translateHorizonError(errorBody.status, errorBody);
+					return this.translateHorizonError(errorBody.status, errorBody);
 				}
 			} else {
-				throw new InternalError(errorBody);
+				return new InternalError(errorBody);
 			}
-		} else {
-			throw new NetworkError();
 		}
+
+		return new NetworkError();
 	}
 
-	translateOperationError(errorCode: number, errorBody?: any) {
+	static translateOperationError(errorCode: number, errorBody?: any): HorizonError {
 		let resultCode;
-		if (this._resultOperationsCode === undefined || this._resultOperationsCode.length === 0) {
-			throw new InternalError(errorBody);
+		if (this._resultOperationsCode === undefined ||!this._resultOperationsCode.length) {
+			return new InternalError(errorBody);
 		}
 
 		for (let entry of this._resultOperationsCode) {
@@ -255,60 +260,59 @@ export class TranslateError {
 			}
 		}
 		if (!resultCode) {
-			throw new InternalError(errorBody);
+			return new InternalError(errorBody);
 		}
 		if (this.includesObject(resultCode, [OperationResultCode.BAD_AUTH,
 			CreateAccountResultCode.MALFORMED,
 			PaymentResultCode.NO_ISSUER,
 			PaymentResultCode.LINE_FULL,
 			ChangeTrustResultCode.INVALID_LIMIT])) {
-			throw new BadRequestError(errorBody);
+			return new BadRequestError(errorBody);
 		} else if (this.includesObject(resultCode, [OperationResultCode.NO_ACCOUNT,
 			PaymentResultCode.NO_DESTINATION])) {
-			throw new AccountNotFoundError();
+			return new AccountNotFoundError(errorBody);
 		} else if (resultCode === CreateAccountResultCode.ACCOUNT_EXISTS) {
-			throw new AccountExistsError(errorCode, errorBody);
+			return new AccountExistsError(errorCode, errorBody);
 		} else if (this.includesObject(resultCode, [CreateAccountResultCode.LOW_RESERVE, PaymentResultCode.UNDERFUNDED])) {
-			throw new LowBalanceError(errorBody);
+			return new LowBalanceError(errorBody);
 		} else if (this.includesObject(resultCode, [PaymentResultCode.SRC_NO_TRUST,
 			PaymentResultCode.NO_TRUST,
 			PaymentResultCode.SRC_NOT_AUTHORIZED,
 			PaymentResultCode.NOT_AUTHORIZED])) {
-			throw new AccountNotActivatedError(errorBody);
+			return new AccountNotActivatedError(errorBody);
 		}
 
-		throw new InternalError(errorBody);
+		return new InternalError(errorBody);
 	}
 
-	translateTransactionError(errorCode: number, errorBody?: any) {
+	static translateTransactionError(errorCode: number, errorBody?: any): HorizonError {
 		if (this._resultTransactionCode === TransactionErrorList.FAILED) {
-			this.translateOperationError(errorCode, errorBody);
+			return this.translateOperationError(errorCode, errorBody);
 		} else if (this._resultTransactionCode === TransactionErrorList.NO_ACCOUNT) {
-			// ToDo: check the account address
-			throw new AccountNotFoundError(errorBody);
+			return new AccountNotFoundError(errorBody);
 		} else if (this._resultTransactionCode === TransactionErrorList.INSUFFICIENT_BALANCE) {
-			throw new LowBalanceError(errorBody, errorBody);
+			return new LowBalanceError(errorBody, errorBody);
 		} else if (this._resultTransactionCode as keyof typeof TransactionErrorList) {
-			throw new BadRequestError(errorBody);
+			return new BadRequestError(errorBody);
 		}
 
-		throw new InternalError(errorBody);
+		return new InternalError(errorBody);
 	}
 
-	translateHorizonError(errorCode: number, errorBody?: any) {
+	static translateHorizonError(errorCode: number, errorBody?: any): HorizonError {
 		if (this.includesObject(errorBody.type, [HorizonErrorList.RATE_LIMIT_EXCEEDED, HorizonErrorList.SERVER_OVER_CAPACITY, HorizonErrorList.TIMEOUT])) {
-			throw new ServerError(errorBody);
+			return new ServerError(errorBody);
 		} else if (this.includesObject(errorBody.type, [HorizonErrorList.NOT_FOUND])) {
-			throw new ResourceNotFoundError(errorBody);
+			return new ResourceNotFoundError(errorBody);
 		} else if (this.includesObject(errorBody.type, [HorizonErrorList.INTERNAL_SERVER_ERROR])) {
-			throw new InternalError(errorBody);
+			return new InternalError(errorBody);
 		} else if (this.includesObject(errorBody.type, Object.values(HorizonErrorList))) {
-			throw new BadRequestError(errorBody);
+			return new BadRequestError(errorBody);
 		}
-		throw new InternalError(errorCode);
+		return new InternalError(errorCode);
 	}
 
-	includesObject(type: string, list: string[]): boolean {
+	static includesObject(type: string, list: string[]): boolean {
 		for (let entry of list) {
 			if (type.includes(entry)) {
 				return true;

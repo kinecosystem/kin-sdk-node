@@ -2,7 +2,7 @@ import {AccountDataRetriever} from "../../scripts/src/blockchain/accountDataRetr
 import {Server} from "@kinecosystem/kin-sdk";
 import {AccountData} from "../../scripts/src/blockchain/horizonModels";
 import * as nock from "nock";
-import {ErrorResponse, InvalidAddressError, ResourceNotFoundError} from "../../scripts/src/errors";
+import {ErrorResponse, InternalError, InvalidAddressError, ResourceNotFoundError} from "../../scripts/src/errors";
 
 const fakeUrl = "http://horizon.com";
 const publicAddress = "GDAVCZIOYRGV74ROE344CMRLPZYSZVRHNTRFGOUSAQBILJ7M5ES25KOZ";
@@ -17,7 +17,7 @@ const mock404NetworkResponse: ErrorResponse = {
 
 
 const mock500NetworkResponse: ErrorResponse = {
-	"type": "https://stellar.org/horizon-errors/not_found",
+	"type": "https://stellar.org/horizon-errors/server_error",
 	"title": "Internal server Error",
 	"status": 500,
 	"detail": "Internal server Error."
@@ -81,13 +81,13 @@ describe("AccountDataRetreiver.fetchAccountData", async () => {
 	test("no account, expect AccountNotFoundError", async () => {
 		mockNetworkResponse(mock404NetworkResponse);
 		await expect(accountDataRetriever.fetchAccountData(publicAddress))
-			.rejects.toThrowError(new ResourceNotFoundError(mock404NetworkResponse));
+			.rejects.toEqual(new ResourceNotFoundError(mock404NetworkResponse));
 	});
 
 	test("error 500, expect ServerError", async () => {
 		mockNetworkResponse(mock500NetworkResponse);
 		await expect(accountDataRetriever.fetchAccountData(publicAddress))
-			.rejects.toThrowError(new ResourceNotFoundError(mock500NetworkResponse));
+			.rejects.toEqual(new InternalError(mock500NetworkResponse));
 	});
 
 	test("timeout error, expect NetworkError", async () => {
@@ -123,13 +123,13 @@ describe("AccountDataRetreiver.fetchKinBalance", async () => {
 	test("no account, expect AccountNotFoundError", async () => {
 		mockNetworkResponse(mock404NetworkResponse);
 		await expect(accountDataRetriever.fetchKinBalance(publicAddress))
-			.rejects.toThrowError(new ResourceNotFoundError(mock404NetworkResponse));
+			.rejects.toEqual(new ResourceNotFoundError(mock404NetworkResponse));
 	});
 
 	test("error 500, expect ServerError", async () => {
 		mockNetworkResponse(mock500NetworkResponse);
 		await expect(accountDataRetriever.fetchKinBalance(publicAddress))
-			.rejects.toThrowError(new ResourceNotFoundError(mock500NetworkResponse));
+			.rejects.toEqual(new InternalError(mock500NetworkResponse));
 	});
 
 	test("timeout error, expect NetworkError", async () => {
@@ -165,13 +165,13 @@ describe("AccountDataRetreiver.isAccountExisting", async () => {
 	test("no account, should return false", async () => {
 		mockNetworkResponse(mock404NetworkResponse);
 		await expect(accountDataRetriever.isAccountExisting(publicAddress))
-			.rejects.toThrowError(new ResourceNotFoundError(mock404NetworkResponse));
+			.rejects.toEqual(new ResourceNotFoundError(mock404NetworkResponse));
 	});
 
 	test("error 500, expect ServerError", async () => {
 		mockNetworkResponse(mock500NetworkResponse);
 		await expect(accountDataRetriever.isAccountExisting(publicAddress))
-			.rejects.toThrowError(new ResourceNotFoundError(mock500NetworkResponse));
+			.rejects.toEqual(new InternalError(mock500NetworkResponse));
 	});
 
 	test("timeout error, expect NetworkError", async () => {

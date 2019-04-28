@@ -2,7 +2,7 @@ import {Server} from "@kinecosystem/kin-sdk";
 import {TransactionRetriever} from "../../scripts/src/blockchain/transactionRetriever";
 import * as nock from "nock";
 import {CreateAccountTransaction, PaymentTransaction, RawTransaction} from "../../scripts/src/blockchain/horizonModels";
-import {ErrorResponse} from "../../scripts/src/errors";
+import {ErrorResponse, InternalError} from "../../scripts/src/errors";
 import {Memo, Operation} from "@kinecosystem/kin-base";
 import {ResourceNotFoundError} from "../../scripts/src/errors";
 
@@ -256,12 +256,12 @@ describe("TransactionRetriever.fetchTransactionHistory", async () => {
 			.get(url => url.includes(address))
 			.reply(response.status, response);
 		await expect(transactionRetriever.fetchTransactionHistory({address: address}))
-			.rejects.toThrowError(new ResourceNotFoundError(response));
+			.rejects.toEqual(new ResourceNotFoundError(response));
 	});
 
 	test("server error code 500, expect ServerError", async () => {
 		const response: ErrorResponse = {
-			type: "https://stellar.org/horizon-errors/not_found",
+			type: "https://stellar.org/horizon-errors/server_error",
 			title: "Internal server Error",
 			status: 500,
 			detail: "Internal server Error."
@@ -272,7 +272,7 @@ describe("TransactionRetriever.fetchTransactionHistory", async () => {
 			.get(url => url.includes(address))
 			.reply(response.status, response);
 		await expect(transactionRetriever.fetchTransactionHistory({address: address}))
-			.rejects.toThrowError(new ResourceNotFoundError(response));
+			.rejects.toEqual(new InternalError(response));
 	});
 
 	test("server error code 500, expect NetworkError", async () => {
