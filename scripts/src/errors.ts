@@ -291,7 +291,7 @@ export class ErrorDecoder {
 		} else if (this._resultTransactionCode === TransactionErrorList.NO_ACCOUNT) {
 			return new AccountNotFoundError(errorBody);
 		} else if (this._resultTransactionCode === TransactionErrorList.INSUFFICIENT_BALANCE) {
-			return new LowBalanceError(errorBody, errorBody);
+			return new LowBalanceError(errorBody);
 		} else if (this._resultTransactionCode as keyof typeof TransactionErrorList) {
 			return new BadRequestError(errorBody);
 		}

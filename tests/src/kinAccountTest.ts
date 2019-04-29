@@ -3,7 +3,7 @@ import * as nock from "nock";
 
 import {KinAccount} from "../../scripts/src/kinAccount";
 import {AccountDataRetriever} from "../../scripts/src/blockchain/accountDataRetriever";
-import {ErrorResponse} from "../../scripts/src/errors";
+import {ErrorResponse, LowBalanceError} from "../../scripts/src/errors";
 import {Environment} from "../../scripts/src/environment";
 import {Network} from "@kinecosystem/kin-base";
 import {WhitelistPayload} from "../../scripts/src/types";
@@ -58,7 +58,33 @@ describe("KinAccount.createAccount", async () => {
 		expect(await kinAccount.submitTransaction(txBuilder)).toEqual("6ab7034086be38c62fbbabd09349d8cc49d59bfe0f7ad3ef6cf89c5a573eee95");
 	});
 
-	test("create account, error expect 400 ServerError", async () => {
+	test("create account tx_insufficient_balance, error expect 400 ServerError", async () => {
+		const response: ErrorResponse = {
+			type: "https://stellar.org/horizon-errors/transaction_failed",
+			title: "Transaction Failed",
+			status: 400,
+			detail: "The transaction failed when submitted to the stellar network. The `extras.result_codes` field on this response contains further details.  Descriptions of each code can be found at: https://www.stellar.org/developers/learn/concepts/list-of-operations.html",
+			extras: {
+				envelope_xdr: "AAAAAOzY9WfVBnssuWevXxORz2d6Qfig4qWIRzwD1ObqTmkjAAAAZAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAABAAAAB2JsYSBibGEAAAAAAQAAAAAAAAAAAAAAAKSsO2j1EiYi4rydi+K+YdTC2HcWfMoKjHOd0/wIiaozAAAAAAX14QAAAAAAAAAAAepOaSMAAABAjwXKIwLrKSCjdfniUpIMlUIJCKOgGOIgbbHglPfXXqTVQslY8jm+/gg0paO2MMox/2QXuucftQktxZ3ni69LDA==",
+				result_codes: {
+					transaction: "tx_insufficient_balance"
+				},
+				result_xdr: "AAAAAAAAAAD////7AAAAAA=="
+			}
+		}
+		mockLoadAccountResponse("6319125253062657");
+		mock400AccountResponse(response);
+
+		const txBuilder = await kinAccount.buildCreateAccount({
+			address: receiverPublic,
+			startingBalance: 10,
+			fee: fee,
+			memoText: memo
+		});
+		await expect(kinAccount.submitTransaction(txBuilder)).rejects.toEqual(new LowBalanceError(response));
+	});
+
+	test("create account tx_bad_seq, error expect 400 ServerError", async () => {
 		const response: ErrorResponse = {
 			type: "https://stellar.org/horizon-errors/transaction_failed",
 			title: "Transaction Failed",
@@ -81,7 +107,7 @@ describe("KinAccount.createAccount", async () => {
 			fee: fee,
 			memoText: memo
 		});
-		await expect(kinAccount.submitTransaction(txBuilder)).rejects.toThrowError(new BadRequestError(response));
+		await expect(kinAccount.submitTransaction(txBuilder)).rejects.toEqual(new BadRequestError(response));
 	});
 
 	test("send kin", async () => {
@@ -97,7 +123,7 @@ describe("KinAccount.createAccount", async () => {
 		expect(await kinAccount.submitTransaction(txBuilder)).toEqual("708ebb9e3c8890333daca3faa6707b89dc0155f2578314e302f39e7387d2d07c");
 	});
 
-	test("send kin, error expect 400 ServerError", async () => {
+	test("send kin, error expect 400 ServerError. when error tx_bad_seq expect BadRequestError", async () => {
 		const response: ErrorResponse = {
 			type: "https://stellar.org/horizon-errors/transaction_failed",
 			title: "Transaction Failed",
@@ -112,19 +138,6 @@ describe("KinAccount.createAccount", async () => {
 			}
 		}
 
-		const response1: ErrorResponse = {
-			type: "blablablalba/horizon-errors/transaction_failed",
-			title: "Transaction Failed",
-			status: 400,
-			detail: "The transaction failed when submitted to the stellar network. The `extras.result_codes` field on this response contains further details.  Descriptions of each code can be found at: https://www.stellar.org/developers/learn/concepts/list-of-operations.html",
-			extras: {
-				envelope_xdr: "AAAAAG809+MhGZ82rRmsoUDGVlkQGcjGXbF2fX62aTPsrih8AAAAZAAXi3wAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAABAAAAALGk81+NzKnst96N+pghxVE61OL/ZTzDk7HfJKdHPJJ0AAAAAAAAAAAAmJaAAAAAAAAAAAHsrih8AAAAQMVoAvHh39F3G4kWnaa/JWBPaoDgFLyND5s0mw3waQTiU7cp1eZ64N+ZrY2lRn9B4YinNMqfWauQjviJdPHOdwc=",
-				result_codes: {
-					transaction: "tx_bad_seq"
-				},
-				result_xdr: "AAAAAAAAAAD////7AAAAAA=="
-			}
-		}
 		mockLoadAccountResponse("6319125253062657");
 		mock400SendKinResponse(response);
 
@@ -134,7 +147,7 @@ describe("KinAccount.createAccount", async () => {
 			fee: fee,
 			memoText: memo
 		});
-		await expect(kinAccount.submitTransaction(txBuilder)).rejects.toEqual(new BadRequestError(response1));
+		await expect(kinAccount.submitTransaction(txBuilder)).rejects.toEqual(new BadRequestError(response));
 	});
 
 	test("whitelist transaction - send kin", async () => {

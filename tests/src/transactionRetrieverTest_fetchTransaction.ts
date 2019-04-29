@@ -233,7 +233,7 @@ describe("TransactionRetriever.fetchTransaction", async () => {
 			.get(url => url.includes(transactionId))
 			.reply(response.status, response);
 		await expect(transactionRetriever.fetchTransaction(transactionId))
-			.rejects.toThrowError(new ResourceNotFoundError(response));
+			.rejects.toEqual(new ResourceNotFoundError(response));
 	});
 
 	test("server error code 500, expect ServerError", async () => {
