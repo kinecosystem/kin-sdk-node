@@ -203,7 +203,7 @@ const keyPair = KeyPair.fromSeed('seed');
 
 ###### Getting the public address from a seed
 ```javascript
-const publicAddress = KeyPair.fromSeed('seed');
+const publicAddress = KeyPair.fromSeed('seed').publicAddress;
 ```
 
 ###### Generate a deterministic KeyPair
