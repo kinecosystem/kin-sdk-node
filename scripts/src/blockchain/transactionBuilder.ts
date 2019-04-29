@@ -1,4 +1,4 @@
-import {Account, TransactionBuilder as BaseTransactionBuilder, xdr, Memo, MemoType} from "@kinecosystem/kin-base";
+import {Account, TransactionBuilder as BaseTransactionBuilder, xdr, Memo, MemoType, MemoText} from "@kinecosystem/kin-base";
 import {Channel} from "./channelsPool";
 import {Server} from "@kinecosystem/kin-sdk";
 
@@ -12,19 +12,21 @@ export class TransactionBuilder {
 
 	private readonly _transactionBuilder: BaseTransactionBuilder;
 	private readonly _channel?: Channel;
+	private readonly _appId?: string;
 
 	constructor(readonly _server: Server, sourceAccount: Account, options: TransactionBuilderOptions, channel?: Channel) {
 		this._transactionBuilder = new BaseTransactionBuilder(sourceAccount, options);
+		this._appId = options.appId;
 		this.addFee(options.fee);
-		this.addMemo(options.memo, options.appId);
-		this.channel = channel;
+		this.addMemo(options.memo ? options.memo : Memo.text(""));
+		this._channel = channel;
 	}
 
 	public addFee(fee: number): this {
 		if (typeof fee === "number" && fee >= 0) {
 			(this as any)._transactionBuilder.baseFee = fee;
 		} else {
-			throw Error('Fee must be a positive number');
+			throw new TypeError('Fee must be a positive number');
 		}
 		return this;
 	}
@@ -34,8 +36,16 @@ export class TransactionBuilder {
 		return this;
 	}
 
-	public addMemo(memo: Memo<MemoType.Text> | undefined, appId: string): this {
-		(this as any)._transactionBuilder.memo = memo ? Memo.text('1-' + appId + '-' + memo.value) : Memo.none();
+	public addMemo(memo: Memo): this {
+		if (!memo) {
+			throw new TypeError('Memo must be defined');
+		}
+		if (memo.type === MemoText){
+			this._transactionBuilder.addMemo( Memo.text('1-' + this._appId + '-' + memo.value));
+		} else {
+			this._transactionBuilder.addMemo(memo);
+		}
+
 		return this;
 	}
 
@@ -44,12 +54,8 @@ export class TransactionBuilder {
 		return this;
 	}
 
-	public set channel(channle: Channel | undefined) {
-		(this as any)._transactionBuilder._channel = channle;
-	}
-
 	public get channel(): Channel | undefined {
-		return (this as any)._transactionBuilder._channel;
+		return this._channel;
 	}
 
 	public build() {
