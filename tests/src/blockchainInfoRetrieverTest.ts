@@ -1,10 +1,15 @@
 import {Server} from "@kinecosystem/kin-sdk";
 import * as nock from "nock";
-import {ServerError} from "../../scripts/src/errors";
 import {BlockchainInfoRetriever} from "../../scripts/src/blockchain/blockchainInfoRetriever";
+import {ResourceNotFoundError} from "../../scripts/src/errors";
 
 const fakeUrl = "https://horizon-testnet.kininfrastructure.com";
 let blockchainInfoRetriever: BlockchainInfoRetriever;
+
+interface ErrorResponseData {
+	code: number,
+	body: any
+}
 
 describe("BlockchainInfoRetriever.getMinimumFee", async () => {
 	beforeAll(async () => {
@@ -76,16 +81,17 @@ describe("BlockchainInfoRetriever.getMinimumFee", async () => {
 	});
 
 	test("error 500, expect ServerError", async () => {
-		nock(fakeUrl)
-			.get(() => true)
-			.reply(500,
-				{
+		const body = {
 					"type": "https://stellar.org/horizon-errors/not_found",
 					"title": "Internal server Error",
 					"status": 500,
 					"detail": "Internal server Error."
-				});
-		await expect(blockchainInfoRetriever.getMinimumFee()).rejects.toEqual(new ServerError(500));
+				};
+		nock(fakeUrl)
+			.get(() => true)
+			.reply(body.status,
+				body);
+		await expect(blockchainInfoRetriever.getMinimumFee()).rejects.toThrowError(new ResourceNotFoundError(body));
 	});
 
 	test("timeout error, expect NetworkError", async () => {

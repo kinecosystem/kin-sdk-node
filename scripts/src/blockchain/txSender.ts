@@ -3,16 +3,11 @@ import {Server} from "@kinecosystem/kin-sdk";
 import {Asset, Keypair, Memo, Network, Operation, Transaction as XdrTransaction, MemoType} from "@kinecosystem/kin-base";
 import {KeyPair} from "./keyPair";
 import {TransactionBuilder} from "./transactionBuilder";
-import {
-	NetworkError,
-	NetworkMismatchedError,
-	ServerError,
-	TransactionFailedError,
-	TransactionNotFoundError
-} from "../errors";
+import {HorizonError, NetworkError, NetworkMismatchedError, ErrorDecoder} from "../errors";
 import {Channel} from "./channelsPool";
 import {IBlockchainInfoRetriever} from "./blockchainInfoRetriever";
 import {CHANNEL_TOP_UP_TX_COUNT} from "../config";
+import {TransactionErrorList} from "./errors";
 
 interface WhitelistPayloadTemp {
 	// The android stellar sdk spells 'envelope' as 'envelop'
@@ -90,29 +85,22 @@ export class TxSender {
 			let transactionResponse = await this._server.submitTransaction(tx);
 			return transactionResponse.hash;
 		} catch (e) {
-			if (e.response) {
-				if (e.response.status === 400) {
-					if (this.checkForInsufficientChannelFeeBalance(builder, e)) {
-						await this.topUpChannel(builder);
-						// Insufficient balance is a "fast-fail", the sequence number doesn't increment
-						// so there is no need to build the transaction again
-						return this.submitTransaction(builder);
-					}
-					throw new TransactionNotFoundError(this._keypair.publicAddress);
-				} else {
-					throw new ServerError(e.response.status, e.response);
-				}
+			const error = ErrorDecoder.translate(e);
+			if (this.checkForInsufficientChannelFeeBalance(builder, error)) {
+				await this.topUpChannel(builder);
+				// Insufficient balance is a "fast-fail", the sequence number doesn't increment
+				// so there is no need to build the transaction again
+				return this.submitTransaction(builder);
 			} else {
-				throw new NetworkError(e.message);
+				throw error;
 			}
 		}
 	}
 
-	private checkForInsufficientChannelFeeBalance(builder: TransactionBuilder, error: any) {
+	private checkForInsufficientChannelFeeBalance(builder: TransactionBuilder, error: HorizonError | NetworkError): boolean {
 		if (!builder.channel)
-			return;
-		const txFailure = new TransactionFailedError(error.response.status, error.response.data);
-		return txFailure.resultTransactionCode === 'tx_insufficient_balance';
+			return false;
+		return (error as HorizonError).resultTransactionCode === TransactionErrorList.INSUFFICIENT_BALANCE;
 	}
 
 
