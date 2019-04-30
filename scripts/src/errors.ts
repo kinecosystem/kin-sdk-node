@@ -1,4 +1,3 @@
-import {TransactionId} from "./types";
 import {
 	ChangeTrustResultCode,
 	CreateAccountResultCode,
@@ -36,13 +35,11 @@ export interface ErrorResponse {
 
 export type ErrorType =
 	'AccountNotFoundError'
-	| 'TransactionNotFoundError'
 	| 'NetworkError'
 	| 'ServerError'
 	| 'FriendbotError'
 	| 'InvalidAddressError'
 	| 'ChannelBusyError'
-	| 'TransactionFailedError'
 	| 'NetworkMismatchedError'
 	| 'InvalidDataError'
 	| 'BadRequestError'
@@ -93,17 +90,6 @@ export class AccountNotFoundError extends HorizonError {
 	}
 }
 
-export class TransactionNotFoundError extends Error implements KinSdkError {
-
-	readonly errorCode: number;
-	readonly type: ErrorType = 'TransactionNotFoundError';
-
-	constructor(readonly transactionId: TransactionId) {
-		super(`Transaction '${transactionId}' was not found in the network.`);
-		this.errorCode = 404;
-	}
-}
-
 export class NetworkError extends Error implements KinSdkError {
 	readonly type = 'NetworkError';
 
@@ -134,14 +120,6 @@ export class ServerError extends HorizonError {
 
 	constructor(readonly errorBody: any) {
 		super(`Server error`, errorBody);
-	}
-}
-
-export class TransactionFailedError extends HorizonError {
-	readonly type: ErrorType = 'TransactionFailedError';
-
-	constructor(readonly errorBody: ErrorResponse, readonly title?: string) {
-		super(`Transaction failed error`, errorBody, title);
 	}
 }
 
@@ -221,9 +199,6 @@ export class ResourceNotFoundError extends HorizonError {
 
 export class ErrorDecoder {
 
-	private static _resultTransactionCode?: string;
-	private static _resultOperationsCode?: string[];
-
 	static translate(errorBody?: any): HorizonError | NetworkError{
 		if (errorBody && errorBody.response) {
 			errorBody = errorBody.response;
@@ -232,8 +207,7 @@ export class ErrorDecoder {
 			}
 			if (errorBody.type && errorBody.status) {
 				// This is a Horizon error
-				this._resultTransactionCode = ErrorUtils.getTransaction(errorBody);
-				this._resultOperationsCode = ErrorUtils.getOperations(errorBody);
+
 				if (errorBody.type.includes(HorizonErrorList.TRANSACTION_FAILED)) {
 					return this.translateTransactionError(errorBody.status, errorBody);
 				} else {
@@ -249,11 +223,12 @@ export class ErrorDecoder {
 
 	static translateOperationError(errorCode: number, errorBody?: any): HorizonError {
 		let resultCode;
-		if (this._resultOperationsCode === undefined ||!this._resultOperationsCode.length) {
+		const resultOperationsCode = ErrorUtils.getOperations(errorBody);
+		if (resultOperationsCode === undefined || !resultOperationsCode.length) {
 			return new InternalError(errorBody);
 		}
 
-		for (let entry of this._resultOperationsCode) {
+		for (let entry of resultOperationsCode) {
 			if (entry !== OperationResultCode.SUCCESS) {
 				resultCode = entry;
 				break;
@@ -272,7 +247,7 @@ export class ErrorDecoder {
 			PaymentResultCode.NO_DESTINATION])) {
 			return new AccountNotFoundError(errorBody);
 		} else if (resultCode === CreateAccountResultCode.ACCOUNT_EXISTS) {
-			return new AccountExistsError(errorCode, errorBody);
+			return new AccountExistsError(errorBody);
 		} else if (this.includesObject(resultCode, [CreateAccountResultCode.LOW_RESERVE, PaymentResultCode.UNDERFUNDED])) {
 			return new LowBalanceError(errorBody);
 		} else if (this.includesObject(resultCode, [PaymentResultCode.SRC_NO_TRUST,
@@ -286,13 +261,14 @@ export class ErrorDecoder {
 	}
 
 	static translateTransactionError(errorCode: number, errorBody?: any): HorizonError {
-		if (this._resultTransactionCode === TransactionErrorList.FAILED) {
+		const resultTransactionCode = ErrorUtils.getTransaction(errorBody);
+		if (resultTransactionCode === TransactionErrorList.FAILED) {
 			return this.translateOperationError(errorCode, errorBody);
-		} else if (this._resultTransactionCode === TransactionErrorList.NO_ACCOUNT) {
+		} else if (resultTransactionCode === TransactionErrorList.NO_ACCOUNT) {
 			return new AccountNotFoundError(errorBody);
-		} else if (this._resultTransactionCode === TransactionErrorList.INSUFFICIENT_BALANCE) {
+		} else if (resultTransactionCode === TransactionErrorList.INSUFFICIENT_BALANCE) {
 			return new LowBalanceError(errorBody);
-		} else if (this._resultTransactionCode as keyof typeof TransactionErrorList) {
+		} else if (resultTransactionCode as keyof typeof TransactionErrorList) {
 			return new BadRequestError(errorBody);
 		}
 
