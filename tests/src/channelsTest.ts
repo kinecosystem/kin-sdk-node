@@ -20,11 +20,12 @@ const mockedBlockchainInfoRetriever: IBlockchainInfoRetriever = {
 describe("Channels", async () => {
 	let txSender: TxSender;
 	let channelsPool: ChannelsPool;
+	const appId = "test";
 
 	beforeAll(async () => {
 		const keyPair = KeyPair.fromSeed(senderSeed);
 		const server = new Server(fakeUrl, {allowHttp: true});
-		txSender = new TxSender(keyPair, "test", server, mockedBlockchainInfoRetriever);
+		txSender = new TxSender(keyPair, appId, server, mockedBlockchainInfoRetriever);
 		channelsPool = new ChannelsPool([channelSeed]);
 	});
 
@@ -38,11 +39,11 @@ describe("Channels", async () => {
 		});
 		const stellarBuilder = (txBuilder as any)._transactionBuilder;
 		expect(stellarBuilder.baseFee).toEqual(100);
-		expect(stellarBuilder.memo).toEqual(Memo.none());
+		expect(stellarBuilder.memo).toEqual(Memo.text('1-' + appId + '-'));
 		expect(stellarBuilder.source.id).toEqual(channelPublic);
 		expect(stellarBuilder.source.sequence).toEqual(sequence);
 		expect((txBuilder as TransactionBuilder).build().toEnvelope().toXDR('base64'))
-			.toEqual("AAAAALWjFW2p4NXRA+vbgAM/4Dg7mN0S7rdKEA6j7qhqotX7AAAAZAAWczYAAAAGAAAAAAAAAAAAAAABAAAAAQAAAABvNPfjIRmfNq0ZrKFAxlZZEBnIxl2xdn1+tmkz7K4ofAAAAAEAAAAAS1u7k0d3aFQiLk3xcyp5X9x6Xmbdlkx1BOh4S+u8bLsAAAAAAAAAAAAhwcwAAAAAAAAAAA==");
+			.toEqual("AAAAALWjFW2p4NXRA+vbgAM/4Dg7mN0S7rdKEA6j7qhqotX7AAAAZAAWczYAAAAGAAAAAAAAAAEAAAAHMS10ZXN0LQAAAAABAAAAAQAAAABvNPfjIRmfNq0ZrKFAxlZZEBnIxl2xdn1+tmkz7K4ofAAAAAEAAAAAS1u7k0d3aFQiLk3xcyp5X9x6Xmbdlkx1BOh4S+u8bLsAAAAAAAAAAAAhwcwAAAAAAAAAAA==");
 
 	});
 
@@ -103,7 +104,7 @@ describe("Channels", async () => {
 
 	function mockCreateAccountResponse() {
 		nock(fakeUrl)
-			.post(url => url.includes("/transactions"), "tx=AAAAALWjFW2p4NXRA%2BvbgAM%2F4Dg7mN0S7rdKEA6j7qhqotX7AAAAZAAWczYAAAAGAAAAAAAAAAAAAAABAAAAAQAAAABvNPfjIRmfNq0ZrKFAxlZZEBnIxl2xdn1%2Btmkz7K4ofAAAAAAAAAAAS1u7k0d3aFQiLk3xcyp5X9x6Xmbdlkx1BOh4S%2Bu8bLsAAAAAAAHiOgAAAAAAAAAC7K4ofAAAAECJ8qaz%2BpsO4c1qdnzawMKJreqlvn0WPMUTpzRw81tYbJxnc9lsZfZfEeZNskgoDlDR57D%2BmT9WZ3jAw0DHCXsCaqLV%2BwAAAECQXD9MIFMXrfnTA2g9PwJgNVXjpcwDahb9ALauz0CBLdaiv9oKEv%2F88CdMkoC8OglNWZtHlbdFkb8fDfnROb4M")
+			.post(url => url.includes("/transactions"), "tx=AAAAALWjFW2p4NXRA%2BvbgAM%2F4Dg7mN0S7rdKEA6j7qhqotX7AAAAZAAWczYAAAAGAAAAAAAAAAEAAAAHMS10ZXN0LQAAAAABAAAAAQAAAABvNPfjIRmfNq0ZrKFAxlZZEBnIxl2xdn1%2Btmkz7K4ofAAAAAAAAAAAS1u7k0d3aFQiLk3xcyp5X9x6Xmbdlkx1BOh4S%2Bu8bLsAAAAAAAHiOgAAAAAAAAAC7K4ofAAAAEDJza8icb1mMJHMLnP7o3x7NoqniwrA6sAqRsl1KN5UGCo80M7ffWF1l657B%2BwjTiQQoxtZWMLjQtwWXXVEyX0CaqLV%2BwAAAECHRSazFIZ%2BueNJvqBkkWUNE%2BOylA6lHJ2yUjr63OOkjDo1BqDdWpVHuCUil36z5yZgOGi%2Bvty8rReYli%2Bp6YcE")
 			.reply(200,
 				{
 					"_links": {

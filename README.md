@@ -488,4 +488,4 @@ switch (err.type) {
 For full errors list see error declaration at `index.d.ts`.
 
 ## License
-The code is currently released under [MIT license](LICENSE).
+The code is currently released under [Kin Ecosystem SDK License](LICENSE.pdf).

@@ -1,6 +1,6 @@
 import {Address, TransactionId, WhitelistPayload} from "../types";
 import {Server} from "@kinecosystem/kin-sdk";
-import {Asset, Keypair, Memo, Network, Operation, Transaction as XdrTransaction} from "@kinecosystem/kin-base";
+import {Asset, Keypair, Memo, Network, Operation, Transaction as XdrTransaction, MemoType} from "@kinecosystem/kin-base";
 import {KeyPair} from "./keyPair";
 import {TransactionBuilder} from "./transactionBuilder";
 import {HorizonError, NetworkError, NetworkMismatchedError, ErrorDecoder} from "../errors";
@@ -25,9 +25,13 @@ export class TxSender {
 		this._blockchainInfoRetriever = _blockchainInfoRetriever;
 	}
 
+	get appId() {
+		return this._appId;
+	}
+
 	public async getTransactionBuilder(fee: number, channel?: Channel): Promise<TransactionBuilder> {
 		const response = await this.loadSenderAccountData(channel);
-		return new TransactionBuilder(this._server, response, {fee: fee}, channel)
+		return new TransactionBuilder(this._server, response, {fee: fee, appId: this.appId}, channel)
 			.setTimeout(0);
 	}
 
@@ -35,8 +39,9 @@ export class TxSender {
 		const response = await this.loadSenderAccountData(channel);
 		return new TransactionBuilder(this._server, response, {
 			fee: fee,
-			memo: memoText ? Memo.text(memoText) : undefined
-		}, channel)
+			memo: memoText ? Memo.text(memoText) : undefined,
+			appId: this.appId}
+			, channel)
 			.setTimeout(0)
 			.addOperation(Operation.createAccount({
 				source: this._keypair.publicAddress,
@@ -49,7 +54,8 @@ export class TxSender {
 		const response = await this.loadSenderAccountData(channel);
 		return new TransactionBuilder(this._server, response, {
 			fee: fee,
-			memo: memoText ? Memo.text(memoText) : undefined
+			memo: memoText ? Memo.text(memoText) : undefined,
+			appId: this.appId
 		}, channel)
 			.setTimeout(0)
 			.addOperation(Operation.payment({
