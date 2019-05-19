@@ -306,7 +306,7 @@ const decodedTransaction = client.decodeTransaction(encodedTransaction);
 ```
 -->
 #### Getting the Minimum Acceptable Fee from the Blockchain
-Transactions usually require a fee {to whom?} to be processed. The fee depends on how fast the transaction will be processed by the blockchain. To find out what the minimum acceptable fee is, use:
+To be processed, transactions usually require a fee to be paid to the blockchain. The fee depends on how fast the transaction will be processed by the blockchain. To find out what the minimum acceptable fee is, use:
 
 ```javascript
 client.getMinimumFee()
@@ -314,7 +314,7 @@ client.getMinimumFee()
             //save minimum fee
         });
 ```
-
+The returned fee amount is in quarks (0.00001 Kin).
 #### Getting Transaction Data
 To review a transaction, use `getTransactionData` with the transaction's ID:
 
