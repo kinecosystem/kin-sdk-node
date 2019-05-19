@@ -151,7 +151,7 @@ client.getAccountBalance('address')
         .then(balance => {
                     });
 ```
-You may want to use the output of this function in your applicationS code.
+You may want to use the output of this function in your application's code.
 You can get addtional information on the account with `getAccountData`.
 
 ```javascript
@@ -314,7 +314,7 @@ client.getMinimumFee()
             //save minimum fee
         });
 ```
-The returned fee amount is in quarks (0.00001 Kin).
+The returned fee amount is in Quarks (0.00001 Kin).
 #### Getting Transaction Data
 To review a transaction, use `getTransactionData` with the transaction's ID:
 
