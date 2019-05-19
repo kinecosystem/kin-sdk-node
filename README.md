@@ -297,13 +297,14 @@ const whitelistedTransaction = account.whitelistTransaction(clientTransaction);
 
 Note that if you are whitelisted, any payment sent from a server developed with the Node SDK is already considered whitelisted, so the server transactions will not need the above step.
 
+<!--
 ### Decoding Transactions
 When clients send you transactions for whitelisting, they will be encoded. It is recommended to decode each transaction and verify its details before whitelisting it. Use `decodeTransaction` to do that:
 
 ```javascript
 const decodedTransaction = client.decodeTransaction(encodedTransaction);
 ```
-
+-->
 #### Getting the Minimum Acceptable Fee from the Blockchain
 Transactions usually require a fee {to whom?} to be processed. The fee depends on how fast the transaction will be processed by the blockchain. To find out what the minimum acceptable fee is, use:
 
