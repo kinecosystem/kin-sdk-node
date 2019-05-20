@@ -1,6 +1,6 @@
-import {Horizon, Server, AssetType} from "@kinecosystem/kin-sdk";
+import {AssetType, Horizon, Server} from "@kinecosystem/kin-sdk";
 import {AccountData, Balance} from "./horizonModels";
-import {ErrorDecoder, KinSdkError, NetworkError} from "../errors"
+import {ErrorDecoder, KinSdkError} from "../errors"
 import {Utils} from "../utils";
 import {Address} from "../types";
 import BalanceLineAsset = Horizon.BalanceLineAsset;
@@ -66,7 +66,7 @@ export class AccountDataRetriever implements IAccountDataRetriever {
 			await this.fetchAccountData(address);
 			return true;
 		} catch (e) {
-			if ((e as KinSdkError).type === 'AccountNotFoundError') {
+			if ((e as KinSdkError).type === "ResourceNotFoundError") {
 				return false;
 			} else {
 				throw e;

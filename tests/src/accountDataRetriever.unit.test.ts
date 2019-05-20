@@ -164,8 +164,7 @@ describe("AccountDataRetreiver.isAccountExisting", async () => {
 
 	test("no account, should return false", async () => {
 		mockNetworkResponse(mock404NetworkResponse);
-		await expect(accountDataRetriever.isAccountExisting(publicAddress))
-			.rejects.toEqual(new ResourceNotFoundError(mock404NetworkResponse));
+		expect(await accountDataRetriever.isAccountExisting(publicAddress)).toBe(false);
 	});
 
 	test("error 500, expect ServerError", async () => {
