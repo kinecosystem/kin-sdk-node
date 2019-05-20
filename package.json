@@ -62,7 +62,6 @@
     ],
     "testPathIgnorePatterns": [
       ".d.ts"
-    ],
-    "collectCoverage": true
+    ]
   }
 }
