@@ -69,7 +69,7 @@ export class KinClient {
 	 * @param address wallet address (public key)
 	 * @returns an AccountData represent account details
 	 */
-	async getAccountData(address: Address): Promise<AccountData | null> {
+	async getAccountData(address: Address): Promise<AccountData> {
 		return await this._accountDataRetriever.fetchAccountData(address);
 	}
 

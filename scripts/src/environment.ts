@@ -40,7 +40,7 @@ export class Environment {
 		return this._friendbotUrl;
 	}
 
-	private constructor(params: EnvironmentParams) {
+	constructor(params: EnvironmentParams) {
 		this._url = params.url;
 		this._name = params.name;
 		this._passphrase = params.passphrase;
