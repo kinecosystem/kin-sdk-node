@@ -142,7 +142,6 @@ describe("KinAccount.createAccount", async () => {
 	test("Kin Client - createPaymentListener", async () => {
 		await client.createPaymentListener({
 			addresses: [account2.publicAddress], onPayment: payment => {
-				console.log("createPaymentListener", payment);
 				expect(payment.amount).toBe(10);
 			}
 		});
