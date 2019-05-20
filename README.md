@@ -467,16 +467,12 @@ switch (err.type) {
   case 'NetworkError':
     // Network availability error. 
     break;
-  case 'ServerError':
+  case 'HorizonError':
     // The blockchain returns an error.
     err.errorCode; //The returned error code from Horizon server.
     break;
   case 'AccountNotFoundError':
     // Some operation performed an account that wasn't created on the Kin blockchain.
-    err.accountId; // the requested account Id that wasn't found.
-    break;
-  case 'TransactionFailedError':
-    // An error occurred when trying to send a transaction.
     break;
   default:
     // Handle any other types of unexpected errors
@@ -486,4 +482,4 @@ switch (err.type) {
 For full error list, see error declaration at `index.d.ts`.
 
 ## License
-The code is currently released under [MIT license](LICENSE).
+The code is currently released under [Kin Ecosystem SDK License](LICENSE.pdf).

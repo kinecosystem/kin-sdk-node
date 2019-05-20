@@ -26,7 +26,7 @@
     "cryptocurrency"
   ],
   "author": "Kin Ecosystem",
-  "license": "MIT",
+  "license": "Kin Ecosystem SDK License",
   "bugs": {
     "url": "https://github.com/kinecosystem/kin-sdk-node/issues"
   },
@@ -44,7 +44,8 @@
     "typescript": "^3.3.4000"
   },
   "dependencies": {
-    "@kinecosystem/kin-sdk": "0.20.3"
+	"@kinecosystem/kin-sdk": "0.20.3",
+	"jest-each": "^24.7.1"
   },
   "jest": {
     "moduleFileExtensions": [

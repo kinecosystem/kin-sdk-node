@@ -4,4 +4,3 @@ export interface WhitelistPayload {
 	envelope: string,
 	networkId: string
 }
-

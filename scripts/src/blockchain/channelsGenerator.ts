@@ -9,7 +9,7 @@ import {BlockchainInfoRetriever, IBlockchainInfoRetriever} from "./blockchainInf
 
 export namespace Channels {
 
-	function createChannels(params: CreateChannelsParams): Promise<KeyPair[]> {
+	export function createChannels(params: CreateChannelsParams): Promise<KeyPair[]> {
 		const server = new Server(params.environment.url);
 		Network.use(new Network(params.environment.passphrase));
 		const accountDataRetriever = new AccountDataRetriever(server);
@@ -19,7 +19,7 @@ export namespace Channels {
 			.createChannels(params.baseSeed, params.salt, params.channelsCount, params.startingBalance);
 	}
 
-	function generateSeeds(params: GenerateSeedsParams): KeyPair[] {
+	export function generateSeeds(params: GenerateSeedsParams): KeyPair[] {
 		return ChannelsGenerator.generateSeeds(params);
 	}
 }
