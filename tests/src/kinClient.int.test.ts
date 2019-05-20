@@ -24,7 +24,7 @@ describe("KinAccount.createAccount", async () => {
 		account2 = client.createKinAccount({seed: seconedKeypair.seed});
 		await client.friendbot({address: keypair.publicAddress, amount: 10000});
 		await client.friendbot({address: seconedKeypair.publicAddress, amount: 10000});
-	}, 12000);
+	}, 30000);
 
 	test("Kin Client - create account with channels", async () => {
 		const thirdKeypair = KeyPair.generate();
@@ -58,7 +58,7 @@ describe("KinAccount.createAccount", async () => {
 		expect(acquiredChannelStatus).toEqual('busy');
 		expect((acquiredChannel as Channel).state).toEqual('free');
 
-	}, 12000);
+	}, 30000);
 
 	test("Kin Client - create account with friend bot", async () => {
 		const data = await client.getAccountData(keypair.publicAddress);
@@ -69,7 +69,7 @@ describe("KinAccount.createAccount", async () => {
 			expect(data.balances[0].balance).toBe(10000);
 		}
 
-	}, 12000);
+	}, 30000);
 
 	test("Kin Client - getAccountData", async () => {
 		const thirdKeypair = KeyPair.generate();
@@ -86,7 +86,7 @@ describe("KinAccount.createAccount", async () => {
 		if (data) {
 			expect(data.balances[0].balance).toBe(1100);
 		}
-	}, 12000);
+	}, 30000);
 
 	test("Kin Client - getMinimumFee", async () => {
 		const thirdKeypair = KeyPair.generate();
@@ -100,7 +100,7 @@ describe("KinAccount.createAccount", async () => {
 		await account.submitTransaction(builder);
 		expect(await client.isAccountExisting(thirdKeypair.publicAddress)).toBe(true);
 		expect(await client.getMinimumFee()).toBe(100);
-	}, 12000);
+	}, 30000);
 
 	test("Kin Client - getTransactionData", async () => {
 		const thirdKeypair = KeyPair.generate();
@@ -114,7 +114,7 @@ describe("KinAccount.createAccount", async () => {
 		const transactionId = await account.submitTransaction(builder);
 		const data = await client.getTransactionData(transactionId);
 		expect(data.fee).toBe(100);
-	}, 12000);
+	}, 30000);
 
 	test("Kin Client - get transaction history", async () => {
 		const thirdKeypair = KeyPair.generate();
