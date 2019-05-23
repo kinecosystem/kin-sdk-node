@@ -141,5 +141,4 @@ describe("KinClient", async () => {
 		});
 		hash = await account.submitTransaction(sendBuilder);
 	}, 30000);
-
 });
