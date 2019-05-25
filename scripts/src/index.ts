@@ -22,6 +22,23 @@ import {
 import {KeyPair} from "./blockchain/keyPair";
 import {Channels, CreateChannelsParams, GenerateSeedsParams} from "./blockchain/channelsGenerator";
 import {Channel, ChannelsPool, ChannelsPoolStatus, ChannelState} from "./blockchain/channelsPool";
+import {
+	AccountExistsError,
+	AccountNotActivatedError,
+	BadRequestError,
+	ChannelBusyError,
+	FriendbotError,
+	HorizonError,
+	InternalError,
+	InvalidAddressError,
+	InvalidDataError,
+	KinSdkError,
+	LowBalanceError,
+	NetworkError,
+	NetworkMismatchedError,
+	ResourceNotFoundError,
+	ServerError
+} from "./errors";
 
 export {
 	KinClient,
@@ -53,5 +70,20 @@ export {
 	ChannelsPool,
 	Channel,
 	ChannelsPoolStatus,
-	ChannelState
+	ChannelState,
+	KinSdkError,
+	NetworkError,
+	ServerError,
+	FriendbotError,
+	InvalidAddressError,
+	ChannelBusyError,
+	NetworkMismatchedError,
+	InvalidDataError,
+	BadRequestError,
+	InternalError,
+	AccountExistsError,
+	LowBalanceError,
+	AccountNotActivatedError,
+	HorizonError,
+	ResourceNotFoundError
 };
