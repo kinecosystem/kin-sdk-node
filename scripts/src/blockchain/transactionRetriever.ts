@@ -55,7 +55,8 @@ export class TransactionRetriever implements ITransactionRetriever {
 			hash: transactionRecord.hash,
 			sequence: parseInt(transactionRecord.source_account_sequence),
 			signatures: xdrTransaction.signatures,
-			source: transactionRecord.source_account
+			source: transactionRecord.source_account,
+			timestamp: transactionRecord.created_at
 		};
 
 		if (operations.length == 1) {
