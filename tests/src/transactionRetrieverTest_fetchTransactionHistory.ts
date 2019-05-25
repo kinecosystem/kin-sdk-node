@@ -2,9 +2,8 @@ import {Server} from "@kinecosystem/kin-sdk";
 import {TransactionRetriever} from "../../scripts/src/blockchain/transactionRetriever";
 import * as nock from "nock";
 import {CreateAccountTransaction, PaymentTransaction, RawTransaction} from "../../scripts/src/blockchain/horizonModels";
-import {ErrorResponse, InternalError} from "../../scripts/src/errors";
+import {ErrorResponse, InternalError, ResourceNotFoundError} from "../../scripts/src/errors";
 import {Memo, Operation} from "@kinecosystem/kin-base";
-import {ResourceNotFoundError} from "../../scripts/src/errors";
 
 // as a workaround, TransactionRetriever was separated to two files due to some jest error when running both fetchTransactionHistory
 // and fetchTransaction tests in the same file
@@ -187,6 +186,8 @@ describe("TransactionRetriever.fetchTransactionHistory", async () => {
 		expect(paymentTx.memo).toBeUndefined();
 		expect(paymentTx.sequence).toEqual(5590101799206914);
 		expect(paymentTx.hash).toEqual('abf994663197b93483ee7e24e05faf30278e9208362ddb1d0ab2bcd29b3e1ded');
+		expect(paymentTx.timestamp).toEqual('2019-03-04T06:59:39Z');
+		expect(paymentTx.type).toEqual('PaymentTransaction');
 		expect(paymentTx.signatures).toHaveLength(1);
 		expect(paymentTx.signatures[0].hint().toString('base64')).toEqual('uAMxrg==');
 		expect(paymentTx.signatures[0].signature().toString('base64')).toEqual('Xz7znnYaWMpr0OGngpp9e0dYqT9F84JN/26j8FIzA7o/8GCSJIlBiVa7NaBEBo6n6GGYAxoAhBMcMax7q6mTCA==');
@@ -194,6 +195,8 @@ describe("TransactionRetriever.fetchTransactionHistory", async () => {
 		expect(rawTx.source).toEqual('GA66MWLBBBWVDQZFPDMZPJUODUUOZLGUPCXMPR7HNTGHX7VYAMY243RR');
 		expect(rawTx.fee).toEqual(246);
 		expect(rawTx.operations).toHaveLength(2);
+		expect(rawTx.timestamp).toEqual('2019-03-03T18:23:59Z');
+		expect(rawTx.type).toEqual('RawTransaction');
 		let createAccountOp = rawTx.operations[0] as Operation.CreateAccount;
 		expect(createAccountOp.startingBalance).toEqual("12.12345");
 		expect(createAccountOp.destination).toEqual('GDXY3YWJXDIC2WOND6WVLQ7NP4VZAZ6MJCB4DNXUWN2GLGG3VK2ZX5TB');
@@ -214,6 +217,8 @@ describe("TransactionRetriever.fetchTransactionHistory", async () => {
 		expect(createAccount.memo).toBeUndefined();
 		expect(createAccount.sequence).toEqual(1728);
 		expect(createAccount.hash).toEqual('c8b8c11b4ef521dfce4b673754ec43860e321ff608985289b944ccff7a427316');
+		expect(createAccount.timestamp).toEqual('2019-03-03T18:22:39Z');
+		expect(createAccount.type).toEqual('CreateAccountTransaction');
 		expect(createAccount.signatures).toHaveLength(1);
 		expect(createAccount.signatures[0].hint().toString('base64')).toEqual('WAD/XQ==');
 		expect(createAccount.signatures[0].signature().toString('base64')).toEqual('7stkmFoi3PKmeMEOSwvJexueg107rM497GnjjvZ3Vmw+MkYltp2FKgBCe7QPZ+2wl/9LGk4X0HnGWxfySKijDw==');

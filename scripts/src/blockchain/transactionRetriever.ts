@@ -56,7 +56,8 @@ export class TransactionRetriever implements ITransactionRetriever {
 			sequence: parseInt(transactionRecord.source_account_sequence),
 			signatures: xdrTransaction.signatures,
 			source: transactionRecord.source_account,
-			timestamp: transactionRecord.created_at
+			timestamp: transactionRecord.created_at,
+			type: 'RawTransaction'
 		};
 
 		if (operations.length == 1) {
@@ -67,7 +68,8 @@ export class TransactionRetriever implements ITransactionRetriever {
 					source: operation.source ? operation.source : transactionRecord.source_account,
 					destination: operation.destination,
 					amount: parseFloat(operation.amount),
-					memo: transactionRecord.memo
+					memo: transactionRecord.memo,
+					type: "PaymentTransaction"
 				};
 			} else if (operation.type == "createAccount") {
 				return <CreateAccountTransaction>{
@@ -75,7 +77,8 @@ export class TransactionRetriever implements ITransactionRetriever {
 					source: operation.source ? operation.source : transactionRecord.source_account,
 					destination: operation.destination,
 					startingBalance: parseFloat(operation.startingBalance),
-					memo: transactionRecord.memo
+					memo: transactionRecord.memo,
+					type: "CreateAccountTransaction"
 				};
 			}
 		}
