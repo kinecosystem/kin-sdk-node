@@ -27,6 +27,7 @@ import {
 	AccountNotActivatedError,
 	BadRequestError,
 	ChannelBusyError,
+	ErrorType,
 	FriendbotError,
 	HorizonError,
 	InternalError,
@@ -85,5 +86,6 @@ export {
 	LowBalanceError,
 	AccountNotActivatedError,
 	HorizonError,
-	ResourceNotFoundError
+	ResourceNotFoundError,
+	ErrorType
 };
