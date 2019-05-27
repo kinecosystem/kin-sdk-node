@@ -91,7 +91,7 @@ export class KinClient {
 	/**
 	 * Get transaction data by transaction id from kin blockchain.
 	 * @param transactionId transaction id (hash)
-	 * @param simplified to get raw data (hash)
+	 * @return RawTransaction only
 	 */
 	async getRawTransactionData(transactionId: TransactionId): Promise<RawTransaction>  {
 		return this._transactionRetriever.fetchTransaction(transactionId, false) as Promise<RawTransaction>;
@@ -108,7 +108,7 @@ export class KinClient {
 	/**
 	 * Get transaction history for a single account from kin blockchain.
 	 * @param params parameters for retrieving transactions
-	 * @param simplified to get raw data (hash)
+	 * @return RawTransaction only
 	 */
 	async getRawTransactionHistory(params: TransactionHistoryParams): Promise<RawTransaction[]> {
 		return this._transactionRetriever.fetchTransactionHistory(params, false) as Promise<RawTransaction[]> ;
