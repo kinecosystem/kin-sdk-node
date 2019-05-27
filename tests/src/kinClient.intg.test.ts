@@ -51,16 +51,6 @@ describe("KinClient", async () => {
 	}, 30000);
 
 	test("Test getMinimumFee", async () => {
-		const thirdKeypair = KeyPair.generate();
-		const builder = await account.buildCreateAccount({
-			address: thirdKeypair.publicAddress,
-			fee: 100,
-			startingBalance: 1000,
-			memoText: 'my first wallet'
-		});
-
-		await account.submitTransaction(builder);
-		expect(await client.isAccountExisting(thirdKeypair.publicAddress)).toBe(true);
 		expect(await client.getMinimumFee()).toBe(100);
 	}, 30000);
 
@@ -75,7 +65,7 @@ describe("KinClient", async () => {
 
 		const transactionId = await account.submitTransaction(builder);
 		const data = await client.getTransactionData(transactionId);
-		expect(data.fee).toBe(100);
+		expect(data.memo).toBe('1-anon-my first wallet');
 	}, 30000);
 
 	test("Test get transaction history", async () => {
