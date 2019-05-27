@@ -1,9 +1,9 @@
 import {Address, TransactionId, WhitelistPayload} from "../types";
 import {Server} from "@kinecosystem/kin-sdk";
-import {Asset, Keypair, Memo, Network, Operation, Transaction as XdrTransaction, MemoType} from "@kinecosystem/kin-base";
+import {Asset, Keypair, Memo, Network, Operation, Transaction as XdrTransaction} from "@kinecosystem/kin-base";
 import {KeyPair} from "./keyPair";
 import {TransactionBuilder} from "./transactionBuilder";
-import {HorizonError, NetworkError, NetworkMismatchedError, ErrorDecoder} from "../errors";
+import {ErrorDecoder, HorizonError, NetworkError, NetworkMismatchedError} from "../errors";
 import {Channel} from "./channelsPool";
 import {IBlockchainInfoRetriever} from "./blockchainInfoRetriever";
 import {CHANNEL_TOP_UP_TX_COUNT} from "../config";
@@ -36,34 +36,28 @@ export class TxSender {
 	}
 
 	public async buildCreateAccount(address: Address, startingBalance: number, fee: number, memoText?: string, channel?: Channel): Promise<TransactionBuilder> {
-		const response = await this.loadSenderAccountData(channel);
-		return new TransactionBuilder(this._server, response, {
-			fee: fee,
-			memo: memoText ? Memo.text(memoText) : undefined,
-			appId: this.appId}
-			, channel)
-			.setTimeout(0)
-			.addOperation(Operation.createAccount({
-				source: this._keypair.publicAddress,
-				destination: address,
-				startingBalance: startingBalance.toString()
-			}));
+		const builder = await this.getTransactionBuilder(fee, channel);
+		builder.setTimeout(0);
+		builder.addMemo(memoText ? Memo.text(memoText) : Memo.text(""));
+		builder.addOperation(Operation.createAccount({
+			source: this._keypair.publicAddress,
+			destination: address,
+			startingBalance: startingBalance.toString()
+		}));
+		return builder;
 	}
 
 	public async buildSendKin(address: Address, amount: number, fee: number, memoText?: string, channel?: Channel): Promise<TransactionBuilder> {
-		const response = await this.loadSenderAccountData(channel);
-		return new TransactionBuilder(this._server, response, {
-			fee: fee,
-			memo: memoText ? Memo.text(memoText) : undefined,
-			appId: this.appId
-		}, channel)
-			.setTimeout(0)
-			.addOperation(Operation.payment({
-				source: this._keypair.publicAddress,
-				destination: address,
-				asset: Asset.native(),
-				amount: amount.toString()
-			}));
+		const builder = await this.getTransactionBuilder(fee, channel);
+		builder.setTimeout(0);
+		builder.addMemo(memoText ? Memo.text(memoText) : Memo.text(""));
+		builder.addOperation(Operation.payment({
+			source: this._keypair.publicAddress,
+			destination: address,
+			asset: Asset.native(),
+			amount: amount.toString()
+		}));
+		return builder;
 	}
 
 	private async loadSenderAccountData(channel?: Channel) {

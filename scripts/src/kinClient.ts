@@ -1,6 +1,13 @@
 import {Environment} from "./environment";
 import {KinAccount} from "./kinAccount";
-import {AccountData, Balance, OnPaymentListener, PaymentListener, Transaction} from "./blockchain/horizonModels";
+import {
+	AccountData,
+	Balance,
+	OnPaymentListener,
+	PaymentListener,
+	RawTransaction,
+	Transaction
+} from "./blockchain/horizonModels";
 import {Server} from "@kinecosystem/kin-sdk";
 import {Network} from "@kinecosystem/kin-base";
 import {AccountDataRetriever} from "./blockchain/accountDataRetriever";
@@ -82,11 +89,29 @@ export class KinClient {
 	}
 
 	/**
+	 * Get transaction data by transaction id from kin blockchain.
+	 * @param transactionId transaction id (hash)
+	 * @return RawTransaction only
+	 */
+	async getRawTransactionData(transactionId: TransactionId): Promise<RawTransaction>  {
+		return this._transactionRetriever.fetchTransaction(transactionId, false) as Promise<RawTransaction>;
+	}
+
+	/**
 	 * Get transaction history for a single account from kin blockchain.
 	 * @param params parameters for retrieving transactions
 	 */
 	async getTransactionHistory(params: TransactionHistoryParams): Promise<Transaction[]> {
 		return this._transactionRetriever.fetchTransactionHistory(params);
+	}
+
+	/**
+	 * Get transaction history for a single account from kin blockchain.
+	 * @param params parameters for retrieving transactions
+	 * @return RawTransaction only
+	 */
+	async getRawTransactionHistory(params: TransactionHistoryParams): Promise<RawTransaction[]> {
+		return this._transactionRetriever.fetchTransactionHistory(params, false) as Promise<RawTransaction[]> ;
 	}
 
 	/**
