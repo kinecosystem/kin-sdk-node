@@ -6,7 +6,7 @@ import {TransactionId} from "../types";
 import {TransactionHistoryParams} from "../kinClient";
 
 export interface ITransactionRetriever {
-	fetchTransaction(transactionId: TransactionId): Promise<Transaction>;
+	fetchTransaction(transactionId: TransactionId, simplified?: boolean): Promise<Transaction>;
 }
 
 export class TransactionRetriever implements ITransactionRetriever {
@@ -18,17 +18,17 @@ export class TransactionRetriever implements ITransactionRetriever {
 		this._server = _server;
 	}
 
-	public async fetchTransaction(transactionId: TransactionId): Promise<Transaction> {
+	public async fetchTransaction(transactionId: TransactionId, simplified?: boolean): Promise<Transaction | RawTransaction> {
 		try {
 			const transactionRecord: Server.TransactionRecord =
 				await this._server.transactions().transaction(transactionId).call() as any;
-			return TransactionRetriever.fromStellarTransaction(transactionRecord);
+			return TransactionRetriever.fromStellarTransaction(transactionRecord, simplified);
 		} catch (e) {
 			throw ErrorDecoder.translate(e);
 		}
 	}
 
-	public async fetchTransactionHistory(params: TransactionHistoryParams): Promise<Transaction[]> {
+	public async fetchTransactionHistory(params: TransactionHistoryParams, simplified?: boolean): Promise<Transaction[] | RawTransaction[]> {
 		try {
 			const transactionCallBuilder = this._server.transactions().forAccount(params.address)
 				.limit(params.limit ? params.limit : this.DEFAULT_LIMIT)
@@ -39,7 +39,7 @@ export class TransactionRetriever implements ITransactionRetriever {
 			const transactionRecords = await transactionCallBuilder.call();
 			const transactionHistory = new Array<Transaction>();
 			for (let record of transactionRecords.records) {
-				transactionHistory.push(TransactionRetriever.fromStellarTransaction(record));
+				transactionHistory.push(TransactionRetriever.fromStellarTransaction(record, simplified));
 			}
 			return transactionHistory;
 		} catch (e) {
@@ -47,7 +47,7 @@ export class TransactionRetriever implements ITransactionRetriever {
 		}
 	}
 
-	public static fromStellarTransaction(transactionRecord: Server.TransactionRecord): Transaction {
+	public static fromStellarTransaction(transactionRecord: Server.TransactionRecord, simplified?: boolean): Transaction {
 		const xdrTransaction = new XdrTransaction(transactionRecord.envelope_xdr);
 		const operations = xdrTransaction.operations;
 		const transactionBase = {
@@ -58,24 +58,26 @@ export class TransactionRetriever implements ITransactionRetriever {
 			source: transactionRecord.source_account
 		};
 
-		if (operations.length == 1) {
-			let operation = operations[0];
-			if (operation.type == "payment") {
-				return <PaymentTransaction>{
-					...transactionBase,
-					source: operation.source ? operation.source : transactionRecord.source_account,
-					destination: operation.destination,
-					amount: parseFloat(operation.amount),
-					memo: transactionRecord.memo
-				};
-			} else if (operation.type == "createAccount") {
-				return <CreateAccountTransaction>{
-					...transactionBase,
-					source: operation.source ? operation.source : transactionRecord.source_account,
-					destination: operation.destination,
-					startingBalance: parseFloat(operation.startingBalance),
-					memo: transactionRecord.memo
-				};
+		if (simplified !== false) {
+			if (operations.length == 1) {
+				let operation = operations[0];
+				if (operation.type == "payment") {
+					return <PaymentTransaction>{
+						...transactionBase,
+						source: operation.source ? operation.source : transactionRecord.source_account,
+						destination: operation.destination,
+						amount: parseFloat(operation.amount),
+						memo: transactionRecord.memo
+					};
+				} else if (operation.type == "createAccount") {
+					return <CreateAccountTransaction>{
+						...transactionBase,
+						source: operation.source ? operation.source : transactionRecord.source_account,
+						destination: operation.destination,
+						startingBalance: parseFloat(operation.startingBalance),
+						memo: transactionRecord.memo
+					};
+				}
 			}
 		}
 
