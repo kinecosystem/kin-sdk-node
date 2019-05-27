@@ -65,6 +65,9 @@ describe("KinClient", async () => {
 
 		const transactionId = await account.submitTransaction(builder);
 		const data = await client.getTransactionData(transactionId);
+		expect((data as any).destination).toBe(thirdKeypair.publicAddress);
+		expect((data as any).startingBalance).toBe(1000);
+		expect(data.source).toBe(account.publicAddress);
 		expect(data.memo).toBe('1-anon-my first wallet');
 	}, 30000);
 
