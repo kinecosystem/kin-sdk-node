@@ -328,6 +328,7 @@ The returned object will be one of the following:
 * PaymentTransaction - in case of a simple payment transaction between two accounts.
 ```typescript
 interface PaymentTransaction {
+	type: 'PaymentTransaction';
 	fee: number;
 	hash: string;
 	sequence: number;
@@ -336,11 +337,13 @@ interface PaymentTransaction {
 	amount: number;
 	destination: string;
 	memo?: string;
+	timestamp: string;
 }
 ```
 * CreateAccountTransaction - in case of a simple Create Account transaction.
 ```typescript
 interface CreateAccountTransaction {
+	type: 'CreateAccountTransaction';
 	fee: number;
 	hash: string;
 	sequence: number;
@@ -349,11 +352,13 @@ interface CreateAccountTransaction {
 	destination: string;
 	startingBalance: number;
 	memo?: string;
+	timestamp: string;
 }
 ```
 * RawTransaction - when the transaction includes more than a single operation or more advanced operation types.
 ```typescript
 interface RawTransaction {
+	type: 'RawTransaction';
 	fee: number;
 	hash: string;
 	sequence: number;
@@ -361,6 +366,7 @@ interface RawTransaction {
 	signatures: xdr.DecoratedSignature[],
 	memo?: Memo;
 	operations: Operation[];
+	timestamp: string;
 }
 ```
 

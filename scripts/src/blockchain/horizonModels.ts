@@ -50,26 +50,31 @@ export namespace AccountData {
 export type Transaction = PaymentTransaction | CreateAccountTransaction | RawTransaction;
 
 export interface TransactionBase {
+	type: 'PaymentTransaction' | 'CreateAccountTransaction' | 'RawTransaction';
 	fee: number;
 	hash: string;
 	sequence: number;
 	source: string;
+	timestamp: string;
 	signatures: xdr.DecoratedSignature[];
 }
 
 export interface PaymentTransaction extends TransactionBase {
+	type: 'PaymentTransaction';
 	amount: number;
 	destination: string;
 	memo?: string;
 }
 
 export interface CreateAccountTransaction extends TransactionBase {
+	type: 'CreateAccountTransaction';
 	destination: string;
 	startingBalance: number;
 	memo?: string;
 }
 
 export interface RawTransaction extends TransactionBase {
+	type: 'RawTransaction';
 	memo?: Memo;
 	operations: Operation[];
 }
