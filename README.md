@@ -97,6 +97,21 @@ const account = client.createKinAccount({
 ```
 See more about channels in the ["Channels" section](#Channels)
 
+You can retrieve the transaction history which is a list of your recent transactions: 
+
+Note: The data is available up to the 5 previous days from the moment of the transaction.
+```javascript
+const history = client.getTransactionHistory({address: keypair.publicAddress});
+```
+
+You can also retrieve a specific transaction with a TransactionId: 
+
+Note: The data is available up to the 5 previous days from the moment of the transaction.
+```javascript
+const history = client.getTransactionData({address: keypair.publicAddress});
+```
+
+
 See [Going live with Kin]() to learn more about what an appID is and how to get it.
 
 ### Managing Kin Accounts
