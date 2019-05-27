@@ -44,7 +44,6 @@ export type ErrorType =
 	| 'InvalidDataError'
 	| 'BadRequestError'
 	| 'InternalError'
-	| 'NoAccountError'
 	| 'AccountExistsError'
 	| 'LowBalanceError'
 	| 'AccountNotActivatedError'
