@@ -62,8 +62,14 @@ export class ChannelsGenerator {
 		});
 		const builder = await this._txSender.getTransactionBuilder(minimumFee);
 		let shouldSendTx = false;
+		const firstExists = await this._accountDataRetriever.isAccountExisting(channels[0].publicAddress);
+		const lastExists = await this._accountDataRetriever.isAccountExisting(channels[channels.length - 1].publicAddress);
+		if (firstExists && lastExists)
+			return channels;
+
 		for (const channel of channels) {
-			if (!await this._accountDataRetriever.isAccountExisting(channel.publicAddress)) {
+			if ((!firstExists && !lastExists) ||
+				!await this._accountDataRetriever.isAccountExisting(channel.publicAddress)) {
 				shouldSendTx = true;
 				builder.addOperation(Operation.createAccount({
 					destination: channel.publicAddress,

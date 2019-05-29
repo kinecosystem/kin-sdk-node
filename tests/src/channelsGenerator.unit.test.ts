@@ -1,4 +1,3 @@
-import {Address} from "../../scripts/src/types";
 import {ChannelsGenerator} from "../../scripts/src/blockchain/channelsGenerator";
 import {KeyPair} from "../../scripts/src/blockchain/keyPair";
 import {IAccountDataRetriever} from "../../scripts/src/blockchain/accountDataRetriever";
@@ -48,8 +47,8 @@ describe("ChannelsGenerator.createChannels", async () => {
 	});
 
 	test("create channels, expect correct transaction sent to blockchain and correct channels returned", async () => {
-		(mockedBlockchainInfoRetriever.getMinimumFee as any).mockResolvedValue(100);
-		(mockedAccountDataRetriever.isAccountExisting as any).mockResolvedValue(false);
+		(mockedBlockchainInfoRetriever.getMinimumFee as jest.Mock).mockResolvedValue(100);
+		(mockedAccountDataRetriever.isAccountExisting as jest.Mock).mockResolvedValue(false);
 		mockLoadAccountResponse("12345678");
 		//the expected tx envelope that will be sent to the network, consists "create account" operation for each of the
 		//'expectedChannels' channel address, fee will should be the minimum fee returned from getMinimumFee * channels count
@@ -58,23 +57,22 @@ describe("ChannelsGenerator.createChannels", async () => {
 		const channels = await channelsGenerator.createChannels(baseSeed, salt, 11, 22.4);
 		expect(channels.map(keyPair => keyPair.publicAddress)).toEqual(expectedChannels);
 		expect(sendKinCall.isDone()).toEqual(true);
+		//should check existence for the first and last accounts only and skip the rest
+		expect(mockedAccountDataRetriever.isAccountExisting).toBeCalledTimes(2);
 	});
 
-	test("create channels when some account already exists, expect transaction with non-existing account only, and all channels returned", async () => {
-		(mockedBlockchainInfoRetriever.getMinimumFee as any).mockResolvedValue(100);
+	test("create channels when first and last accounts exists, expect no transaction sent to blockchain and correct channels returned", async () => {
+		(mockedBlockchainInfoRetriever.getMinimumFee as jest.Mock).mockResolvedValue(100);
 		//claim that some accounts existing
-		mockedAccountDataRetriever.isAccountExisting = async function (address: Address) {
-			return address === 'GAKSR7ZSIRVHQTHVUMTU2KCSSRUDM3FXEQU4IYSVGRZ5Z7PEHVHRP7MT' ||
-				address === 'GCZEP7D5ANTNVVWN74FHNRZ33G7AUH5LVM34APYDC6QWR2TYY26VWCYY';
-		};
+		(mockedAccountDataRetriever.isAccountExisting as jest.Mock).mockImplementation(args => {
+			const address = args;
+			return address === 'GCXJ6DA2SLT5B6OAZ5JXAVOLRO2ART6UES7P4HQC34UVW4L3URCZX5IE' ||
+				address === 'GDJ7352OGIUPUMFIA5UZWTBNTFCCQKHYWN4IRT2UWEEYVQ5FG3QITLL2';
+		});
 		mockLoadAccountResponse("12345678");
-		//the expected tx envelope that will be sent to the network, consists "create account" operation for each of the
-		//'expectedChannels' channel address, fee will should be the minimum fee returned from getMinimumFee * channels count
-		const sendKinCall = mockSendKinResponse('AAAAAG809%2BMhGZ82rRmsoUDGVlkQGcjGXbF2fX62aTPsrih8AAADhAAAAAAAvGFPAAAAAAAAAAEAAAADMS0tAAAAAAkAAAAAAAAAAAAAAACunwwakufQ%2BcDPU3BVy4u0CM%2FUJL7%2BHgLfKVtxe6RFmwAAAAAAIi4AAAAAAAAAAAAAAAAAdtMQsDKTLU9%2BRHr%2BZ592Z6wYHNl1cmRXziG3YtCWyjoAAAAAACIuAAAAAAAAAAAAAAAAACkm8W%2Bml2l2beMYNqLyJzerMvu0za8%2FPaIFzSLiky6MAAAAAAAiLgAAAAAAAAAAAAAAAAC8ks5050e6fvxlJRgPLAuq0Q4cPsFZaY52CRe0oC2THwAAAAAAIi4AAAAAAAAAAAAAAAAAANOUnCHSYdk1EE6e1pxj31CgysDhfgHkl%2BtVGcEpR%2BEAAAAAACIuAAAAAAAAAAAAAAAAANKO6xgt3E4ye%2FDErgG1sDQmOtqcE4NWjke0LQPAfohcAAAAAAAiLgAAAAAAAAAAAAAAAADnh5FLH4d5e12M7JXjEA4I%2BSdCztkuJv17rjaTqP5RBwAAAAAAIi4AAAAAAAAAAAAAAAAAoguzqRDvPUXfcrTSsDn8kakx4BYC9y5s%2BUSSmThO%2F1wAAAAAACIuAAAAAAAAAAAAAAAAANP9904yKPowqAdpm0wtmUQoKPizeIjPVLEJisOlNuCJAAAAAAAiLgAAAAAAAAAAAeyuKHwAAABAsy4dapFtsgMv3BgoSTRYx6CZijKThA5Gn9XP5WH0MyuKqSXdE%2B0AaNsVST15QZqdJJt7fme6nAS2ctp7gQ%2BHCw%3D%3D');
-
 		const channels = await channelsGenerator.createChannels(baseSeed, salt, 11, 22.4);
 		expect(channels.map(keyPair => keyPair.publicAddress)).toEqual(expectedChannels);
-		expect(sendKinCall.isDone()).toEqual(true);
+		expect(mockedAccountDataRetriever.isAccountExisting).toBeCalledTimes(2);
 	});
 
 	test("create channels when all channels already created, expect no transaction sent to blockchain and correct channels returned", async () => {
