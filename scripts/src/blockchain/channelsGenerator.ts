@@ -54,12 +54,12 @@ export class ChannelsGenerator {
 	}
 
 	async createChannels(baseSeed: string, salt: string, channelsCount: number, startingBalance: number): Promise<KeyPair[]> {
-		const minimumFee = await this._blockchainInfoRetriever.getMinimumFee();
 		const channels = ChannelsGenerator.generateSeeds({
 			baseSeed: baseSeed,
 			salt: salt,
 			channelsCount: channelsCount
 		});
+		const minimumFee = await this._blockchainInfoRetriever.getMinimumFee();
 		const builder = await this._txSender.getTransactionBuilder(minimumFee);
 		let shouldSendTx = false;
 		const firstExists = await this._accountDataRetriever.isAccountExisting(channels[0].publicAddress);
