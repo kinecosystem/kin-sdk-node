@@ -46,7 +46,7 @@
     "typescript": "^3.3.4000"
   },
   "dependencies": {
-    "@kinecosystem/kin-sdk": "0.20.3",
+    "@kinecosystem/kin-sdk": "0.20.4",
     "jest-each": "^24.7.1"
   },
   "jest": {
