@@ -15,7 +15,7 @@ Make sure you have Node v.8 or higher.
 ## Installation
 
 ```bash
-npm install kin-node-sdk
+npm install @kinecosystem/kin-sdk-node
 ```
 
 Track the development of this SDK on [GitHub](https://github.com/kinecosystem/kin-sdk-node/tree/master).
