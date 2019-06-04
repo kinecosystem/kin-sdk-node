@@ -20,12 +20,8 @@ describe("KinClient", async () => {
 		client = new KinClient(integEnv);
 		sender = client.createKinAccount({seed: keypair.seed});
 		receiver = client.createKinAccount({seed: seconedKeypair.seed});
-		console.log("creating first account using friendbot = " + keypair.publicAddress);
 		const transactionId = await client.friendbot({address: keypair.publicAddress, amount: 10000});
-		console.log("creating first account done.");
-		console.log("creating second account using friendbot = " + seconedKeypair.publicAddress);
 		const secondtransactionId = await client.friendbot({address: seconedKeypair.publicAddress, amount: 10000});
-		console.log("creating second account done.");
 		expect(transactionId).toBeDefined();
 		expect(secondtransactionId).toBeDefined();
 	}, 30000);
@@ -127,7 +123,6 @@ describe("KinClient", async () => {
 		let hash: string;
 		await client.createPaymentListener({
 			addresses: [receiver.publicAddress], onPayment: payment => {
-				console.log(payment);
 				expect(payment.source).toBe(keypair.publicAddress);
 				expect(payment.destination).toBe(seconedKeypair.publicAddress);
 				expect(payment.memo).toBe('1-anon-sending kin');
@@ -144,6 +139,5 @@ describe("KinClient", async () => {
 			memoText: 'sending kin'
 		});
 		hash = await sender.submitTransaction(sendBuilder);
-		console.log("submitTransaction " + hash);
 	}, 120000);
 });
