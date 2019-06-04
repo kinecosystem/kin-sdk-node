@@ -8,6 +8,7 @@ import {Environment} from "../../scripts/src/environment";
 import {Memo, Network, Operation} from "@kinecosystem/kin-base";
 import {WhitelistPayload} from "../../scripts/src/types";
 import {BlockchainInfoRetriever} from "../../scripts/src/blockchain/blockchainInfoRetriever";
+import CreateAccount = Operation.CreateAccount;
 
 const fakeUrl = "http://horizon.com";
 const server = new Server(fakeUrl, {allowHttp: true});
@@ -42,6 +43,18 @@ describe("KinAccount.createAccount", async () => {
 			startingBalance: '10000'
 		}));
 		expect(await kinAccount.submitTransaction(txBuilder)).toEqual("6ab7034086be38c62fbbabd09349d8cc49d59bfe0f7ad3ef6cf89c5a573eee95");
+	});
+
+	test("build create account with 0", async () => {
+		mockLoadAccountResponse("6319125253062661");
+
+		const txBuilder = await kinAccount.buildCreateAccount({
+			address: receiverPublic,
+			startingBalance: 0,
+			fee: fee
+		});
+		let transaction = txBuilder.build();
+		expect((transaction.operations[0] as CreateAccount).startingBalance).toEqual("0");
 	});
 
 	test("account created build transaction", async () => {

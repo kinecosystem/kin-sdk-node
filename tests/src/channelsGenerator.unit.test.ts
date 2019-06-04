@@ -1,10 +1,10 @@
-import {Address} from "../../scripts/src/types";
 import {ChannelsGenerator} from "../../scripts/src/blockchain/channelsGenerator";
 import {KeyPair} from "../../scripts/src/blockchain/keyPair";
 import {IAccountDataRetriever} from "../../scripts/src/blockchain/accountDataRetriever";
 import {IBlockchainInfoRetriever} from "../../scripts/src/blockchain/blockchainInfoRetriever";
 import {TxSender} from "../../scripts/src/blockchain/txSender";
-import {Network, Server} from "@kinecosystem/kin-sdk";
+import {Server} from "@kinecosystem/kin-sdk";
+import {Network} from "@kinecosystem/kin-base";
 import {Environment} from "../../scripts/src/environment";
 import * as nock from "nock";
 
@@ -41,6 +41,7 @@ describe("ChannelsGenerator.createChannels", async () => {
 		};
 
 		Network.use(new Network(Environment.Testnet.passphrase));
+		console.log(Network.current());
 		const server = new Server(fakeUrl, {allowHttp: true});
 		const txSender = new TxSender(KeyPair.fromSeed(baseSeed),
 			"", server, mockedBlockchainInfoRetriever);
@@ -48,8 +49,8 @@ describe("ChannelsGenerator.createChannels", async () => {
 	});
 
 	test("create channels, expect correct transaction sent to blockchain and correct channels returned", async () => {
-		(mockedBlockchainInfoRetriever.getMinimumFee as any).mockResolvedValue(100);
-		(mockedAccountDataRetriever.isAccountExisting as any).mockResolvedValue(false);
+		(mockedBlockchainInfoRetriever.getMinimumFee as jest.Mock).mockResolvedValue(100);
+		(mockedAccountDataRetriever.isAccountExisting as jest.Mock).mockResolvedValue(false);
 		mockLoadAccountResponse("12345678");
 		//the expected tx envelope that will be sent to the network, consists "create account" operation for each of the
 		//'expectedChannels' channel address, fee will should be the minimum fee returned from getMinimumFee * channels count
@@ -58,23 +59,40 @@ describe("ChannelsGenerator.createChannels", async () => {
 		const channels = await channelsGenerator.createChannels(baseSeed, salt, 11, 22.4);
 		expect(channels.map(keyPair => keyPair.publicAddress)).toEqual(expectedChannels);
 		expect(sendKinCall.isDone()).toEqual(true);
+		//should check existence for the first and last accounts only and skip the rest
+		expect(mockedAccountDataRetriever.isAccountExisting).toBeCalledTimes(2);
 	});
 
-	test("create channels when some account already exists, expect transaction with non-existing account only, and all channels returned", async () => {
-		(mockedBlockchainInfoRetriever.getMinimumFee as any).mockResolvedValue(100);
+	test("create channels when only first exists, expect no transaction sent to blockchain and correct channels returned", async () => {
+		(mockedBlockchainInfoRetriever.getMinimumFee as jest.Mock).mockResolvedValue(100);
 		//claim that some accounts existing
-		mockedAccountDataRetriever.isAccountExisting = async function (address: Address) {
-			return address === 'GAKSR7ZSIRVHQTHVUMTU2KCSSRUDM3FXEQU4IYSVGRZ5Z7PEHVHRP7MT' ||
-				address === 'GCZEP7D5ANTNVVWN74FHNRZ33G7AUH5LVM34APYDC6QWR2TYY26VWCYY';
-		};
+		(mockedAccountDataRetriever.isAccountExisting as jest.Mock).mockImplementation(args => {
+			const address = args;
+			return address === expectedChannels[0];
+		});
 		mockLoadAccountResponse("12345678");
 		//the expected tx envelope that will be sent to the network, consists "create account" operation for each of the
 		//'expectedChannels' channel address, fee will should be the minimum fee returned from getMinimumFee * channels count
-		const sendKinCall = mockSendKinResponse('AAAAAG809%2BMhGZ82rRmsoUDGVlkQGcjGXbF2fX62aTPsrih8AAADhAAAAAAAvGFPAAAAAAAAAAEAAAADMS0tAAAAAAkAAAAAAAAAAAAAAACunwwakufQ%2BcDPU3BVy4u0CM%2FUJL7%2BHgLfKVtxe6RFmwAAAAAAIi4AAAAAAAAAAAAAAAAAdtMQsDKTLU9%2BRHr%2BZ592Z6wYHNl1cmRXziG3YtCWyjoAAAAAACIuAAAAAAAAAAAAAAAAACkm8W%2Bml2l2beMYNqLyJzerMvu0za8%2FPaIFzSLiky6MAAAAAAAiLgAAAAAAAAAAAAAAAAC8ks5050e6fvxlJRgPLAuq0Q4cPsFZaY52CRe0oC2THwAAAAAAIi4AAAAAAAAAAAAAAAAAANOUnCHSYdk1EE6e1pxj31CgysDhfgHkl%2BtVGcEpR%2BEAAAAAACIuAAAAAAAAAAAAAAAAANKO6xgt3E4ye%2FDErgG1sDQmOtqcE4NWjke0LQPAfohcAAAAAAAiLgAAAAAAAAAAAAAAAADnh5FLH4d5e12M7JXjEA4I%2BSdCztkuJv17rjaTqP5RBwAAAAAAIi4AAAAAAAAAAAAAAAAAoguzqRDvPUXfcrTSsDn8kakx4BYC9y5s%2BUSSmThO%2F1wAAAAAACIuAAAAAAAAAAAAAAAAANP9904yKPowqAdpm0wtmUQoKPizeIjPVLEJisOlNuCJAAAAAAAiLgAAAAAAAAAAAeyuKHwAAABAsy4dapFtsgMv3BgoSTRYx6CZijKThA5Gn9XP5WH0MyuKqSXdE%2B0AaNsVST15QZqdJJt7fme6nAS2ctp7gQ%2BHCw%3D%3D');
+		const sendKinCall = mockSendKinResponse('AAAAAG809%2BMhGZ82rRmsoUDGVlkQGcjGXbF2fX62aTPsrih8AAAD6AAAAAAAvGFPAAAAAAAAAAEAAAADMS0tAAAAAAoAAAAAAAAAAAAAAAAVKP8yRGp4TPWjJ00oUpRoNmy3JCnEYlU0c9z95D1PFwAAAAAAIi4AAAAAAAAAAAAAAAAAskf8fQNm2tbN%2Fwp2xzvZvgofq6s3wD8DF6Fo6njGvVsAAAAAACIuAAAAAAAAAAAAAAAAAHbTELAyky1PfkR6%2FmefdmesGBzZdXJkV84ht2LQlso6AAAAAAAiLgAAAAAAAAAAAAAAAAApJvFvppdpdm3jGDai8ic3qzL7tM2vPz2iBc0i4pMujAAAAAAAIi4AAAAAAAAAAAAAAAAAvJLOdOdHun78ZSUYDywLqtEOHD7BWWmOdgkXtKAtkx8AAAAAACIuAAAAAAAAAAAAAAAAAADTlJwh0mHZNRBOntacY99QoMrA4X4B5JfrVRnBKUfhAAAAAAAiLgAAAAAAAAAAAAAAAADSjusYLdxOMnvwxK4BtbA0JjranBODVo5HtC0DwH6IXAAAAAAAIi4AAAAAAAAAAAAAAAAA54eRSx%2BHeXtdjOyV4xAOCPknQs7ZLib9e642k6j%2BUQcAAAAAACIuAAAAAAAAAAAAAAAAAKILs6kQ7z1F33K00rA5%2FJGpMeAWAvcubPlEkpk4Tv9cAAAAAAAiLgAAAAAAAAAAAAAAAADT%2FfdOMij6MKgHaZtMLZlEKCj4s3iIz1SxCYrDpTbgiQAAAAAAIi4AAAAAAAAAAAHsrih8AAAAQNQDtAcI4zUEeVgibFdrinnT3VMmfCZsaP4wrKbsnBW5H3qnUmPzRV%2FNME%2BnHoeIkUX3bx6pvs88LGL96eI53QM%3D');
 
 		const channels = await channelsGenerator.createChannels(baseSeed, salt, 11, 22.4);
 		expect(channels.map(keyPair => keyPair.publicAddress)).toEqual(expectedChannels);
 		expect(sendKinCall.isDone()).toEqual(true);
+		expect(mockedAccountDataRetriever.isAccountExisting).toBeCalledTimes(2 + 11);
+	});
+
+	test("create channels when first and last accounts exists, expect no transaction sent to blockchain and correct channels returned", async () => {
+		(mockedBlockchainInfoRetriever.getMinimumFee as jest.Mock).mockResolvedValue(100);
+		//claim that some accounts existing
+		(mockedAccountDataRetriever.isAccountExisting as jest.Mock).mockImplementation(args => {
+			const address = args;
+			return address === expectedChannels[0] ||
+				address === expectedChannels[expectedChannels.length - 1];
+		});
+		mockLoadAccountResponse("12345678");
+		const channels = await channelsGenerator.createChannels(baseSeed, salt, 11, 22.4);
+		expect(channels.map(keyPair => keyPair.publicAddress)).toEqual(expectedChannels);
+		expect(mockedAccountDataRetriever.isAccountExisting).toBeCalledTimes(2);
 	});
 
 	test("create channels when all channels already created, expect no transaction sent to blockchain and correct channels returned", async () => {
@@ -86,6 +104,11 @@ describe("ChannelsGenerator.createChannels", async () => {
 		const channels = await channelsGenerator.createChannels(baseSeed, salt, 11, 22.4);
 		expect(channels.map(keyPair => keyPair.publicAddress)).toEqual(expectedChannels);
 		expect(sendKinCall.isDone()).toEqual(false);
+	});
+
+	test("create channels with more than 100 channels count", async () => {
+		await expect(channelsGenerator.createChannels(baseSeed, salt, 101, 22.4))
+			.rejects.toBeInstanceOf(RangeError);
 	});
 
 	function mockLoadAccountResponse(sequence: string) {

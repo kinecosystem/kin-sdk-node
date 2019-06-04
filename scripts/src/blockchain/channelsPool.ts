@@ -13,7 +13,7 @@ export class ChannelsPool {
 		return this.channels.filter(channel => channel.state == 'free');
 	}
 
-	public async acquireChannel(func: (channel: Channel) => Promise<void>): Promise<void> {
+	public async acquireChannel<T>(func: (channel: Channel) => Promise<T>): Promise<T> {
 		let freeChannels = this.getFreeChannels();
 		if (freeChannels.length == 0) {
 			throw new ChannelBusyError();
@@ -22,7 +22,7 @@ export class ChannelsPool {
 		const freeChannel = freeChannels[randomIndex];
 		freeChannel.state = 'busy';
 		try {
-			await func(freeChannel);
+			return await func(freeChannel);
 		} finally {
 			this.releaseChannel(freeChannel);
 		}
