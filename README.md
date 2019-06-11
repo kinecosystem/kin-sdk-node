@@ -231,24 +231,24 @@ The snippet Transfer Kin will transfer 20 Kin to the recipient account "GDIRGGTB
 
 Option 1: Send the transaction without using channels
 ```javascript
-   //build the transaction locally
+   //Build the transaction locally
    account.buildSendKin({
         address: destination,
         amount: 20,
         fee: 100,
         memoText: 'tx memo'
     }).then(builder => {
-        //use the builder to submit the transaction to the blockchain
+        //Use the builder to submit the transaction to the blockchain
         builder => account.submitTransaction(builder)
     });
 ```
 
-Option 2: Use channels to enable parallel processing of multiple transactions.
+Option 2: Use channels to enable parallel processing of multiple transactions
 
 ```javascript
 //acquire a channel first
 account.channelsPool.acquireChannel(channel =>
-        //build the transaction within the channel
+        //Build the transaction within the channel
         account.buildSendKin({
             address: destination,
             amount: 20,
@@ -256,10 +256,10 @@ account.channelsPool.acquireChannel(channel =>
             memoText: 'tx memo',
             channel: channel
         })
-        //use the builder to submit the transaction to the blockchain
+        //Use the builder to submit the transaction to the blockchain
             .then(builder => account.submitTransaction(builder))
     )
-        // the Promise inside acquireChannel function can be chained directly from acquireChannel
+        // The Promise inside acquireChannel function can be chained directly from acquireChannel.
         .then(transactionId => console.log(transactionId));
 ```
 Note: A channel is a resource that has to be released after use. You should use channels only within the above function. In that case, the SDK will release the channel back to the channels pool, so it will be available for later use.
