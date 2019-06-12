@@ -1,6 +1,6 @@
 {
   "name": "@kinecosystem/kin-sdk-node",
-  "version": "0.0.1",
+  "version": "0.9.0",
   "description": "Kin SDK for the Node runtime",
   "main": "scripts/bin/index.js",
   "types": "scripts/bin/index.d.ts",

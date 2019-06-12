@@ -41,7 +41,6 @@ describe("ChannelsGenerator.createChannels", async () => {
 		};
 
 		Network.use(new Network(Environment.Testnet.passphrase));
-		console.log(Network.current());
 		const server = new Server(fakeUrl, {allowHttp: true});
 		const txSender = new TxSender(KeyPair.fromSeed(baseSeed),
 			"", server, mockedBlockchainInfoRetriever);
