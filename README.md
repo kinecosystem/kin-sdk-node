@@ -1,5 +1,3 @@
-# This SDK is work in progress and is not ready for use.
-
 # Kin SDK for Node
 
 Kin SDK for Node is meant to be used as a back-end service. It can perform actions for your client apps (iOS, Android, etc.) 
