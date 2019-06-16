@@ -7,4 +7,4 @@ It can also monitor blockchain transactions so that you can implement broader se
 It is up to you how to integrate the SDK in your overall architecture and how to manage your server.
 
 
-<a href="http://localhost:3000/kin-website-docs/docs/documentation/nodejs-sdk"><img src="https://partners.kinecosystem.com/img/documentation-button2x.png" width=300 height=84 alt="Documentation"/></a>
+<a href="https://kinecosystem.github.io/kin-website-docs/docs/documentation/nodejs-sdk"><img src="https://partners.kinecosystem.com/img/documentation-button2x.png" width=300 height=84 alt="Documentation"/></a>
