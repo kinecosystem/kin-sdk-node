@@ -16,7 +16,7 @@ import {BlockchainInfoRetriever} from "./blockchain/blockchainInfoRetriever";
 import {TransactionRetriever} from "./blockchain/transactionRetriever";
 import {Address, TransactionId} from "./types";
 import {BlockchainListener} from "./blockchain/blockchainListeners";
-import {ANON_APP_ID} from "./config";
+import {ANON_APP_ID, GLOBAL_HEADERS} from "./config";
 
 export class KinClient {
 
@@ -29,7 +29,7 @@ export class KinClient {
 
 	constructor(private readonly _environment: Environment) {
 		this._environment = _environment;
-		this._server = new Server(_environment.url);
+		this._server = new Server(_environment.url, {allowHttp: false, headers: GLOBAL_HEADERS});
 		Network.use(new Network(_environment.passphrase));
 		this._accountDataRetriever = new AccountDataRetriever(this._server);
 		this._friendbotHandler = _environment.friendbotUrl ? new Friendbot(_environment.friendbotUrl, this._accountDataRetriever) : undefined;

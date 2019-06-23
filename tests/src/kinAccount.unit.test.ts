@@ -1,4 +1,3 @@
-import {Server} from "@kinecosystem/kin-sdk";
 import * as nock from "nock";
 
 import {KinAccount} from "../../scripts/src/kinAccount";
@@ -9,9 +8,12 @@ import {Memo, Network, Operation} from "@kinecosystem/kin-base";
 import {WhitelistPayload} from "../../scripts/src/types";
 import {BlockchainInfoRetriever} from "../../scripts/src/blockchain/blockchainInfoRetriever";
 import CreateAccount = Operation.CreateAccount;
+import {Server} from "@kinecosystem/kin-sdk";
 
 const fakeUrl = "http://horizon.com";
-const server = new Server(fakeUrl, {allowHttp: true});
+const headerKey = "user-agent";
+const headerVal = "test-kin";
+const server = new Server(fakeUrl, {allowHttp: true, headers: new Map<string, string>().set(headerKey, headerVal)});
 const accountDataRetriever = new AccountDataRetriever(server);
 const senderSeed = "SBVYIBM6UTDHMN7RN6VVEFKABRQBW3YB7W7RYFZFTBD6YX3IDFLS7NGW";
 const senderPublic = "GBXTJ57DEEMZ6NVNDGWKCQGGKZMRAGOIYZO3C5T5P23GSM7MVYUHZK65";
@@ -243,18 +245,21 @@ describe("KinAccount.createAccount", async () => {
 
 function mock400SendKinResponse(response: ErrorResponse) {
 	nock(fakeUrl)
+		.matchHeader(headerKey, headerVal)
 		.post(url => url.includes("/transactions"), /tx=\w+/gi)
 		.reply(response.status, response);
 }
 
 function mock400AccountResponse(response: ErrorResponse) {
 	nock(fakeUrl)
+		.matchHeader(headerKey, headerVal)
 		.post(url => url.includes("/transactions"), /tx=\w+/gi)
 		.reply(400, response);
 }
 
 function mockLoadAccountResponse(sequence: string) {
 	nock(fakeUrl)
+		.matchHeader(headerKey, headerVal)
 		.get(url => url.includes(senderPublic))
 		.reply(200,
 			{
@@ -329,6 +334,7 @@ function mockLoadAccountResponse(sequence: string) {
 
 function mockBuilderCreateAccountResponse() {
 	nock(fakeUrl)
+		.matchHeader(headerKey, headerVal)
 		.post(url => url.includes("/transactions"), "tx=AAAAAG809%2BMhGZ82rRmsoUDGVlkQGcjGXbF2fX62aTPsrih8AAAACgAWczYAAAAGAAAAAAAAA" +
 			"AEAAAAQMS1hYWFhLXRlc3QgbWVtbwAAAAEAAAABAAAAAG809%2BMhGZ82rRmsoUDGVlkQGcjGXbF2fX62aTPsrih8AAAAAAAAAABLW7uTR3doVCIuTfFzKnlf3HpeZt2WTHUE6HhL67xsuwAAA" +
 			"AA7msoAAAAAAAAAAAHsrih8AAAAQIbUcMf2hOWK42YlO8cWIGnZIYuTPj739NhH8WeB5mIEgaNfwyrWvdNUkAInnNoTGu6DdbMky5izo9QEgLeZ0gg%3D")
@@ -353,6 +359,7 @@ function mockBuilderCreateAccountResponse() {
 
 function mockCreateAccountResponse() {
 	nock(fakeUrl)
+		.matchHeader(headerKey, headerVal)
 		.post(url => url.includes("/transactions"), "tx=AAAAAG809%2BMhGZ82rRmsoUDGVlkQGcjGXbF2fX62aTPsrih8AAAAZAAWczYAAAAGAAAAAAAAAAE" +
 			"AAAAQMS1hYWFhLXRlc3QgbWVtbwAAAAEAAAABAAAAAG809%2BMhGZ82rRmsoUDGVlkQGcjGXbF2fX62aTPsrih8AAAAAAAAAABtunizTDaQZvKXPNPf9i8kbSej8dQw1GU7agVmLPf0XQAAAAAAD" +
 			"0JAAAAAAAAAAAHsrih8AAAAQAcqtM7IY%2FdojHCYDZHlGyU9khht6BmyFnYyffwcXgQXuYRyRbIEZFKawz4jQznYVSgQQnHSoYqHtaO0J%2BVLmwA%3D")
@@ -377,6 +384,7 @@ function mockCreateAccountResponse() {
 
 function mockSendKinResponse() {
 	nock(fakeUrl)
+		.matchHeader(headerKey, headerVal)
 		.post(url => url.includes("/transactions"), "tx=AAAAAG809%2BMhGZ82rRmsoUDGVlkQGcjGXbF2fX62aTPsrih8AAAAZAAWczYAAAAHAAAAAAAAAAEAAA" +
 			"AQMS1hYWFhLXRlc3QgbWVtbwAAAAEAAAABAAAAAG809%2BMhGZ82rRmsoUDGVlkQGcjGXbF2fX62aTPsrih8AAAAAQAAAABLW7uTR3doVCIuTfFzKnlf3HpeZt2WTHUE6HhL67xsuwAAAAAAAAAAACO" +
 			"NkAAAAAAAAAAB7K4ofAAAAECVwez0u84Tk%2BNbQbh5srOCmYv4vE81P23nW6uy1oQAhpTuwJ%2Bm0LbprWH9GGUl3zZV%2FZYcM9ghOJBRyZ55glcO")
@@ -403,6 +411,7 @@ function mockSendKinResponse() {
 
 function mockMissingMemoResponse() {
 	nock(fakeUrl)
+		.matchHeader(headerKey, headerVal)
 		.post(url => url.includes("/transactions"), "tx=AAAAAG809%2BMhGZ82rRmsoUDGVlkQGcjGXbF2fX62aTPsrih8AAAAZAAWczYAAAAGAAAAAAAAAAEAAAAHM" +
 			"S1hYWFhLQAAAAABAAAAAQAAAABvNPfjIRmfNq0ZrKFAxlZZEBnIxl2xdn1%2Btmkz7K4ofAAAAAAAAAAAbbp4s0w2kGbylzzT3%2FYvJG0no%2FHUMNRlO2oFZiz39F0AAAAAAA9CQAAAAAAAAAAB7K4of" +
 			"AAAAEAme%2F5beR7kQm9B%2B1b9CLd9swfG3dHLml0QRG72pOuOkqDAgIB%2BmryTtl4m7BYM5SXNqjq80XPxgrTvfzPY%2F6oP")
@@ -428,6 +437,7 @@ function mockMissingMemoResponse() {
 
 function mockAddMemoResponse() {
 	nock(fakeUrl)
+		.matchHeader(headerKey, headerVal)
 		.post(url => url.includes("/transactions"), "tx=AAAAAG809%2BMhGZ82rRmsoUDGVlkQGcjGXbF2fX62aTPsrih8AAAAZAAWczYAAAAGAAAAAAAAAAEAAAAQMS1h" +
 			"YWFhLXRlc3QgbWVtbwAAAAEAAAABAAAAAG809%2BMhGZ82rRmsoUDGVlkQGcjGXbF2fX62aTPsrih8AAAAAAAAAABtunizTDaQZvKXPNPf9i8kbSej8dQw1GU7agVmLPf0XQAAAAAAD0JAAAAAAAAAAAHsrih" +
 			"8AAAAQAcqtM7IY%2FdojHCYDZHlGyU9khht6BmyFnYyffwcXgQXuYRyRbIEZFKawz4jQznYVSgQQnHSoYqHtaO0J%2BVLmwA%3D")
@@ -452,6 +462,7 @@ function mockAddMemoResponse() {
 
 function mockAddFeeResponse() {
 	nock(fakeUrl)
+		.matchHeader(headerKey, headerVal)
 		.post(url => url.includes("/transactions"), "tx=AAAAAG809%2BMhGZ82rRmsoUDGVlkQGcjGXbF2fX62aTPsrih8AAAAFAAWczYAAAAHAAAAAAAAAAEAAAAQMS1hYWF" +
 			"hLXRlc3QgbWVtbwAAAAEAAAABAAAAAG809%2BMhGZ82rRmsoUDGVlkQGcjGXbF2fX62aTPsrih8AAAAAQAAAABLW7uTR3doVCIuTfFzKnlf3HpeZt2WTHUE6HhL67xsuwAAAAAAAAAAACONkAAAAAAAAAAB7K4of" +
 			"AAAAEDCr47RR1bk%2FI1TynPEgn937jX3pPXNyyMHPSAW28CtOIXspWiXV3pQe0xN3eZSz94Y%2BNm5G8f0gCPmXxQXIJ4N")

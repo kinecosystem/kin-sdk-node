@@ -170,6 +170,4 @@ describe("KinAccount", async () => {
 		expect(data.data.test).toBe(base64data);
 
 	}, 60000);
-
-
 });

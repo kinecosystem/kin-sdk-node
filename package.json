@@ -47,7 +47,7 @@
     "jest-each": "^24.7.1"
   },
   "dependencies": {
-    "@kinecosystem/kin-sdk": "0.20.4"
+    "@kinecosystem/kin-sdk": "0.20.5"
   },
   "jest": {
     "moduleFileExtensions": [

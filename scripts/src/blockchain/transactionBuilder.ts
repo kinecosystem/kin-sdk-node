@@ -1,6 +1,13 @@
-import {Account, TransactionBuilder as BaseTransactionBuilder, xdr, Memo, MemoType, MemoText} from "@kinecosystem/kin-base";
+import {
+	Account,
+	Memo,
+	MemoText,
+	MemoType,
+	Transaction,
+	TransactionBuilder as BaseTransactionBuilder,
+	xdr
+} from "@kinecosystem/kin-base";
 import {Channel} from "./channelsPool";
-import {Server} from "@kinecosystem/kin-sdk";
 
 interface TransactionBuilderOptions extends BaseTransactionBuilder.TransactionBuilderOptions {
 	fee: number;
@@ -14,7 +21,7 @@ export class TransactionBuilder {
 	private readonly _channel?: Channel;
 	private readonly _appId?: string;
 
-	constructor(readonly _server: Server, sourceAccount: Account, options: TransactionBuilderOptions, channel?: Channel) {
+	constructor(sourceAccount: Account, options: TransactionBuilderOptions, channel?: Channel) {
 		this._transactionBuilder = new BaseTransactionBuilder(sourceAccount, options);
 		this._appId = options.appId;
 		this.addFee(options.fee);
@@ -58,7 +65,7 @@ export class TransactionBuilder {
 		return this._channel;
 	}
 
-	public build() {
+	public build(): Transaction {
 		return this._transactionBuilder.build();
 	}
 }

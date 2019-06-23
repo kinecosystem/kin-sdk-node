@@ -1,9 +1,9 @@
-import {Server} from "@kinecosystem/kin-sdk";
 import {TransactionRetriever} from "../../scripts/src/blockchain/transactionRetriever";
 import * as nock from "nock";
 import {CreateAccountTransaction, PaymentTransaction, RawTransaction} from "../../scripts/src/blockchain/horizonModels";
 import {ErrorResponse, InternalError, ResourceNotFoundError} from "../../scripts/src/errors";
 import {Memo, Operation} from "@kinecosystem/kin-base";
+import {Server} from "@kinecosystem/kin-sdk";
 
 // as a workaround, TransactionRetriever was separated to two files due to some jest error when running both fetchTransactionHistory
 // and fetchTransaction tests in the same file

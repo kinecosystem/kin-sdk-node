@@ -1,15 +1,11 @@
-import {Server} from "@kinecosystem/kin-sdk";
 import * as nock from "nock";
 import {BlockchainInfoRetriever} from "../../scripts/src/blockchain/blockchainInfoRetriever";
 import {ResourceNotFoundError} from "../../scripts/src/errors";
+import {Server} from "@kinecosystem/kin-sdk";
 
 const fakeUrl = "https://horizon-testnet.kininfrastructure.com";
 let blockchainInfoRetriever: BlockchainInfoRetriever;
 
-interface ErrorResponseData {
-	code: number,
-	body: any
-}
 
 describe("BlockchainInfoRetriever.getMinimumFee", async () => {
 	beforeAll(async () => {

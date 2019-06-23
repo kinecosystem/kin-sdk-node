@@ -1,5 +1,4 @@
 import {Address, TransactionId, WhitelistPayload} from "../types";
-import {Server} from "@kinecosystem/kin-sdk";
 import {Asset, Keypair, Memo, Network, Operation, Transaction as XdrTransaction} from "@kinecosystem/kin-base";
 import {KeyPair} from "./keyPair";
 import {TransactionBuilder} from "./transactionBuilder";
@@ -8,6 +7,7 @@ import {Channel} from "./channelsPool";
 import {IBlockchainInfoRetriever} from "./blockchainInfoRetriever";
 import {CHANNEL_TOP_UP_TX_COUNT} from "../config";
 import {TransactionErrorList} from "./errors";
+import {Server} from "@kinecosystem/kin-sdk";
 
 interface WhitelistPayloadTemp {
 	// The android stellar sdk spells 'envelope' as 'envelop'
@@ -31,7 +31,7 @@ export class TxSender {
 
 	public async getTransactionBuilder(fee: number, channel?: Channel): Promise<TransactionBuilder> {
 		const response = await this.loadSenderAccountData(channel);
-		return new TransactionBuilder(this._server, response, {fee: fee, appId: this.appId}, channel)
+		return new TransactionBuilder(response, {fee: fee, appId: this.appId}, channel)
 			.setTimeout(0);
 	}
 

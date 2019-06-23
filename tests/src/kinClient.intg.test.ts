@@ -131,7 +131,6 @@ describe("KinClient", async () => {
 				done();
 			}
 		});
-
 		let sendBuilder = await sender.buildSendKin({
 			address: receiver.publicAddress,
 			amount: 10,
@@ -139,5 +138,6 @@ describe("KinClient", async () => {
 			memoText: 'sending kin'
 		});
 		hash = await sender.submitTransaction(sendBuilder);
+
 	}, 120000);
 });

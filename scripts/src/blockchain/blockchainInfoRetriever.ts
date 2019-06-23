@@ -1,5 +1,5 @@
 import {Server} from "@kinecosystem/kin-sdk";
-import {NetworkError, ServerError, ErrorDecoder} from "../errors";
+import {ErrorDecoder} from "../errors";
 
 export interface IBlockchainInfoRetriever {
 	getMinimumFee(): Promise<number>;

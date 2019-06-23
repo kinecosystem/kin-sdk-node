@@ -1,8 +1,9 @@
 import {AccountDataRetriever} from "../../scripts/src/blockchain/accountDataRetriever";
-import {Server} from "@kinecosystem/kin-sdk";
 import {AccountData} from "../../scripts/src/blockchain/horizonModels";
 import * as nock from "nock";
 import {ErrorResponse, InternalError, InvalidAddressError, ResourceNotFoundError} from "../../scripts/src/errors";
+import {Server} from "@kinecosystem/kin-sdk";
+import {GLOBAL_HEADERS} from "../../scripts/src/config";
 
 const fakeUrl = "http://horizon.com";
 const publicAddress = "GDAVCZIOYRGV74ROE344CMRLPZYSZVRHNTRFGOUSAQBILJ7M5ES25KOZ";
@@ -101,7 +102,7 @@ describe("AccountDataRetreiver.fetchAccountData", async () => {
 
 describe("AccountDataRetreiver.fetchKinBalance", async () => {
 	beforeAll(async () => {
-		accountDataRetriever = new AccountDataRetriever(new Server(fakeUrl, {allowHttp: true}));
+		accountDataRetriever = new AccountDataRetriever(new Server(fakeUrl, {allowHttp: true, headers: GLOBAL_HEADERS}));
 	});
 
 	test("too long address, expect InvalidAddressError", async () => {
@@ -143,7 +144,7 @@ describe("AccountDataRetreiver.fetchKinBalance", async () => {
 
 describe("AccountDataRetreiver.isAccountExisting", async () => {
 	beforeAll(async () => {
-		accountDataRetriever = new AccountDataRetriever(new Server(fakeUrl, {allowHttp: true}));
+		accountDataRetriever = new AccountDataRetriever(new Server(fakeUrl, {allowHttp: true, headers: GLOBAL_HEADERS}));
 	});
 
 	test("too long address, expect InvalidAddressError", async () => {
