@@ -1,7 +1,7 @@
 import {IAccountDataRetriever} from "../../scripts/src/blockchain/accountDataRetriever";
 import {Friendbot} from "../../scripts/src/friendbot";
 import * as nock from "nock";
-import {FriendbotError, InvalidAddressError, NetworkError} from "../../scripts/src/errors";
+import {FriendbotError, InvalidAddressError, NetworkError} from "../../scripts/src";
 
 const fakeUrl = "http://horizon.com";
 const publicAddress = "GDAVCZIOYRGV74ROE344CMRLPZYSZVRHNTRFGOUSAQBILJ7M5ES25KOZ";
@@ -104,7 +104,7 @@ describe("Friendbot.createOrFund", async () => {
 
 		isAccountExistingFn.mockResolvedValue(false);
 		await expect(friendBot.createOrFund(publicAddress, 30))
-			.rejects.toEqual(new NetworkError());
+			.rejects.toEqual(new NetworkError(errorResponseData));
 	});
 
 

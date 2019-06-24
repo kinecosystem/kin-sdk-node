@@ -1,6 +1,6 @@
 import * as nock from "nock";
 import {BlockchainInfoRetriever} from "../../scripts/src/blockchain/blockchainInfoRetriever";
-import {ResourceNotFoundError} from "../../scripts/src/errors";
+import {NetworkError, ResourceNotFoundError} from "../../scripts/src/errors";
 import {Server} from "@kinecosystem/kin-sdk";
 
 const fakeUrl = "https://horizon-testnet.kininfrastructure.com";
@@ -96,7 +96,7 @@ describe("BlockchainInfoRetriever.getMinimumFee", async () => {
 			.replyWithError({code: 'ETIMEDOUT'});
 
 		await expect(blockchainInfoRetriever.getMinimumFee())
-			.rejects.toHaveProperty('type', 'NetworkError');
+			.rejects.toEqual(new NetworkError({code: 'ETIMEDOUT'}));
 	});
 
 });

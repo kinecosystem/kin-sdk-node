@@ -92,7 +92,7 @@ export class AccountNotFoundError extends HorizonError {
 export class NetworkError extends Error implements KinSdkError {
 	readonly type = 'NetworkError';
 
-		constructor(readonly error?: any) {
+	constructor(readonly error: any) {
 		super( error && error.message ? error.message : `Network error occurred`);
 		this.error = error;
 	}
@@ -217,7 +217,7 @@ export class ErrorDecoder {
 			}
 		}
 
-		return new NetworkError();
+		return new NetworkError(errorBody);
 	}
 
 	static translateOperationError(errorCode: number, errorBody?: any): HorizonError {

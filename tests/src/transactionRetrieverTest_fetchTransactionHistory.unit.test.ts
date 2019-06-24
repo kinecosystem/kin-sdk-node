@@ -1,7 +1,7 @@
 import {TransactionRetriever} from "../../scripts/src/blockchain/transactionRetriever";
 import * as nock from "nock";
 import {CreateAccountTransaction, PaymentTransaction, RawTransaction} from "../../scripts/src/blockchain/horizonModels";
-import {ErrorResponse, InternalError, ResourceNotFoundError} from "../../scripts/src/errors";
+import {ErrorResponse, InternalError, NetworkError, ResourceNotFoundError} from "../../scripts/src/errors";
 import {Memo, Operation} from "@kinecosystem/kin-base";
 import {Server} from "@kinecosystem/kin-sdk";
 
@@ -284,9 +284,9 @@ describe("TransactionRetriever.fetchTransactionHistory", async () => {
 		const address = "GA66MWLBBBWVDQZFPDMZPJUODUUOZLGUPCXMPR7HNTGHX7VYAMY243RR";
 		nock(fakeUrl)
 			.get(url => url.includes(address))
-			.replyWithError({code: 'scripts/src'});
+			.replyWithError({code: 'ETIMEDOUT'});
 		await expect(transactionRetriever.fetchTransactionHistory({address: address}))
-			.rejects.toHaveProperty('type', 'NetworkError');
+			.rejects.toEqual(new NetworkError({code: 'ETIMEDOUT'}));
 	});
 
 });
