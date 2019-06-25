@@ -1,13 +1,13 @@
-import {AccountData, Balance} from "./blockchain/horizonModels";
-import {Server} from "@kinecosystem/kin-sdk";
-import {AccountDataRetriever} from "./blockchain/accountDataRetriever";
-import {TxSender} from "./blockchain/txSender";
-import {Address, TransactionId, WhitelistPayload} from "./types";
+import { AccountData, Balance } from "./blockchain/horizonModels";
+import { Server } from "@kinecosystem/kin-sdk";
+import { AccountDataRetriever } from "./blockchain/accountDataRetriever";
+import { TxSender } from "./blockchain/txSender";
+import { Address, TransactionId, WhitelistPayload } from "./types";
 import * as config from "./config";
-import {KeyPair} from "./blockchain/keyPair";
-import {TransactionBuilder} from "./blockchain/transactionBuilder";
-import {Channel, ChannelsPool} from "./blockchain/channelsPool";
-import {IBlockchainInfoRetriever} from "./blockchain/blockchainInfoRetriever";
+import { KeyPair } from "./blockchain/keyPair";
+import { TransactionBuilder } from "./blockchain/transactionBuilder";
+import { Channel, ChannelsPool } from "./blockchain/channelsPool";
+import { IBlockchainInfoRetriever } from "./blockchain/blockchainInfoRetriever";
 
 export class KinAccount {
 	private readonly _keypair: KeyPair;
@@ -15,8 +15,8 @@ export class KinAccount {
 	private readonly _publicAddress: string;
 	private readonly _channelsPool?: ChannelsPool;
 
-	constructor(private readonly _seed: string, private readonly _accountDataRetriever: AccountDataRetriever,
-				server: Server, blockchainInfoRetriever: IBlockchainInfoRetriever,
+	constructor(private readonly _seed: string,
+				private readonly _accountDataRetriever: AccountDataRetriever, server: Server, blockchainInfoRetriever: IBlockchainInfoRetriever,
 				private readonly _appId: string = config.ANON_APP_ID, private readonly _channelSecretKeys?: string[]) {
 		if (!config.APP_ID_REGEX.test(_appId)) {
 			throw new Error("Invalid app id: " + _appId);
@@ -41,7 +41,7 @@ export class KinAccount {
 		return this._channelsPool;
 	}
 
-	async getBalance(): Promise<Balance> {
+	public async getBalance(): Promise<Balance> {
 		return await this._accountDataRetriever.fetchKinBalance(this.publicAddress);
 	}
 

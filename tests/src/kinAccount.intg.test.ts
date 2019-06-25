@@ -1,8 +1,9 @@
-import {KinAccount} from "../../scripts/src/kinAccount";
-import {Environment} from "../../scripts/src/environment";
-import {Channels, KeyPair, KinClient} from "../../scripts/src";
-import {Keypair, Memo, Network, Operation, Transaction as XdrTransaction} from "@kinecosystem/kin-base";
-import {Server} from "@kinecosystem/kin-sdk";
+import { KinAccount } from "../../scripts/src/kinAccount";
+import { Environment } from "../../scripts/src/environment";
+import { Channels, KeyPair, KinClient } from "../../scripts/src";
+import { Keypair, Memo, Network, Operation, Transaction as XdrTransaction } from "@kinecosystem/kin-base";
+import { Server } from "@kinecosystem/kin-sdk";
+import { MEMO_LENGTH_ERROR } from "../../scripts/src/config";
 
 const integEnv = new Environment({
 	url: Environment.Testnet.url,
@@ -20,10 +21,10 @@ let receiver: KinAccount;
 describe("KinAccount", async () => {
 	beforeAll(async () => {
 		client = new KinClient(integEnv);
-		sender = client.createKinAccount({seed: keyPair.seed});
-		receiver = client.createKinAccount({seed: seconedKeypair.seed});
-		const transactionId = await client.friendbot({address: keyPair.publicAddress, amount: 10000});
-		const secondTransactionId = await client.friendbot({address: seconedKeypair.publicAddress, amount: 10000});
+		sender = client.createKinAccount({ seed: keyPair.seed });
+		receiver = client.createKinAccount({ seed: seconedKeypair.seed });
+		const transactionId = await client.friendbot({ address: keyPair.publicAddress, amount: 10000 });
+		const secondTransactionId = await client.friendbot({ address: seconedKeypair.publicAddress, amount: 10000 });
 		expect(transactionId).toBeDefined();
 		expect(secondTransactionId).toBeDefined();
 
@@ -31,7 +32,7 @@ describe("KinAccount", async () => {
 
 	test("Create sender with channels, the receiver history must be related to the channel private key", async done => {
 		const thirdKeypair = KeyPair.generate();
-		await client.friendbot({address: thirdKeypair.publicAddress, amount: 10000});
+		await client.friendbot({ address: thirdKeypair.publicAddress, amount: 10000 });
 		const keyPairs = await Channels.createChannels({
 			environment: integEnv,
 			baseSeed: thirdKeypair.seed,
@@ -45,20 +46,20 @@ describe("KinAccount", async () => {
 				return keypair.seed;
 			})
 		});
-		await account3.channelsPool!!.acquireChannel(async channel => {
+		await account3.channelsPool!!.acquireChannel(async channel1 => {
 			const builder = await account3.buildSendKin({
 				address: seconedKeypair.publicAddress,
 				amount: 200,
 				fee: 100,
 				memoText: "Send with channels",
-				channel: channel
+				channel: channel1
 			});
 			await account3.submitTransaction(builder);
 			const history2 = await client.getRawTransactionHistory({
 				address: seconedKeypair.publicAddress,
 				order: "desc"
 			});
-			expect(history2[0].source).toBe(channel.keyPair.publicAddress);
+			expect(history2[0].source).toBe(channel1.keyPair.publicAddress);
 			expect((history2[0]).operations[0].source).toBe(thirdKeypair.publicAddress);
 			done();
 		});
@@ -72,16 +73,14 @@ describe("KinAccount", async () => {
 			startingBalance: 1500,
 			memoText: "Test create sender",
 			address: localKeypair.publicAddress
-
 		});
 
 		await sender.submitTransaction(txBuilder);
 		const isExist = await client.isAccountExisting(localKeypair.publicAddress);
 		const balance = await client.getAccountBalance(localKeypair.publicAddress);
-		expect(isExist).toBe(true)
+		expect(isExist).toBe(true);
 		expect(balance).toBe(1500);
-
-	}, 60000);
+	}, 30000);
 
 	test("Test send kin", async () => {
 		const txBuilder = await sender.buildSendKin({
@@ -105,8 +104,8 @@ describe("KinAccount", async () => {
 	test("Test whitelist send kin", async () => {
 		const server = new Server(integEnv.url);
 		const whitelistKeypair = Keypair.fromSecret("SDH76EUIJRM4LARRAOWPBGEAWJMRXFUDCFNBEBMMIO74AWB3MZJYGJ4J");
-		const whitelistAccount = client.createKinAccount({seed: "SDH76EUIJRM4LARRAOWPBGEAWJMRXFUDCFNBEBMMIO74AWB3MZJYGJ4J"});
-		await client.friendbot({address: "GAJCKSF6YXOS52FIIP5MWQY2NGZLCG6RDEKYACETVRA7XV72QRHUKYBJ", amount: 250});
+		const whitelistAccount = client.createKinAccount({ seed: "SDH76EUIJRM4LARRAOWPBGEAWJMRXFUDCFNBEBMMIO74AWB3MZJYGJ4J" });
+		await client.friendbot({ address: "GAJCKSF6YXOS52FIIP5MWQY2NGZLCG6RDEKYACETVRA7XV72QRHUKYBJ", amount: 250 });
 		const txBuilder = await sender.buildSendKin({
 			amount: 250,
 			memoText: "Test whitelist",
@@ -150,24 +149,23 @@ describe("KinAccount", async () => {
 
 	}, 60000);
 
-
 	test("Test \"manage data\" operation", async () => {
-		const value = "bew data";
+		const opVal = "new data";
 		const builder = await sender.getTransactionBuilder({
 			fee: 100
 		});
 		builder.setTimeout(0);
-		builder.addMemo(Memo.text("Test"));
+		builder.addMemo(Memo.text("Test memo"));
 		builder.addOperation(Operation.manageData({
-			name: "test", source: "", value: value
+			name: "test", source: "", value: opVal
 		}));
 		await sender.submitTransaction(builder);
 		const data = await sender.getData();
 
-		const buff = Buffer.from(value);
-		const base64data = buff.toString('base64');
+		const buff = Buffer.from(opVal);
+		const base64data = buff.toString("base64");
 
-		expect(data.data.test).toBe(base64data);
+		expect((data as any).data.test).toBe(base64data);
 
 	}, 60000);
 });

@@ -1,28 +1,28 @@
 import * as nock from "nock";
 
-import {KinAccount} from "../../scripts/src/kinAccount";
-import {AccountDataRetriever} from "../../scripts/src/blockchain/accountDataRetriever";
-import {BadRequestError, ErrorResponse, LowBalanceError} from "../../scripts/src/errors";
-import {Environment} from "../../scripts/src/environment";
-import {Memo, Network, Operation} from "@kinecosystem/kin-base";
-import {WhitelistPayload} from "../../scripts/src/types";
-import {BlockchainInfoRetriever} from "../../scripts/src/blockchain/blockchainInfoRetriever";
+import { KinAccount } from "../../scripts/src/kinAccount";
+import { AccountDataRetriever } from "../../scripts/src/blockchain/accountDataRetriever";
+import { BadRequestError, ErrorResponse, LowBalanceError } from "../../scripts/src/errors";
+import { Environment } from "../../scripts/src/environment";
+import { Memo, Network, Operation } from "@kinecosystem/kin-base";
+import { WhitelistPayload } from "../../scripts/src/types";
+import { BlockchainInfoRetriever } from "../../scripts/src/blockchain/blockchainInfoRetriever";
 import CreateAccount = Operation.CreateAccount;
-import {Server} from "@kinecosystem/kin-sdk";
+import { Server } from "@kinecosystem/kin-sdk";
+import {MEMO_LENGTH_ERROR} from "../../scripts/src/config";
 
 const fakeUrl = "http://horizon.com";
 const headerKey = "user-agent";
 const headerVal = "test-kin";
-const server = new Server(fakeUrl, {allowHttp: true, headers: new Map<string, string>().set(headerKey, headerVal)});
+const server = new Server(fakeUrl, { allowHttp: true, headers: new Map<string, string>().set(headerKey, headerVal) });
 const accountDataRetriever = new AccountDataRetriever(server);
 const senderSeed = "SBVYIBM6UTDHMN7RN6VVEFKABRQBW3YB7W7RYFZFTBD6YX3IDFLS7NGW";
 const senderPublic = "GBXTJ57DEEMZ6NVNDGWKCQGGKZMRAGOIYZO3C5T5P23GSM7MVYUHZK65";
 const receiverPublic = "GBFVXO4TI53WQVBCFZG7C4ZKPFP5Y6S6M3OZMTDVATUHQS7LXRWLWF5S";
 const appId = "aaaa";
-const fee = 100;
+const amount: number = 100;
 const memo = "test memo";
 let kinAccount: KinAccount;
-
 
 describe("KinAccount.createAccount", async () => {
 	beforeAll(async () => {
@@ -35,14 +35,14 @@ describe("KinAccount.createAccount", async () => {
 		mockBuilderCreateAccountResponse();
 
 		const txBuilder = await kinAccount.getTransactionBuilder({
-			fee: fee
+			fee: amount
 		});
 		txBuilder.addFee(10);
 		txBuilder.addMemo(Memo.text(memo));
 		txBuilder.addOperation(Operation.createAccount({
 			source: senderPublic,
 			destination: receiverPublic,
-			startingBalance: '10000'
+			startingBalance: "10000"
 		}));
 		expect(await kinAccount.submitTransaction(txBuilder)).toEqual("6ab7034086be38c62fbbabd09349d8cc49d59bfe0f7ad3ef6cf89c5a573eee95");
 	});
@@ -53,9 +53,9 @@ describe("KinAccount.createAccount", async () => {
 		const txBuilder = await kinAccount.buildCreateAccount({
 			address: receiverPublic,
 			startingBalance: 0,
-			fee: fee
+			fee: amount
 		});
-		let transaction = txBuilder.build();
+		const transaction = txBuilder.build();
 		expect((transaction.operations[0] as CreateAccount).startingBalance).toEqual("0");
 	});
 
@@ -66,14 +66,14 @@ describe("KinAccount.createAccount", async () => {
 			{
 				address: receiverPublic,
 				startingBalance: 10000,
-				fee: fee,
+				fee: amount,
 				memoText: memo
 			});
-		expect((txBuilder as any)._transactionBuilder.baseFee).toEqual(fee);
-		expect((txBuilder as any)._transactionBuilder.memo._value).toEqual('1-' + appId + '-' + memo);
+		expect((txBuilder as any)._transactionBuilder.baseFee).toEqual(amount);
+		expect((txBuilder as any)._transactionBuilder.memo._value).toEqual("1-" + appId + "-" + memo);
 		expect((txBuilder as any)._transactionBuilder.source.id).toEqual(senderPublic);
 		expect((txBuilder as any)._transactionBuilder.source.sequence).toEqual("6319125253062661");
-		expect(txBuilder.build().toEnvelope().toXDR('base64')).toEqual("AAAAAG809+MhGZ82rRmsoUDGVlkQGcjGXbF2fX62aTPsrih8AAAAZAAWczYAAAAGAAAAAAAAAAEAAAAQMS1hY" +
+		expect(txBuilder.build().toEnvelope().toXDR("base64")).toEqual("AAAAAG809+MhGZ82rRmsoUDGVlkQGcjGXbF2fX62aTPsrih8AAAAZAAWczYAAAAGAAAAAAAAAAEAAAAQMS1hY" +
 			"WFhLXRlc3QgbWVtbwAAAAEAAAABAAAAAG809+MhGZ82rRmsoUDGVlkQGcjGXbF2fX62aTPsrih8AAAAAAAAAABLW7uTR3doVCIuTfFzKnlf3HpeZt2WTHUE6HhL67xsuwAAAAA7msoAAAAAAAAAAAA=");
 	});
 
@@ -82,12 +82,24 @@ describe("KinAccount.createAccount", async () => {
 		mockCreateAccountResponse();
 
 		const txBuilder = await kinAccount.buildCreateAccount({
-			address: 'GBW3U6FTJQ3JAZXSS46NHX7WF4SG2J5D6HKDBVDFHNVAKZRM672F2GDP',
+			address: "GBW3U6FTJQ3JAZXSS46NHX7WF4SG2J5D6HKDBVDFHNVAKZRM672F2GDP",
 			startingBalance: 10,
-			fee: fee,
+			fee: amount,
 			memoText: memo
 		});
 		expect(await kinAccount.submitTransaction(txBuilder)).toEqual("6ab7034086be38c62fbbabd09349d8cc49d59bfe0f7ad3ef6cf89c5a573eee95");
+	});
+
+	test("create account, throw error - memo is too long", async () => {
+		mockLoadAccountResponse("6319125253062661");
+		mockCreateAccountResponse();
+
+		await expect(kinAccount.buildCreateAccount({
+			address: "GBW3U6FTJQ3JAZXSS46NHX7WF4SG2J5D6HKDBVDFHNVAKZRM672F2GDP",
+			startingBalance: 10,
+			fee: amount,
+			memoText: "Test minimum length is working"
+		})).rejects.toEqual(new Error(MEMO_LENGTH_ERROR));
 	});
 
 	test("create account tx_insufficient_balance, error expect 400 ServerError", async () => {
@@ -106,14 +118,14 @@ describe("KinAccount.createAccount", async () => {
 				},
 				result_xdr: "AAAAAAAAAAD////7AAAAAA=="
 			}
-		}
+		};
 		mockLoadAccountResponse("6319125253062657");
 		mock400AccountResponse(response);
 
 		const txBuilder = await kinAccount.buildCreateAccount({
 			address: receiverPublic,
 			startingBalance: 10,
-			fee: fee,
+			fee: amount,
 			memoText: memo
 		});
 		await expect(kinAccount.submitTransaction(txBuilder)).rejects.toEqual(new LowBalanceError(response));
@@ -135,14 +147,14 @@ describe("KinAccount.createAccount", async () => {
 				},
 				result_xdr: "AAAAAAAAAAD////7AAAAAA=="
 			}
-		}
+		};
 		mockLoadAccountResponse("6319125253062657");
 		mock400AccountResponse(response);
 
 		const txBuilder = await kinAccount.buildCreateAccount({
 			address: receiverPublic,
 			startingBalance: 10,
-			fee: fee,
+			fee: amount,
 			memoText: memo
 		});
 		await expect(kinAccount.submitTransaction(txBuilder)).rejects.toEqual(new BadRequestError(response));
@@ -155,10 +167,47 @@ describe("KinAccount.createAccount", async () => {
 		const txBuilder = await kinAccount.buildSendKin({
 			address: receiverPublic,
 			amount: 23.3,
-			fee: fee,
+			fee: amount,
 			memoText: memo
 		});
 		expect(await kinAccount.submitTransaction(txBuilder)).toEqual("708ebb9e3c8890333daca3faa6707b89dc0155f2578314e302f39e7387d2d07c");
+	});
+
+	test("test get proxy redirect", async () => {
+		const url = "https://fake.url.com";
+		nock(fakeUrl)
+			.get(url => url.includes(senderPublic))
+			.reply(307, undefined, { location: url + "/accounts/" + senderPublic });
+		mockLoadAccountResponse("6319125253062661", url);
+
+		const createBuilder = await kinAccount.buildCreateAccount({
+			address: receiverPublic,
+			startingBalance: 0,
+			fee: amount
+		});
+		const transaction = createBuilder.build();
+		expect((transaction.operations[0] as CreateAccount).startingBalance).toEqual("0");
+	});
+
+	test("test post proxy redirect", async () => {
+		const url = "https://fake.url.com";
+		mockLoadAccountResponse("6319125253062661");
+		nock(fakeUrl)
+			.post(url => url.includes(senderPublic))
+			.reply(307, undefined, {
+				location: url + "/transactions/tx=AAAAAG809%2BMhGZ82rRmsoUDGVlkQGcjGXbF2fX62aTPsrih8AAAAZAAWczYAAAAHAAAAAAAAAAEAAA" +
+					"AQMS1hYWFhLXRlc3QgbWVtbwAAAAEAAAABAAAAAG809%2BMhGZ82rRmsoUDGVlkQGcjGXbF2fX62aTPsrih8AAAAAQAAAABLW7uTR3doVCIuTfFzKnlf3HpeZt2WTHUE6HhL67xsuwAAAAAAAAAAACO" +
+					"NkAAAAAAAAAAB7K4ofAAAAECVwez0u84Tk%2BNbQbh5srOCmYv4vE81P23nW6uy1oQAhpTuwJ%2Bm0LbprWH9GGUl3zZV%2FZYcM9ghOJBRyZ55glcO"
+			});
+		mockAddMemoResponse();
+
+		const txBuilder = await kinAccount.buildCreateAccount({
+			address: "GBW3U6FTJQ3JAZXSS46NHX7WF4SG2J5D6HKDBVDFHNVAKZRM672F2GDP",
+			startingBalance: 10,
+			fee: amount
+		});
+		txBuilder.addMemo(Memo.text(memo));
+		expect(await kinAccount.submitTransaction(txBuilder)).toEqual("6ab7034086be38c62fbbabd09349d8cc49d59bfe0f7ad3ef6cf89c5a573eee95");
 	});
 
 	test("send kin, error expect 400 ServerError. when error tx_bad_seq expect BadRequestError", async () => {
@@ -177,7 +226,7 @@ describe("KinAccount.createAccount", async () => {
 				},
 				result_xdr: "AAAAAAAAAAD////7AAAAAA=="
 			}
-		}
+		};
 
 		mockLoadAccountResponse("6319125253062657");
 		mock400SendKinResponse(response);
@@ -185,43 +234,41 @@ describe("KinAccount.createAccount", async () => {
 		const txBuilder = await kinAccount.buildSendKin({
 			address: receiverPublic,
 			amount: 10,
-			fee: fee,
+			fee: amount,
 			memoText: memo
 		});
 		await expect(kinAccount.submitTransaction(txBuilder)).rejects.toEqual(new BadRequestError(response));
 	});
 
 	test("whitelist transaction - send kin", async () => {
-		let envelope = "AAAAAG809+MhGZ82rRmsoUDGVlkQGcjGXbF2fX62aTPsrih8AAAAAAAXi3wAAAABAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAABAAAAB2JsYSBibGEAAAAAAQAAAAAAAAABAAAAAMn/" +
+		const data = "AAAAAG809+MhGZ82rRmsoUDGVlkQGcjGXbF2fX62aTPsrih8AAAAAAAXi3wAAAABAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAABAAAAB2JsYSBibGEAAAAAAQAAAAAAAAABAAAAAMn/" +
 			"CFYMgqIVL2JthzKcO+0IQKdG8GGNFDf6BjKHT1KPAAAAAAAAAAAF9eEAAAAAAAAAAAA=";
-		const txPair: WhitelistPayload = {envelope: envelope, networkId: Network.current().networkPassphrase()};
+		const txPair: WhitelistPayload = { envelope: data, networkId: Network.current().networkPassphrase() };
 		await expect(kinAccount.whitelistTransaction(txPair)).toEqual("AAAAAG809+MhGZ82rRmsoUDGVlkQGcjGXbF2fX62aTPsrih8AAAAAAAXi3wAAAABAAAAAQAAAAAAAAAAAAAAAAAAA" +
 			"AAAAAABAAAAB2JsYSBibGEAAAAAAQAAAAAAAAABAAAAAMn/CFYMgqIVL2JthzKcO+0IQKdG8GGNFDf6BjKHT1KPAAAAAAAAAAAF9eEAAAAAAAAAAAHsrih8AAAAQEp6EC/3dO8zMeY33USui59M" +
 			"PIxxLaXsiYWxSVaIX7MwNaocb+NyoR5++eT/GPynxbPKQptftf/JPv2FNev2VwU=");
 	});
-
 
 	test("create account, no memo, expect error", async () => {
 		mockLoadAccountResponse("6319125253062661");
 		mockMissingMemoResponse();
 
 		const txBuilder = await kinAccount.buildCreateAccount({
-			address: 'GBW3U6FTJQ3JAZXSS46NHX7WF4SG2J5D6HKDBVDFHNVAKZRM672F2GDP',
+			address: "GBW3U6FTJQ3JAZXSS46NHX7WF4SG2J5D6HKDBVDFHNVAKZRM672F2GDP",
 			startingBalance: 10,
-			fee: fee
+			fee: amount
 		});
 		expect(await kinAccount.submitTransaction(txBuilder)).toEqual("6ab7034086be38c62fbbabd09349d8cc49d59bfe0f7ad3ef6cf89c5a573eee95");
 	});
-
 
 	test("create account, add memo", async () => {
 		mockLoadAccountResponse("6319125253062661");
 		mockAddMemoResponse();
 
 		const txBuilder = await kinAccount.buildCreateAccount({
-			address: 'GBW3U6FTJQ3JAZXSS46NHX7WF4SG2J5D6HKDBVDFHNVAKZRM672F2GDP',
+			address: "GBW3U6FTJQ3JAZXSS46NHX7WF4SG2J5D6HKDBVDFHNVAKZRM672F2GDP",
 			startingBalance: 10,
-			fee: fee
+			fee: amount
 		});
 		txBuilder.addMemo(Memo.text(memo));
 		expect(await kinAccount.submitTransaction(txBuilder)).toEqual("6ab7034086be38c62fbbabd09349d8cc49d59bfe0f7ad3ef6cf89c5a573eee95");
@@ -234,7 +281,7 @@ describe("KinAccount.createAccount", async () => {
 		const txBuilder = await kinAccount.buildSendKin({
 			address: receiverPublic,
 			amount: 23.3,
-			fee: fee,
+			fee: amount,
 			memoText: memo
 		});
 		txBuilder.addFee(20);
@@ -257,8 +304,8 @@ function mock400AccountResponse(response: ErrorResponse) {
 		.reply(400, response);
 }
 
-function mockLoadAccountResponse(sequence: string) {
-	nock(fakeUrl)
+function mockLoadAccountResponse(sequence: string, url?: string) {
+	nock(url ? url : fakeUrl)
 		.matchHeader(headerKey, headerVal)
 		.get(url => url.includes(senderPublic))
 		.reply(200,
@@ -382,8 +429,8 @@ function mockCreateAccountResponse() {
 			});
 }
 
-function mockSendKinResponse() {
-	nock(fakeUrl)
+function mockSendKinResponse(url?: string) {
+	nock(url ? url : fakeUrl)
 		.matchHeader(headerKey, headerVal)
 		.post(url => url.includes("/transactions"), "tx=AAAAAG809%2BMhGZ82rRmsoUDGVlkQGcjGXbF2fX62aTPsrih8AAAAZAAWczYAAAAHAAAAAAAAAAEAAA" +
 			"AQMS1hYWFhLXRlc3QgbWVtbwAAAAEAAAABAAAAAG809%2BMhGZ82rRmsoUDGVlkQGcjGXbF2fX62aTPsrih8AAAAAQAAAABLW7uTR3doVCIuTfFzKnlf3HpeZt2WTHUE6HhL67xsuwAAAAAAAAAAACO" +
@@ -407,7 +454,6 @@ function mockSendKinResponse() {
 					"AG809+MhGZ82rRmsoUDGVlkQGcjGXbF2fX62aTPsrih8AAAAALGul5QAFnM2AAAABwAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAA"
 			});
 }
-
 
 function mockMissingMemoResponse() {
 	nock(fakeUrl)
@@ -433,7 +479,6 @@ function mockMissingMemoResponse() {
 					"AwAAAAAAAAAAG809+MhGZ82rRmsoUDGVlkQGcjGXbF2fX62aTPsrih8AAAAALHSJYgAFnM2AAAABgAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAA"
 			});
 }
-
 
 function mockAddMemoResponse() {
 	nock(fakeUrl)
