@@ -23,7 +23,7 @@ export class Friendbot {
 			if (e.response) {
 				response = e.response;
 			} else {
-				throw new NetworkError(e.message);
+				throw new NetworkError(e);
 			}
 		}
 

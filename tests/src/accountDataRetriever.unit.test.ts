@@ -1,7 +1,13 @@
 import {AccountDataRetriever} from "../../scripts/src/blockchain/accountDataRetriever";
 import {AccountData} from "../../scripts/src/blockchain/horizonModels";
 import * as nock from "nock";
-import {ErrorResponse, InternalError, InvalidAddressError, ResourceNotFoundError} from "../../scripts/src/errors";
+import {
+	ErrorResponse,
+	InternalError,
+	InvalidAddressError,
+	NetworkError,
+	ResourceNotFoundError
+} from "../../scripts/src/errors";
 import {Server} from "@kinecosystem/kin-sdk";
 import {GLOBAL_HEADERS} from "../../scripts/src/config";
 
@@ -14,7 +20,7 @@ const mock404NetworkResponse: ErrorResponse = {
 	"title": "Resource Missing",
 	"status": 404,
 	"detail": "The resource at the url requested was not found.  This is usually occurs for one of two reasons:  The url requested is not valid, or no data in our database could be found with the parameters provided."
-}
+};
 
 
 const mock500NetworkResponse: ErrorResponse = {
@@ -22,7 +28,8 @@ const mock500NetworkResponse: ErrorResponse = {
 	"title": "Internal server Error",
 	"status": 500,
 	"detail": "Internal server Error."
-}
+};
+const fakeTimeoutResponse = {message: "timeout error", code: 'ETIMEDOUT'};
 
 describe("AccountDataRetreiver.fetchAccountData", async () => {
 	beforeAll(async () => {
@@ -95,14 +102,17 @@ describe("AccountDataRetreiver.fetchAccountData", async () => {
 		mockTimeoutNetworkReponse();
 		//TODO check stellar sdk for exposing network errors up
 		await expect(accountDataRetriever.fetchAccountData(publicAddress))
-			.rejects.toHaveProperty('type', 'NetworkError');
+			.rejects.toEqual(new NetworkError(fakeTimeoutResponse));
 	});
 
 });
 
 describe("AccountDataRetreiver.fetchKinBalance", async () => {
 	beforeAll(async () => {
-		accountDataRetriever = new AccountDataRetriever(new Server(fakeUrl, {allowHttp: true, headers: GLOBAL_HEADERS}));
+		accountDataRetriever = new AccountDataRetriever(new Server(fakeUrl, {
+			allowHttp: true,
+			headers: GLOBAL_HEADERS
+		}));
 	});
 
 	test("too long address, expect InvalidAddressError", async () => {
@@ -129,6 +139,12 @@ describe("AccountDataRetreiver.fetchKinBalance", async () => {
 
 	test("error 500, expect ServerError", async () => {
 		mockNetworkResponse(mock500NetworkResponse);
+		mockNetworkResponse(mock500NetworkResponse);
+		try {
+			await accountDataRetriever.fetchKinBalance(publicAddress);
+		} catch (e) {
+			console.log(e.error);
+		}
 		await expect(accountDataRetriever.fetchKinBalance(publicAddress))
 			.rejects.toEqual(new InternalError(mock500NetworkResponse));
 	});
@@ -137,14 +153,17 @@ describe("AccountDataRetreiver.fetchKinBalance", async () => {
 		mockTimeoutNetworkReponse();
 		//TODO check stellar sdk for exposing network errors up
 		await expect(accountDataRetriever.fetchKinBalance(publicAddress))
-			.rejects.toHaveProperty('type', 'NetworkError');
+			.rejects.toEqual(new NetworkError(fakeTimeoutResponse));
 	});
 
 });
 
 describe("AccountDataRetreiver.isAccountExisting", async () => {
 	beforeAll(async () => {
-		accountDataRetriever = new AccountDataRetriever(new Server(fakeUrl, {allowHttp: true, headers: GLOBAL_HEADERS}));
+		accountDataRetriever = new AccountDataRetriever(new Server(fakeUrl, {
+			allowHttp: true,
+			headers: GLOBAL_HEADERS
+		}));
 	});
 
 	test("too long address, expect InvalidAddressError", async () => {
@@ -178,7 +197,7 @@ describe("AccountDataRetreiver.isAccountExisting", async () => {
 		mockTimeoutNetworkReponse();
 		//TODO check stellar sdk for exposing network errors up
 		await expect(accountDataRetriever.isAccountExisting(publicAddress))
-			.rejects.toHaveProperty('type', 'NetworkError');
+			.rejects.toEqual(new NetworkError(fakeTimeoutResponse));
 	});
 
 });
@@ -192,7 +211,7 @@ function mockNetworkResponse(response: ErrorResponse) {
 function mockTimeoutNetworkReponse() {
 	nock(fakeUrl)
 		.get(url => url.includes(publicAddress))
-		.replyWithError({code: 'ETIMEDOUT'});
+		.replyWithError(fakeTimeoutResponse);
 }
 
 function mockAccountNetworkResponse() {
