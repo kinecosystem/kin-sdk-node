@@ -1,18 +1,11 @@
-import { KinAccount } from "../../scripts/src/kinAccount";
-import { Environment } from "../../scripts/src/environment";
-import { Channels, KeyPair, KinClient } from "../../scripts/src";
-import { Keypair, Memo, Network, Operation, Transaction as XdrTransaction } from "@kinecosystem/kin-base";
-import { Server } from "@kinecosystem/kin-sdk";
-import { MEMO_LENGTH_ERROR } from "../../scripts/src/config";
+import {KinAccount} from "../../scripts/src/kinAccount";
+import {Channels, KeyPair, KinClient} from "../../scripts/src";
+import {Keypair, Memo, Network, Operation, Transaction as XdrTransaction} from "@kinecosystem/kin-base";
+import {Server} from "@kinecosystem/kin-sdk";
+import {INTEG_ENV} from "./integConfig";
 
-const integEnv = new Environment({
-	url: Environment.Testnet.url,
-	passphrase: Environment.Testnet.passphrase,
-	friendbotUrl: "https://friendbot.developers.kinecosystem.com",
-	name: "test env"
-});
 const keyPair = KeyPair.generate();
-const seconedKeypair = KeyPair.generate();
+const secondKeypair = KeyPair.generate();
 
 let client: KinClient;
 let sender: KinAccount;
@@ -20,11 +13,11 @@ let receiver: KinAccount;
 
 describe("KinAccount", async () => {
 	beforeAll(async () => {
-		client = new KinClient(integEnv);
+		client = new KinClient(INTEG_ENV);
 		sender = client.createKinAccount({ seed: keyPair.seed });
-		receiver = client.createKinAccount({ seed: seconedKeypair.seed });
+		receiver = client.createKinAccount({seed: secondKeypair.seed});
 		const transactionId = await client.friendbot({ address: keyPair.publicAddress, amount: 10000 });
-		const secondTransactionId = await client.friendbot({ address: seconedKeypair.publicAddress, amount: 10000 });
+		const secondTransactionId = await client.friendbot({address: secondKeypair.publicAddress, amount: 10000});
 		expect(transactionId).toBeDefined();
 		expect(secondTransactionId).toBeDefined();
 
@@ -34,7 +27,7 @@ describe("KinAccount", async () => {
 		const thirdKeypair = KeyPair.generate();
 		await client.friendbot({ address: thirdKeypair.publicAddress, amount: 10000 });
 		const keyPairs = await Channels.createChannels({
-			environment: integEnv,
+			environment: INTEG_ENV,
 			baseSeed: thirdKeypair.seed,
 			salt: "salt salt",
 			channelsCount: 2,
@@ -48,7 +41,7 @@ describe("KinAccount", async () => {
 		});
 		await account3.channelsPool!!.acquireChannel(async channel1 => {
 			const builder = await account3.buildSendKin({
-				address: seconedKeypair.publicAddress,
+				address: secondKeypair.publicAddress,
 				amount: 200,
 				fee: 100,
 				memoText: "Send with channels",
@@ -56,7 +49,7 @@ describe("KinAccount", async () => {
 			});
 			await account3.submitTransaction(builder);
 			const history2 = await client.getRawTransactionHistory({
-				address: seconedKeypair.publicAddress,
+				address: secondKeypair.publicAddress,
 				order: "desc"
 			});
 			expect(history2[0].source).toBe(channel1.keyPair.publicAddress);
@@ -92,17 +85,17 @@ describe("KinAccount", async () => {
 		});
 
 		const balance = await client.getAccountBalance(keyPair.publicAddress);
-		const secondBalance = await client.getAccountBalance(seconedKeypair.publicAddress);
+		const secondBalance = await client.getAccountBalance(secondKeypair.publicAddress);
 		await sender.submitTransaction(txBuilder);
 		const balance2 = await client.getAccountBalance(keyPair.publicAddress);
-		const secondBalance2 = await client.getAccountBalance(seconedKeypair.publicAddress);
+		const secondBalance2 = await client.getAccountBalance(secondKeypair.publicAddress);
 		expect(balance2).toBe(balance - 150 - 0.001);
 		expect(secondBalance2).toBe(secondBalance + 150);
 
 	}, 60000);
 
 	test("Test whitelist send kin", async () => {
-		const server = new Server(integEnv.url);
+		const server = new Server(INTEG_ENV.url);
 		const whitelistKeypair = Keypair.fromSecret("SDH76EUIJRM4LARRAOWPBGEAWJMRXFUDCFNBEBMMIO74AWB3MZJYGJ4J");
 		const whitelistAccount = client.createKinAccount({ seed: "SDH76EUIJRM4LARRAOWPBGEAWJMRXFUDCFNBEBMMIO74AWB3MZJYGJ4J" });
 		await client.friendbot({ address: "GAJCKSF6YXOS52FIIP5MWQY2NGZLCG6RDEKYACETVRA7XV72QRHUKYBJ", amount: 250 });
