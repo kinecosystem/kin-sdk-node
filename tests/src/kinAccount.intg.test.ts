@@ -96,9 +96,8 @@ describe("KinAccount", async () => {
 
 	test("Test whitelist send kin", async () => {
 		const server = new Server(INTEG_ENV.url);
-		const whitelistKeypair = Keypair.fromSecret("SDH76EUIJRM4LARRAOWPBGEAWJMRXFUDCFNBEBMMIO74AWB3MZJYGJ4J");
-		const whitelistAccount = client.createKinAccount({ seed: "SDH76EUIJRM4LARRAOWPBGEAWJMRXFUDCFNBEBMMIO74AWB3MZJYGJ4J" });
-		await client.friendbot({ address: "GAJCKSF6YXOS52FIIP5MWQY2NGZLCG6RDEKYACETVRA7XV72QRHUKYBJ", amount: 250 });
+		// use premade whitelisted account GAJCKSF6YXOS52FIIP5MWQY2NGZLCG6RDEKYACETVRA7XV72QRHUKYBJ
+		const whitelistAccount = client.createKinAccount({seed: "SDH76EUIJRM4LARRAOWPBGEAWJMRXFUDCFNBEBMMIO74AWB3MZJYGJ4J"});
 		const txBuilder = await sender.buildSendKin({
 			amount: 250,
 			memoText: "Test whitelist",
