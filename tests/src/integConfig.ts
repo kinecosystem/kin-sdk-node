@@ -3,17 +3,19 @@ import {Environment} from "../../scripts/src";
 export const INTEG_ENV = getIntegEnv();
 
 function getIntegEnv() {
-	if (!process.env.INTEG_TESTS_NETWORK_URL ||
-		!process.env.INTEG_TESTS_NETWORK_PASSPHRASE ||
-		!process.env.INTEG_TESTS_NETWORK_FRIENDBOT) {
-		console.error("Environment variables must be defined for running integ tests: " +
-			"'INTEG_TESTS_NETWORK_URL', 'INTEG_TESTS_NETWORK_URL' , 'INTEG_TESTS_NETWORK_FRIENDBOT'. ");
-		process.exit(1);
+	const envUrl = process.env.INTEG_TESTS_NETWORK_URL;
+	const envFriendbot = process.env.INTEG_TESTS_NETWORK_FRIENDBOT;
+	const envPassphrase = process.env.INTEG_TESTS_NETWORK_PASSPHRASE;
+
+	if (!envUrl || !envFriendbot || !envPassphrase) {
+		console.warn("Environment variables are not defined, using defaults.");
 	}
-	return new Environment({
-		url: process.env.INTEG_TESTS_NETWORK_URL as string,
-		passphrase: process.env.INTEG_TESTS_NETWORK_PASSPHRASE as string,
-		friendbotUrl: process.env.INTEG_TESTS_NETWORK_FRIENDBOT,
-		name: "test env"
-	});
+
+	return new Environment(
+		{
+			url: envUrl ? envUrl : Environment.Testnet.url,
+			passphrase: envPassphrase ? envPassphrase : Environment.Testnet.passphrase,
+			friendbotUrl: envFriendbot ? envFriendbot : Environment.Testnet.friendbotUrl,
+			name: "IntegEnv"
+		});
 }
