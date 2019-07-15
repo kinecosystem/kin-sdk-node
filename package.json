@@ -1,6 +1,6 @@
 {
   "name": "@kinecosystem/kin-sdk-node",
-  "version": "0.9.0",
+  "version": "0.9.1",
   "description": "Kin SDK for the Node runtime",
   "main": "scripts/bin/index.js",
   "types": "scripts/bin/index.d.ts",
@@ -47,7 +47,7 @@
     "jest-each": "^24.7.1"
   },
   "dependencies": {
-    "@kinecosystem/kin-sdk": "0.20.5"
+    "@kinecosystem/kin-sdk": "^0.20.6"
   },
   "jest": {
     "moduleFileExtensions": [

@@ -198,7 +198,7 @@ export class ResourceNotFoundError extends HorizonError {
 
 export class ErrorDecoder {
 
-	static translate(errorBody?: any): HorizonError | NetworkError{
+	public static translate(errorBody?: any): HorizonError | NetworkError {
 		if (errorBody && errorBody.response) {
 			errorBody = errorBody.response;
 			if (errorBody.data) {

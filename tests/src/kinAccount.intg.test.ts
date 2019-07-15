@@ -3,7 +3,6 @@ import { Environment } from "../../scripts/src/environment";
 import { Channels, KeyPair, KinClient } from "../../scripts/src";
 import { Keypair, Memo, Network, Operation, Transaction as XdrTransaction } from "@kinecosystem/kin-base";
 import { Server } from "@kinecosystem/kin-sdk";
-import { MEMO_LENGTH_ERROR } from "../../scripts/src/config";
 
 const integEnv = new Environment({
 	url: Environment.Testnet.url,
