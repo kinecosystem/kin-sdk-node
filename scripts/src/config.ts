@@ -10,3 +10,5 @@ export const MEMO_LENGTH: number = 21;
 export const GLOBAL_HEADERS = new Map<string, string>()
 	.set("user-agent", "kin-sdk-node-" + PACKAGE_JSON.version)
 	.set("kin-sdk-node-version", PACKAGE_JSON.version);
+
+export const GLOBAL_RETRY =  { retries: 4 };

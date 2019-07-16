@@ -17,7 +17,9 @@ interface WhitelistPayloadTemp {
 }
 
 export class TxSender {
-	constructor(private readonly _keypair: KeyPair, private readonly _appId: string, private readonly _server: Server,
+	constructor(private readonly _keypair: KeyPair,
+				private readonly _appId: string,
+				private readonly _server: Server,
 				private readonly _blockchainInfoRetriever: IBlockchainInfoRetriever) {
 		this._keypair = _keypair;
 		this._appId = _appId;
@@ -62,15 +64,9 @@ export class TxSender {
 		return builder;
 	}
 
-	private async loadSenderAccountData(channel?: Channel) {
-		const addressToLoad = channel ? channel.keyPair.publicAddress : this._keypair.publicAddress;
-		const response: Server.AccountResponse = await this._server.loadAccount(addressToLoad);
-		return response;
-	}
-
 	public async submitTransaction(builder: TransactionBuilder): Promise<TransactionId> {
 		try {
-			let tx = builder.build();
+			const tx = builder.build();
 			const signers = new Array<Keypair>();
 			signers.push(Keypair.fromSecret(this._keypair.seed));
 			if (builder.channel) {
@@ -93,24 +89,10 @@ export class TxSender {
 		}
 	}
 
-	private checkForInsufficientChannelFeeBalance(builder: TransactionBuilder, error: HorizonError | NetworkError): boolean {
-		if (!builder.channel)
-			return false;
-		return (error as HorizonError).resultTransactionCode === TransactionErrorList.INSUFFICIENT_BALANCE;
-	}
-
-	private async topUpChannel(builder: TransactionBuilder) {
-		const channel = builder.channel as Channel;
-		const fee = await this._blockchainInfoRetriever.getMinimumFee();
-		const amount = fee * CHANNEL_TOP_UP_TX_COUNT;
-		const topUpBuilder = await this.buildSendKin(channel.keyPair.publicAddress, amount, fee);
-		await this.submitTransaction(topUpBuilder);
-	}
-
 	public whitelistTransaction(payload: string | WhitelistPayload): string {
 		let txPair: WhitelistPayload | WhitelistPayloadTemp;
 		if (typeof payload === "string") {
-			let tx = JSON.parse(payload);
+			const tx = JSON.parse(payload);
 			if (tx.envelop != null) {
 				txPair = tx as WhitelistPayloadTemp;
 				txPair.envelope = txPair.envelop;
@@ -136,5 +118,26 @@ export class TxSender {
 		const buffer = envelope.toXDR("base64");
 
 		return buffer.toString();
+	}
+
+	private checkForInsufficientChannelFeeBalance(builder: TransactionBuilder, error: HorizonError | NetworkError): boolean {
+		if (!builder.channel) {
+			return false;
+		}
+		return (error as HorizonError).resultTransactionCode === TransactionErrorList.INSUFFICIENT_BALANCE;
+	}
+
+	private async topUpChannel(builder: TransactionBuilder) {
+		const channel = builder.channel as Channel;
+		const fee = await this._blockchainInfoRetriever.getMinimumFee();
+		const amount = fee * CHANNEL_TOP_UP_TX_COUNT;
+		const topUpBuilder = await this.buildSendKin(channel.keyPair.publicAddress, amount, fee);
+		await this.submitTransaction(topUpBuilder);
+	}
+
+	private async loadSenderAccountData(channel?: Channel) {
+		const addressToLoad = channel ? channel.keyPair.publicAddress : this._keypair.publicAddress;
+		const response: Server.AccountResponse = await this._server.loadAccount(addressToLoad);
+		return response;
 	}
 }

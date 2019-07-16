@@ -1,4 +1,4 @@
-import {KinAccount} from "../../scripts/src/kinAccount";
+import {KinAccount} from "../../scripts/src";
 import {Channels, KeyPair, KinClient} from "../../scripts/src";
 import {Keypair, Memo, Network, Operation, Transaction as XdrTransaction} from "@kinecosystem/kin-base";
 import {Server} from "@kinecosystem/kin-sdk";

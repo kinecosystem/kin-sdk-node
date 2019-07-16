@@ -1,5 +1,5 @@
-import {Environment} from "./environment";
-import {KinAccount} from "./kinAccount";
+import { Environment } from "./environment";
+import { KinAccount } from "./kinAccount";
 import {
 	AccountData,
 	Balance,
@@ -8,15 +8,15 @@ import {
 	RawTransaction,
 	Transaction
 } from "./blockchain/horizonModels";
-import {Server} from "@kinecosystem/kin-sdk";
-import {Network} from "@kinecosystem/kin-base";
-import {AccountDataRetriever} from "./blockchain/accountDataRetriever";
-import {Friendbot} from "./friendbot";
-import {BlockchainInfoRetriever} from "./blockchain/blockchainInfoRetriever";
-import {TransactionRetriever} from "./blockchain/transactionRetriever";
-import {Address, TransactionId} from "./types";
-import {BlockchainListener} from "./blockchain/blockchainListeners";
-import {ANON_APP_ID, GLOBAL_HEADERS} from "./config";
+import { Server } from "@kinecosystem/kin-sdk";
+import { Network } from "@kinecosystem/kin-base";
+import { AccountDataRetriever } from "./blockchain/accountDataRetriever";
+import { Friendbot } from "./friendbot";
+import { BlockchainInfoRetriever } from "./blockchain/blockchainInfoRetriever";
+import { TransactionRetriever } from "./blockchain/transactionRetriever";
+import { Address, TransactionId } from "./types";
+import { BlockchainListener } from "./blockchain/blockchainListeners";
+import { ANON_APP_ID, GLOBAL_HEADERS, GLOBAL_RETRY } from "./config";
 
 export class KinClient {
 
@@ -29,7 +29,7 @@ export class KinClient {
 
 	constructor(private readonly _environment: Environment) {
 		this._environment = _environment;
-		this._server = new Server(_environment.url, {allowHttp: false, headers: GLOBAL_HEADERS});
+		this._server = new Server(_environment.url, { allowHttp: false, headers: GLOBAL_HEADERS, retry: GLOBAL_RETRY });
 		Network.use(new Network(_environment.passphrase));
 		this._accountDataRetriever = new AccountDataRetriever(this._server);
 		this._friendbotHandler = _environment.friendbotUrl ? new Friendbot(_environment.friendbotUrl, this._accountDataRetriever) : undefined;
@@ -39,10 +39,10 @@ export class KinClient {
 	}
 
 	get environment() {
-		return this._environment
+		return this._environment;
 	}
 
-	createKinAccount(params: CreateKinAccountParams): KinAccount {
+	public createKinAccount(params: CreateKinAccountParams): KinAccount {
 		return new KinAccount(params.seed, this._accountDataRetriever, this._server, this._blockchainInfoRetriever,
 			params.appId ? params.appId : ANON_APP_ID, params.channelSecretKeys);
 	}
@@ -51,7 +51,7 @@ export class KinClient {
 	 * Get the current minimum fee that the network charges per operation.
 	 * @returns The fee expressed in Quarks.
 	 */
-	getMinimumFee(): Promise<number> {
+	public getMinimumFee(): Promise<number> {
 		return this._blockchainInfoRetriever.getMinimumFee();
 	}
 
@@ -59,7 +59,7 @@ export class KinClient {
 	 * Get the current confirmed balance in kin from kin blockchain.
 	 * @param address wallet address (public key)
 	 */
-	async getAccountBalance(address: Address): Promise<Balance> {
+	public async getAccountBalance(address: Address): Promise<Balance> {
 		return await this._accountDataRetriever.fetchKinBalance(address);
 	}
 
@@ -67,7 +67,7 @@ export class KinClient {
 	 * Check if the account exists on kin blockchain.
 	 * @param address wallet address (public key)
 	 */
-	async isAccountExisting(address: Address): Promise<boolean> {
+	public async isAccountExisting(address: Address): Promise<boolean> {
 		return await this._accountDataRetriever.isAccountExisting(address);
 	}
 
@@ -76,7 +76,7 @@ export class KinClient {
 	 * @param address wallet address (public key)
 	 * @returns an AccountData represent account details
 	 */
-	async getAccountData(address: Address): Promise<AccountData> {
+	public async getAccountData(address: Address): Promise<AccountData> {
 		return await this._accountDataRetriever.fetchAccountData(address);
 	}
 
@@ -84,7 +84,7 @@ export class KinClient {
 	 * Get transaction data by transaction id from kin blockchain.
 	 * @param transactionId transaction id (hash)
 	 */
-	async getTransactionData(transactionId: TransactionId): Promise<Transaction> {
+	public async getTransactionData(transactionId: TransactionId): Promise<Transaction> {
 		return this._transactionRetriever.fetchTransaction(transactionId);
 	}
 
@@ -93,7 +93,7 @@ export class KinClient {
 	 * @param transactionId transaction id (hash)
 	 * @return RawTransaction only
 	 */
-	async getRawTransactionData(transactionId: TransactionId): Promise<RawTransaction>  {
+	public async getRawTransactionData(transactionId: TransactionId): Promise<RawTransaction> {
 		return this._transactionRetriever.fetchTransaction(transactionId, false) as Promise<RawTransaction>;
 	}
 
@@ -101,7 +101,7 @@ export class KinClient {
 	 * Get transaction history for a single account from kin blockchain.
 	 * @param params parameters for retrieving transactions
 	 */
-	async getTransactionHistory(params: TransactionHistoryParams): Promise<Transaction[]> {
+	public async getTransactionHistory(params: TransactionHistoryParams): Promise<Transaction[]> {
 		return this._transactionRetriever.fetchTransactionHistory(params);
 	}
 
@@ -110,15 +110,15 @@ export class KinClient {
 	 * @param params parameters for retrieving transactions
 	 * @return RawTransaction only
 	 */
-	async getRawTransactionHistory(params: TransactionHistoryParams): Promise<RawTransaction[]> {
-		return this._transactionRetriever.fetchTransactionHistory(params, false) as Promise<RawTransaction[]> ;
+	public async getRawTransactionHistory(params: TransactionHistoryParams): Promise<RawTransaction[]> {
+		return this._transactionRetriever.fetchTransactionHistory(params, false) as Promise<RawTransaction[]>;
 	}
 
 	/**
 	 * Creates a payment listener for the given addresses.
 	 * @return PaymentListener listener object, call `close` to stop listener, `addAddress` to add additional address to listen to
 	 */
-	createPaymentListener(params: PaymentListenerParams): PaymentListener {
+	public createPaymentListener(params: PaymentListenerParams): PaymentListener {
 		return this._blockchainListener.createPaymentsListener(params.onPayment, params.addresses);
 	}
 
@@ -127,7 +127,7 @@ export class KinClient {
 	 * If account already exists it will be funded, o.w. the account will be created with the input amount as starting
 	 * balance
 	 */
-	async friendbot(params: FriendBotParams): Promise<TransactionId> {
+	public async friendbot(params: FriendBotParams): Promise<TransactionId> {
 		if (!this._friendbotHandler) {
 			throw Error("Friendbot url not defined, friendbot is not available on production environment");
 		}

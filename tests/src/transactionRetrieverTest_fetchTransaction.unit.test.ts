@@ -1,7 +1,7 @@
 import {TransactionRetriever} from "../../scripts/src/blockchain/transactionRetriever";
 import * as nock from "nock";
 import {CreateAccountTransaction, PaymentTransaction, RawTransaction} from "../../scripts/src/blockchain/horizonModels";
-import {ErrorResponse, InternalError, ResourceNotFoundError} from "../../scripts/src/errors";
+import {ErrorResponse, InternalError, NetworkError, ResourceNotFoundError} from "../../scripts/src/errors";
 import {Memo, Operation} from "@kinecosystem/kin-base";
 import {Server} from "@kinecosystem/kin-sdk";
 
@@ -251,6 +251,7 @@ describe("TransactionRetriever.fetchTransaction", async () => {
 
 		const transactionId = "cc9a643dde0167401459ca57199ac8eb45bff8f2ab8e21e1073cdbbbb121cfce";
 		mockNetworkResponse(response, transactionId);
+
 		await expect(transactionRetriever.fetchTransaction(transactionId))
 			.rejects.toEqual(new InternalError(response));
 	});
@@ -259,9 +260,9 @@ describe("TransactionRetriever.fetchTransaction", async () => {
 		const transactionId = "cc9a643dde0167401459ca57199ac8eb45bff8f2ab8e21e1073cdbbbb121cfce";
 		nock(fakeUrl)
 			.get(url => url.includes(transactionId))
-			.replyWithError({code: 'scripts/src'});
+			.replyWithError({code: 'ETIMEDOUT'});
 		await expect(transactionRetriever.fetchTransaction(transactionId))
-			.rejects.toHaveProperty('type', 'NetworkError');
+			.rejects.toEqual(new NetworkError({code: 'ETIMEDOUT'}));
 	});
 
 });

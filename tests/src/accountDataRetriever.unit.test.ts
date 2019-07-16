@@ -22,7 +22,6 @@ const mock404NetworkResponse: ErrorResponse = {
 	"detail": "The resource at the url requested was not found.  This is usually occurs for one of two reasons:  The url requested is not valid, or no data in our database could be found with the parameters provided."
 };
 
-
 const mock500NetworkResponse: ErrorResponse = {
 	"type": "https://stellar.org/horizon-errors/server_error",
 	"title": "Internal server Error",
@@ -33,7 +32,7 @@ const fakeTimeoutResponse = {message: "timeout error", code: 'ETIMEDOUT'};
 
 describe("AccountDataRetreiver.fetchAccountData", async () => {
 	beforeAll(async () => {
-		accountDataRetriever = new AccountDataRetriever(new Server(fakeUrl, {allowHttp: true}));
+		accountDataRetriever = new AccountDataRetriever(new Server(fakeUrl, { allowHttp: true }));
 	});
 
 	test("too long address, expect InvalidAddressError", async () => {
@@ -100,7 +99,6 @@ describe("AccountDataRetreiver.fetchAccountData", async () => {
 
 	test("timeout error, expect NetworkError", async () => {
 		mockTimeoutNetworkReponse();
-		//TODO check stellar sdk for exposing network errors up
 		await expect(accountDataRetriever.fetchAccountData(publicAddress))
 			.rejects.toEqual(new NetworkError(fakeTimeoutResponse));
 	});
@@ -139,19 +137,12 @@ describe("AccountDataRetreiver.fetchKinBalance", async () => {
 
 	test("error 500, expect ServerError", async () => {
 		mockNetworkResponse(mock500NetworkResponse);
-		mockNetworkResponse(mock500NetworkResponse);
-		try {
-			await accountDataRetriever.fetchKinBalance(publicAddress);
-		} catch (e) {
-			console.log(e.error);
-		}
 		await expect(accountDataRetriever.fetchKinBalance(publicAddress))
 			.rejects.toEqual(new InternalError(mock500NetworkResponse));
 	});
 
 	test("timeout error, expect NetworkError", async () => {
 		mockTimeoutNetworkReponse();
-		//TODO check stellar sdk for exposing network errors up
 		await expect(accountDataRetriever.fetchKinBalance(publicAddress))
 			.rejects.toEqual(new NetworkError(fakeTimeoutResponse));
 	});
@@ -195,7 +186,6 @@ describe("AccountDataRetreiver.isAccountExisting", async () => {
 
 	test("timeout error, expect NetworkError", async () => {
 		mockTimeoutNetworkReponse();
-		//TODO check stellar sdk for exposing network errors up
 		await expect(accountDataRetriever.isAccountExisting(publicAddress))
 			.rejects.toEqual(new NetworkError(fakeTimeoutResponse));
 	});
