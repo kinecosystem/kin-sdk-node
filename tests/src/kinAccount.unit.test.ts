@@ -4,10 +4,9 @@ import {KinAccount} from "../../scripts/src/kinAccount";
 import {AccountDataRetriever} from "../../scripts/src/blockchain/accountDataRetriever";
 import {BadRequestError, ErrorDecoder, ErrorResponse, LowBalanceError} from "../../scripts/src/errors";
 import {Environment} from "../../scripts/src/environment";
-import {Memo, Network, Operation} from "@kinecosystem/kin-base";
+import {Memo, Network, Operation, Server} from "@kinecosystem/kin-sdk";
 import {WhitelistPayload} from "../../scripts/src/types";
 import {BlockchainInfoRetriever} from "../../scripts/src/blockchain/blockchainInfoRetriever";
-import {Server} from "@kinecosystem/kin-sdk";
 import {GLOBAL_RETRY, MEMO_LENGTH_ERROR} from "../../scripts/src/config";
 import CreateAccount = Operation.CreateAccount;
 

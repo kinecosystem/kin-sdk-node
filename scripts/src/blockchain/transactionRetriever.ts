@@ -1,7 +1,6 @@
-import {Server} from "@kinecosystem/kin-sdk";
+import {Server, Transaction as XdrTransaction} from "@kinecosystem/kin-sdk";
 import {ErrorDecoder} from "../errors";
 import {CreateAccountTransaction, PaymentTransaction, RawTransaction, Transaction,} from "./horizonModels";
-import {Transaction as XdrTransaction} from "@kinecosystem/kin-base";
 import {TransactionId} from "../types";
 import {TransactionHistoryParams} from "../kinClient";
 

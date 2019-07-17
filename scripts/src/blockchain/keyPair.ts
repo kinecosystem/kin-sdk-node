@@ -1,4 +1,4 @@
-import {Keypair} from "@kinecosystem/kin-base";
+import {Keypair} from "@kinecosystem/kin-sdk";
 import {Address} from "../types";
 import * as crypto from "crypto";
 

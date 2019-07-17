@@ -1,7 +1,6 @@
 import {TxSender} from "../../scripts/src/blockchain/txSender";
 import {KeyPair} from "../../scripts/src/blockchain/keyPair";
-import {Memo, Server} from "@kinecosystem/kin-sdk";
-import {Network} from "@kinecosystem/kin-base";
+import {Memo, Network, Server} from "@kinecosystem/kin-sdk";
 import {IBlockchainInfoRetriever} from "../../scripts/src/blockchain/blockchainInfoRetriever";
 import {ChannelsPool} from "../../scripts/src/blockchain/channelsPool";
 import * as nock from "nock";

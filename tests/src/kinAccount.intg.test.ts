@@ -1,8 +1,7 @@
-import { KinAccount } from "../../scripts/src/kinAccount";
-import { Environment } from "../../scripts/src/environment";
-import { Channels, KeyPair, KinClient } from "../../scripts/src";
-import { Keypair, Memo, Network, Operation, Transaction as XdrTransaction } from "@kinecosystem/kin-base";
-import { Server } from "@kinecosystem/kin-sdk";
+import {KinAccount} from "../../scripts/src/kinAccount";
+import {Environment} from "../../scripts/src/environment";
+import {Channels, KeyPair, KinClient} from "../../scripts/src";
+import {Keypair, Memo, Network, Operation, Server, Transaction as XdrTransaction} from "@kinecosystem/kin-sdk";
 
 const integEnv = new Environment({
 	url: Environment.Testnet.url,
