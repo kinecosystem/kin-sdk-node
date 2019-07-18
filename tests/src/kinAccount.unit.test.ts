@@ -10,6 +10,8 @@ import {BlockchainInfoRetriever} from "../../scripts/src/blockchain/blockchainIn
 import {Server} from "@kinecosystem/kin-sdk";
 import {GLOBAL_RETRY, MEMO_LENGTH_ERROR} from "../../scripts/src/config";
 import CreateAccount = Operation.CreateAccount;
+import {TransactionRetriever} from "../../scripts/src/blockchain/transactionRetriever";
+import {CreateAccountTransaction, PaymentTransaction} from "../../scripts/src";
 
 const horizonUrl = "http://horizon.com";
 const headerKey = "user-agent";
@@ -392,6 +394,35 @@ describe("KinAccount.createAccount", async () => {
 		txBuilder.addFee(20);
 		await expect(kinAccount.submitTransaction(txBuilder)).rejects.toEqual(ErrorDecoder.translate({response: mock500NetworkResponse}));
 	}, 120000);
+
+	test("decode transaction, creaate account", async () => {
+		const envCreateAccount = "AAAAAJgYN4A6gJqythoF+KrosLoDT0z7xDUd7ZNopGmsL1mrAAAAZAATihkAAAABAAAAAQAAAAAAAAAAAAAAAA" +
+			"AAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAfKjvdav7L3Xvs514g5E86dPE9EMSLLV1vTOrVHRAFIAAAAAAX14QAAAAAAAAAAAA==";
+		const transaction = TransactionRetriever.fromTransactionPayload(envCreateAccount);
+
+		expect(transaction.fee).toBe(100);
+		expect(transaction.hash).toBe("73cHToe2X8uunnnrr+JwMNte90RlvmCVDlddwVSwrQA=");
+		expect(transaction.sequence).toBe(5499864536317953);
+		expect(transaction.source).toBe("GCMBQN4AHKAJVMVWDIC7RKXIWC5AGT2M7PCDKHPNSNUKI2NMF5M2XTCJ");
+		expect(transaction.type).toBe("CreateAccountTransaction");
+		expect((transaction as CreateAccountTransaction).destination).toBe("GAD4VDXXLK73F5267M45PCBZCPHJ2PCPIQYSFS2XLPJTVNKHIQAURDJS");
+		expect((transaction as CreateAccountTransaction).startingBalance).toBe(1000);
+	});
+
+	test("decode transaction, creaate account", async () => {
+		const envPayment = "AAAAAJgYN4A6gJqythoF+KrosLoDT0z7xDUd7ZNopGmsL1mrAAAAZAATihkAAAABAAAAAQAAAAAAAAAAAAAAAAAAAAAA" +
+			"AAABAAAADlRlc3QgdHJhbnNsYXRlAAAAAAABAAAAAAAAAAEAAAAAB8qO91q/svde+znXiDkTzp08T0QxIstXW9M6tUdEAUgAAAAAAAAAAAC" +
+			"YloAAAAAAAAAAAA==";
+		const transaction = TransactionRetriever.fromTransactionPayload(envPayment);
+
+		expect(transaction.fee).toBe(100);
+		expect(transaction.hash).toBe("2QOrZ5DtDful+dxWHAjWn7D6w25Q/K70mlpEc5RkKsY=");
+		expect(transaction.sequence).toBe(5499864536317953);
+		expect(transaction.source).toBe("GCMBQN4AHKAJVMVWDIC7RKXIWC5AGT2M7PCDKHPNSNUKI2NMF5M2XTCJ");
+		expect(transaction.type).toBe("PaymentTransaction");
+		expect((transaction as PaymentTransaction).destination).toBe("GAD4VDXXLK73F5267M45PCBZCPHJ2PCPIQYSFS2XLPJTVNKHIQAURDJS");
+		expect((transaction as PaymentTransaction).amount).toBe(100);
+	});
 });
 
 function mockFailedRetries(retries: number) {

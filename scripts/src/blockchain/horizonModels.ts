@@ -55,7 +55,7 @@ export interface TransactionBase {
 	hash: string;
 	sequence: number;
 	source: string;
-	timestamp: string;
+	timestamp: string | undefined;
 	signatures: xdr.DecoratedSignature[];
 }
 

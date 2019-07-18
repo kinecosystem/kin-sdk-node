@@ -1,6 +1,12 @@
 import {Server} from "@kinecosystem/kin-sdk";
 import {ErrorDecoder} from "../errors";
-import {CreateAccountTransaction, PaymentTransaction, RawTransaction, Transaction,} from "./horizonModels";
+import {
+	CreateAccountTransaction,
+	PaymentTransaction,
+	RawTransaction,
+	Transaction,
+	TransactionBase,
+} from "./horizonModels";
 import {Transaction as XdrTransaction} from "@kinecosystem/kin-base";
 import {TransactionId} from "../types";
 import {TransactionHistoryParams} from "../kinClient";
@@ -61,10 +67,10 @@ export class TransactionRetriever implements ITransactionRetriever {
 		};
 
 		if (simplified !== false) {
-			if (operations.length == 1) {
-				let operation = operations[0];
-				if (operation.type == "payment") {
-					return <PaymentTransaction>{
+			if (operations.length === 1) {
+				const operation = operations[0];
+				if (operation.type === "payment") {
+					return <PaymentTransaction> {
 						...transactionBase,
 						source: operation.source ? operation.source : transactionRecord.source_account,
 						destination: operation.destination,
@@ -72,8 +78,8 @@ export class TransactionRetriever implements ITransactionRetriever {
 						memo: transactionRecord.memo,
 						type: "PaymentTransaction"
 					};
-				} else if (operation.type == "createAccount") {
-					return <CreateAccountTransaction>{
+				} else if (operation.type === "createAccount") {
+					return <CreateAccountTransaction> {
 						...transactionBase,
 						source: operation.source ? operation.source : transactionRecord.source_account,
 						destination: operation.destination,
@@ -89,6 +95,47 @@ export class TransactionRetriever implements ITransactionRetriever {
 			...transactionBase,
 			memo: xdrTransaction.memo,
 			operations: xdrTransaction.operations
+		};
+	}
+
+	public static fromTransactionPayload(envelope: string, simplified?: boolean): Transaction {
+		const transactionRecord = new XdrTransaction(envelope);
+		const transactionBase = {
+			fee: transactionRecord.fee,
+			hash: transactionRecord.hash().toString("base64"),
+			sequence: parseInt(String(transactionRecord.sequence)),
+			signatures: transactionRecord.signatures,
+			source: transactionRecord.source,
+			timestamp: "",
+			type: "RawTransaction"
+		};
+
+		if (transactionRecord.operations.length === 1) {
+			const operation = transactionRecord.operations[0];
+			if (operation.type === "payment") {
+					return <PaymentTransaction> {
+						...transactionBase,
+						source: operation.source ? operation.source : transactionRecord.source,
+						destination: operation.destination,
+						amount: parseFloat(operation.amount),
+						memo: transactionRecord.memo.value,
+						type: "PaymentTransaction"
+					};
+				} else if (operation.type === "createAccount") {
+					return <CreateAccountTransaction> {
+						...transactionBase,
+						source: operation.source ? operation.source : transactionRecord.source,
+						destination: operation.destination,
+						startingBalance: parseFloat(operation.startingBalance),
+						memo: transactionRecord.memo.value,
+						type: "CreateAccountTransaction"
+					};
+				}
+		}
+		return <RawTransaction> {
+				...transactionBase,
+			memo: transactionRecord.memo,
+			operations: transactionRecord.operations
 		};
 	}
 }

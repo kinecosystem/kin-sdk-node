@@ -3,7 +3,7 @@
 	"rules": {
 		"indent": [true, "tabs", 2],
 		"quotemark": [true, "double"],
-		"object-curly-spacing": [true, "always"],
+		"object-curly-spacing": [false, "always"],
 		"arrow-parens": [true, "ban-single-arg-parens"],
 		"whitespace": [true,
 			"check-branch",
@@ -12,8 +12,7 @@
 			"check-separator",
 			"check-typecast",
 			"check-type",
-			"check-typecast",
-			"check-module"
+			"check-typecast"
 		],
 		"eofline": true,
 		"max-line-length": [250],
@@ -34,6 +33,7 @@
 		"unified-signatures": false,
 		"ban-types": [false],
 		"variable-name": false,
+		"no-angle-bracket-type-assertion": false,
 		"object-literal-key-quotes": [false]
 	}
 }

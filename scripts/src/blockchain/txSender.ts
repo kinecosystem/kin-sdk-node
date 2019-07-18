@@ -73,7 +73,6 @@ export class TxSender {
 				signers.push(Keypair.fromSecret(builder.channel.keyPair.seed));
 			}
 			tx.sign(...signers);
-			// console.debug(tx.toEnvelope().toXDR('base64'));
 			const transactionResponse = await this._server.submitTransaction(tx);
 			return transactionResponse.hash;
 		} catch (e) {
