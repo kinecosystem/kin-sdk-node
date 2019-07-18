@@ -3,10 +3,9 @@ import {KeyPair} from "../../scripts/src/blockchain/keyPair";
 import {IAccountDataRetriever} from "../../scripts/src/blockchain/accountDataRetriever";
 import {IBlockchainInfoRetriever} from "../../scripts/src/blockchain/blockchainInfoRetriever";
 import {TxSender} from "../../scripts/src/blockchain/txSender";
-import {Network} from "@kinecosystem/kin-base";
+import {Network, Server} from "@kinecosystem/kin-sdk";
 import {Environment} from "../../scripts/src/environment";
 import * as nock from "nock";
-import {Server} from "@kinecosystem/kin-sdk";
 
 const fakeUrl = "http://horizon.com";
 const baseSeed = "SBVYIBM6UTDHMN7RN6VVEFKABRQBW3YB7W7RYFZFTBD6YX3IDFLS7NGW";

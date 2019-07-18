@@ -6,9 +6,9 @@ import {
 	Transaction,
 	TransactionBuilder as BaseTransactionBuilder,
 	xdr
-} from "@kinecosystem/kin-base";
-import { Channel } from "./channelsPool";
-import { MEMO_LENGTH, MEMO_LENGTH_ERROR } from "../config";
+} from "@kinecosystem/kin-sdk";
+import {Channel} from "./channelsPool";
+import {MEMO_LENGTH, MEMO_LENGTH_ERROR} from "../config";
 
 interface TransactionBuilderOptions extends BaseTransactionBuilder.TransactionBuilderOptions {
 	fee: number;

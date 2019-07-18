@@ -1,13 +1,12 @@
-import { Address, TransactionId, WhitelistPayload } from "../types";
-import { Asset, Keypair, Memo, Network, Operation, Transaction as XdrTransaction } from "@kinecosystem/kin-base";
-import { KeyPair } from "./keyPair";
-import { TransactionBuilder } from "./transactionBuilder";
-import { ErrorDecoder, HorizonError, NetworkError, NetworkMismatchedError } from "../errors";
-import { Channel } from "./channelsPool";
-import { IBlockchainInfoRetriever } from "./blockchainInfoRetriever";
-import { CHANNEL_TOP_UP_TX_COUNT } from "../config";
-import { TransactionErrorList } from "./errors";
-import { Server } from "@kinecosystem/kin-sdk";
+import {Address, TransactionId, WhitelistPayload} from "../types";
+import {Asset, Keypair, Network, Operation, Server, Transaction as XdrTransaction} from "@kinecosystem/kin-sdk";
+import {KeyPair} from "./keyPair";
+import {TransactionBuilder} from "./transactionBuilder";
+import {ErrorDecoder, HorizonError, NetworkError, NetworkMismatchedError} from "../errors";
+import {Channel} from "./channelsPool";
+import {IBlockchainInfoRetriever} from "./blockchainInfoRetriever";
+import {CHANNEL_TOP_UP_TX_COUNT} from "../config";
+import {TransactionErrorList} from "./errors";
 
 interface WhitelistPayloadTemp {
 	// The android stellar sdk spells 'envelope' as 'envelop'

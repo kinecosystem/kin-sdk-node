@@ -1,9 +1,8 @@
 import {KeyPair} from "./keyPair";
 import * as crypto from "crypto";
 import {TxSender} from "./txSender";
-import {Network, Operation} from "@kinecosystem/kin-base";
+import {Network, Operation, Server} from "@kinecosystem/kin-sdk";
 import {Environment} from "../environment";
-import {Server} from "@kinecosystem/kin-sdk";
 import {AccountDataRetriever, IAccountDataRetriever} from "./accountDataRetriever";
 import {BlockchainInfoRetriever, IBlockchainInfoRetriever} from "./blockchainInfoRetriever";
 
