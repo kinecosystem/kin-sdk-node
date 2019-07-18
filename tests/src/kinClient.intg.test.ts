@@ -1,14 +1,8 @@
-import { KinAccount } from "../../scripts/src/kinAccount";
-import { Environment } from "../../scripts/src/environment";
-import { KeyPair, KinClient } from "../../scripts/src";
-import { TransactionBuilder } from "../../scripts/src/blockchain/transactionBuilder";
+import {KinAccount} from "../../scripts/src/kinAccount";
+import {KeyPair, KinClient} from "../../scripts/src";
+import {TransactionBuilder} from "../../scripts/src/blockchain/transactionBuilder";
+import {INTEG_ENV} from "./integConfig";
 
-const integEnv = new Environment({
-	url: Environment.Testnet.url,
-	passphrase: Environment.Testnet.passphrase,
-	friendbotUrl: "https://friendbot.developers.kinecosystem.com",
-	name: "test env"
-});
 const keypair = KeyPair.generate();
 const seconedKeypair = KeyPair.generate();
 let client: KinClient;
@@ -17,7 +11,7 @@ let receiver: KinAccount;
 
 describe("KinClient", async () => {
 	beforeAll(async () => {
-		client = new KinClient(integEnv);
+		client = new KinClient(INTEG_ENV);
 		sender = client.createKinAccount({ seed: keypair.seed });
 		receiver = client.createKinAccount({ seed: seconedKeypair.seed });
 		const transactionId = await client.friendbot({ address: keypair.publicAddress, amount: 10000 });
