@@ -137,6 +137,5 @@ describe("KinClient", async () => {
 			memoText: "sending kin"
 		});
 		hash = await sender.submitTransaction(sendBuilder);
-
-	}, 120000);
+	}, 180000);
 });

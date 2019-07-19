@@ -108,7 +108,7 @@ export class TxSender {
 
 		const networkPassphrase = Network.current().networkPassphrase();
 		if (networkPassphrase !== txPair.networkId) {
-			throw new NetworkMismatchedError();
+			throw new NetworkMismatchedError("Unable to sign whitelist transaction, network type is mismatched");
 		}
 
 		const transaction = new XdrTransaction(txPair.envelope);

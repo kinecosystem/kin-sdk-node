@@ -1,5 +1,5 @@
 import {Server} from "@kinecosystem/kin-sdk";
-import {ErrorDecoder} from "../errors";
+import {ErrorDecoder, NetworkMismatchedError} from "../errors";
 import {
 	CreateAccountTransaction,
 	PaymentTransaction,
@@ -7,7 +7,7 @@ import {
 	Transaction,
 	TransactionBase,
 } from "./horizonModels";
-import {Transaction as XdrTransaction} from "@kinecosystem/kin-base";
+import {Transaction as XdrTransaction, Network} from "@kinecosystem/kin-base";
 import {TransactionId} from "../types";
 import {TransactionHistoryParams} from "../kinClient";
 
@@ -98,7 +98,7 @@ export class TransactionRetriever implements ITransactionRetriever {
 		};
 	}
 
-	public static fromTransactionPayload(envelope: string, simplified?: boolean): Transaction {
+	public static fromTransactionPayload(envelope: string, networkId: string, simplified?: boolean): Transaction {
 		const transactionRecord = new XdrTransaction(envelope);
 		const transactionBase = {
 			fee: transactionRecord.fee,
@@ -106,14 +106,20 @@ export class TransactionRetriever implements ITransactionRetriever {
 			sequence: parseInt(String(transactionRecord.sequence)),
 			signatures: transactionRecord.signatures,
 			source: transactionRecord.source,
-			timestamp: "",
+			timestamp: undefined,
 			type: "RawTransaction"
 		};
 
-		if (transactionRecord.operations.length === 1) {
-			const operation = transactionRecord.operations[0];
-			if (operation.type === "payment") {
-					return <PaymentTransaction> {
+		const networkPassphrase = Network.current().networkPassphrase();
+		if (networkPassphrase !== networkId) {
+			throw new NetworkMismatchedError(`Unable to decode transaction, network type is mismatched`);
+		}
+
+		if (simplified !== false) {
+			if (transactionRecord.operations.length === 1) {
+				const operation = transactionRecord.operations[0];
+				if (operation.type === "payment") {
+					return <PaymentTransaction>{
 						...transactionBase,
 						source: operation.source ? operation.source : transactionRecord.source,
 						destination: operation.destination,
@@ -122,7 +128,7 @@ export class TransactionRetriever implements ITransactionRetriever {
 						type: "PaymentTransaction"
 					};
 				} else if (operation.type === "createAccount") {
-					return <CreateAccountTransaction> {
+					return <CreateAccountTransaction>{
 						...transactionBase,
 						source: operation.source ? operation.source : transactionRecord.source,
 						destination: operation.destination,
@@ -131,6 +137,7 @@ export class TransactionRetriever implements ITransactionRetriever {
 						type: "CreateAccountTransaction"
 					};
 				}
+			}
 		}
 		return <RawTransaction> {
 				...transactionBase,

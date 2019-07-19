@@ -1,9 +1,10 @@
 import {Memo, Operation, xdr} from "@kinecosystem/kin-base";
+import {TransactionRetriever} from "./transactionRetriever";
 
 export type Balance = number;
 export type Address = string;
 export type TransactionId = string;
-export type AssetType = 'native' | 'credit_alphanum4' | 'credit_alphanum12';
+export type AssetType = "native" | "credit_alphanum4" | "credit_alphanum12";
 
 export interface AccountData {
 	readonly id: string;
@@ -49,8 +50,17 @@ export namespace AccountData {
 
 export type Transaction = PaymentTransaction | CreateAccountTransaction | RawTransaction;
 
+export namespace Transaction {
+	export function decodeTransaction(params: DecodeTransactionParams): PaymentTransaction | CreateAccountTransaction {
+		return TransactionRetriever.fromTransactionPayload(params.envelope, params.networkId) as PaymentTransaction | CreateAccountTransaction;
+	}
+	export function decodeRawTransaction(params: DecodeTransactionParams): RawTransaction {
+		return TransactionRetriever.fromTransactionPayload(params.envelope, params.networkId, false) as RawTransaction;
+	}
+}
+
 export interface TransactionBase {
-	type: 'PaymentTransaction' | 'CreateAccountTransaction' | 'RawTransaction';
+	type: "PaymentTransaction" | "CreateAccountTransaction" | "RawTransaction";
 	fee: number;
 	hash: string;
 	sequence: number;
@@ -60,21 +70,21 @@ export interface TransactionBase {
 }
 
 export interface PaymentTransaction extends TransactionBase {
-	type: 'PaymentTransaction';
+	type: "PaymentTransaction";
 	amount: number;
 	destination: string;
 	memo?: string;
 }
 
 export interface CreateAccountTransaction extends TransactionBase {
-	type: 'CreateAccountTransaction';
+	type: "CreateAccountTransaction";
 	destination: string;
 	startingBalance: number;
 	memo?: string;
 }
 
 export interface RawTransaction extends TransactionBase {
-	type: 'RawTransaction';
+	type: "RawTransaction";
 	memo?: Memo;
 	operations: Operation[];
 }
@@ -83,6 +93,11 @@ export interface PaymentListener {
 	addAddress: (address: Address) => void;
 	removeAddress: (address: Address) => void;
 	close: () => void;
+}
+
+export interface DecodeTransactionParams {
+	envelope: string;
+	networkId: string;
 }
 
 export type OnPaymentListener = (payment: PaymentTransaction) => void;
