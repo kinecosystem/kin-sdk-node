@@ -101,8 +101,8 @@ export class NetworkError extends Error implements KinSdkError {
 export class NetworkMismatchedError extends Error implements KinSdkError {
 	readonly type = 'NetworkMismatchedError';
 
-	constructor() {
-		super(`Unable to sign whitelist transaction, network type is mismatched`);
+	constructor(message: string) {
+		super(message);
 	}
 }
 

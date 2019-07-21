@@ -1,8 +1,14 @@
 import {TransactionRetriever} from "../../scripts/src/blockchain/transactionRetriever";
 import * as nock from "nock";
-import {CreateAccountTransaction, PaymentTransaction, RawTransaction} from "../../scripts/src/blockchain/horizonModels";
+import {
+	CreateAccountTransaction,
+	PaymentTransaction,
+	RawTransaction,
+	Transaction
+} from "../../scripts/src/blockchain/horizonModels";
 import {ErrorResponse, InternalError, NetworkError, ResourceNotFoundError} from "../../scripts/src/errors";
-import {Memo, Operation, Server} from "@kinecosystem/kin-sdk";
+import {Memo, Operation, Server, Network} from "@kinecosystem/kin-sdk";
+import {Environment} from "../../scripts/src";
 
 // as a workaround, TransactionRetriever was separated to two files due to some jest error when running both fetchTransactionHistory
 // and fetchTransaction tests in the same file
@@ -12,6 +18,7 @@ let transactionRetriever: TransactionRetriever;
 
 describe("TransactionRetriever.fetchTransaction", async () => {
 	beforeAll(async () => {
+		Network.use(new Network(Environment.Testnet.passphrase));
 		transactionRetriever = new TransactionRetriever(new Server(fakeUrl, {allowHttp: true}));
 	});
 
@@ -262,6 +269,50 @@ describe("TransactionRetriever.fetchTransaction", async () => {
 			.replyWithError({code: 'ETIMEDOUT'});
 		await expect(transactionRetriever.fetchTransaction(transactionId))
 			.rejects.toEqual(new NetworkError({code: 'ETIMEDOUT'}));
+	});
+
+	test("decode transaction, create account", async () => {
+		const envCreateAccount = "AAAAAJgYN4A6gJqythoF+KrosLoDT0z7xDUd7ZNopGmsL1mrAAAAZAATihkAAAABAAAAAQAAAAAAAAAAAAAAAA" +
+			"AAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAfKjvdav7L3Xvs514g5E86dPE9EMSLLV1vTOrVHRAFIAAAAAAX14QAAAAAAAAAAAA==";
+		const transaction = Transaction.decodeTransaction({envelope: envCreateAccount, networkId: Network.current().networkPassphrase()});
+
+		expect(transaction.fee).toBe(100);
+		expect(transaction.hash).toBe("73cHToe2X8uunnnrr+JwMNte90RlvmCVDlddwVSwrQA=");
+		expect(transaction.sequence).toBe(5499864536317953);
+		expect(transaction.source).toBe("GCMBQN4AHKAJVMVWDIC7RKXIWC5AGT2M7PCDKHPNSNUKI2NMF5M2XTCJ");
+		expect((transaction as CreateAccountTransaction).destination).toBe("GAD4VDXXLK73F5267M45PCBZCPHJ2PCPIQYSFS2XLPJTVNKHIQAURDJS");
+		expect((transaction as CreateAccountTransaction).startingBalance).toBe(1000);
+		expect(transaction.type).toBe("CreateAccountTransaction");
+	});
+
+	test("decode transaction, send kin", async () => {
+		const envPayment = "AAAAAJgYN4A6gJqythoF+KrosLoDT0z7xDUd7ZNopGmsL1mrAAAAZAATihkAAAABAAAAAQAAAAAAAAAAAAAAAAAAAAAA" +
+			"AAABAAAADlRlc3QgdHJhbnNsYXRlAAAAAAABAAAAAAAAAAEAAAAAB8qO91q/svde+znXiDkTzp08T0QxIstXW9M6tUdEAUgAAAAAAAAAAAC" +
+			"YloAAAAAAAAAAAA==";
+		const transaction = Transaction.decodeTransaction({envelope: envPayment, networkId: Network.current().networkPassphrase()});
+
+		expect(transaction.fee).toBe(100);
+		expect(transaction.hash).toBe("2QOrZ5DtDful+dxWHAjWn7D6w25Q/K70mlpEc5RkKsY=");
+		expect(transaction.sequence).toBe(5499864536317953);
+		expect(transaction.source).toBe("GCMBQN4AHKAJVMVWDIC7RKXIWC5AGT2M7PCDKHPNSNUKI2NMF5M2XTCJ");
+		expect((transaction as PaymentTransaction).destination).toBe("GAD4VDXXLK73F5267M45PCBZCPHJ2PCPIQYSFS2XLPJTVNKHIQAURDJS");
+		expect((transaction as PaymentTransaction).amount).toBe(100);
+		expect(((transaction as PaymentTransaction).memo as any).toString()).toBe("Test translate");
+		expect(transaction.type).toBe("PaymentTransaction");
+	});
+
+	test("decode transaction, set menage data", async () => {
+		const envRaw = "AAAAAJgYN4A6gJqythoF+KrosLoDT0z7xDUd7ZNopGmsL1mrAAAAZAATihkAAAABAAAAAQAAAAAAAAAAAAAAAAAAAAAA" +
+			"AAABAAAADlRlc3QgdHJhbnNsYXRlAAAAAAABAAAAAAAAAAoAAAAUVGVzdCByYXcgdHJhbnNhY3Rpb24AAAAAAAAAAAAAAAA=§";
+		const transaction = Transaction.decodeRawTransaction({envelope: envRaw, networkId: Network.current().networkPassphrase()});
+
+		expect(transaction.fee).toBe(100);
+		expect(transaction.hash).toBe("DjZXk44BOrnbTRp1ZnJvTyLlWsVB+8h/9rw07aIaq7U=");
+		expect(transaction.sequence).toBe(5499864536317953);
+		expect(transaction.source).toBe("GCMBQN4AHKAJVMVWDIC7RKXIWC5AGT2M7PCDKHPNSNUKI2NMF5M2XTCJ");
+		expect(transaction.operations[0].type).toBe("manageData");
+		expect((transaction.operations[0] as any).name).toBe("Test raw transaction");
+		expect(transaction.type).toBe("RawTransaction");
 	});
 
 });
