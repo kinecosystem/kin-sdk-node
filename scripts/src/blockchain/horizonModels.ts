@@ -1,4 +1,4 @@
-import {Memo, Operation, xdr} from "@kinecosystem/kin-base";
+import {Memo, Operation, xdr} from "@kinecosystem/kin-sdk";
 import {TransactionRetriever} from "./transactionRetriever";
 
 export type Balance = number;

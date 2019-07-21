@@ -7,8 +7,7 @@ import {
 	Transaction
 } from "../../scripts/src/blockchain/horizonModels";
 import {ErrorResponse, InternalError, NetworkError, ResourceNotFoundError} from "../../scripts/src/errors";
-import {Memo, Operation, Network} from "@kinecosystem/kin-base";
-import {Server} from "@kinecosystem/kin-sdk";
+import {Memo, Operation, Server, Network} from "@kinecosystem/kin-sdk";
 import {Environment} from "../../scripts/src";
 
 // as a workaround, TransactionRetriever was separated to two files due to some jest error when running both fetchTransactionHistory

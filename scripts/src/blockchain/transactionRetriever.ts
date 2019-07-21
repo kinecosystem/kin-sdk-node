@@ -1,4 +1,4 @@
-import {Server} from "@kinecosystem/kin-sdk";
+import {Server, Transaction as XdrTransaction, Network} from "@kinecosystem/kin-sdk";
 import {ErrorDecoder, NetworkMismatchedError} from "../errors";
 import {
 	CreateAccountTransaction,
@@ -7,7 +7,6 @@ import {
 	Transaction,
 	TransactionBase,
 } from "./horizonModels";
-import {Transaction as XdrTransaction, Network} from "@kinecosystem/kin-base";
 import {TransactionId} from "../types";
 import {TransactionHistoryParams} from "../kinClient";
 
@@ -17,7 +16,7 @@ export interface ITransactionRetriever {
 
 export class TransactionRetriever implements ITransactionRetriever {
 
-	private readonly DEFAULT_ORDER = 'desc';
+	private readonly DEFAULT_ORDER = "desc";
 	private readonly DEFAULT_LIMIT = 10;
 
 	constructor(private readonly _server: Server) {
@@ -44,7 +43,7 @@ export class TransactionRetriever implements ITransactionRetriever {
 			}
 			const transactionRecords = await transactionCallBuilder.call();
 			const transactionHistory = new Array<Transaction>();
-			for (let record of transactionRecords.records) {
+			for (const record of transactionRecords.records) {
 				transactionHistory.push(TransactionRetriever.fromStellarTransaction(record, simplified));
 			}
 			return transactionHistory;
@@ -56,14 +55,14 @@ export class TransactionRetriever implements ITransactionRetriever {
 	public static fromStellarTransaction(transactionRecord: Server.TransactionRecord, simplified?: boolean): Transaction {
 		const xdrTransaction = new XdrTransaction(transactionRecord.envelope_xdr);
 		const operations = xdrTransaction.operations;
-		const transactionBase = {
+		const transactionBase: TransactionBase = {
 			fee: xdrTransaction.fee,
 			hash: transactionRecord.hash,
 			sequence: parseInt(transactionRecord.source_account_sequence),
 			signatures: xdrTransaction.signatures,
 			source: transactionRecord.source_account,
 			timestamp: transactionRecord.created_at,
-			type: 'RawTransaction'
+			type: "RawTransaction"
 		};
 
 		if (simplified !== false) {
@@ -91,7 +90,7 @@ export class TransactionRetriever implements ITransactionRetriever {
 			}
 		}
 
-		return <RawTransaction>{
+		return <RawTransaction> {
 			...transactionBase,
 			memo: xdrTransaction.memo,
 			operations: xdrTransaction.operations
@@ -100,7 +99,7 @@ export class TransactionRetriever implements ITransactionRetriever {
 
 	public static fromTransactionPayload(envelope: string, networkId: string, simplified?: boolean): Transaction {
 		const transactionRecord = new XdrTransaction(envelope);
-		const transactionBase = {
+		const transactionBase: TransactionBase = {
 			fee: transactionRecord.fee,
 			hash: transactionRecord.hash().toString("base64"),
 			sequence: parseInt(String(transactionRecord.sequence)),
@@ -119,7 +118,7 @@ export class TransactionRetriever implements ITransactionRetriever {
 			if (transactionRecord.operations.length === 1) {
 				const operation = transactionRecord.operations[0];
 				if (operation.type === "payment") {
-					return <PaymentTransaction>{
+					return <PaymentTransaction> {
 						...transactionBase,
 						source: operation.source ? operation.source : transactionRecord.source,
 						destination: operation.destination,
@@ -128,7 +127,7 @@ export class TransactionRetriever implements ITransactionRetriever {
 						type: "PaymentTransaction"
 					};
 				} else if (operation.type === "createAccount") {
-					return <CreateAccountTransaction>{
+					return <CreateAccountTransaction> {
 						...transactionBase,
 						source: operation.source ? operation.source : transactionRecord.source,
 						destination: operation.destination,
