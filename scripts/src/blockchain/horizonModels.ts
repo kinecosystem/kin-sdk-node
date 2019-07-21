@@ -51,7 +51,7 @@ export namespace AccountData {
 export type Transaction = PaymentTransaction | CreateAccountTransaction | RawTransaction;
 
 export namespace Transaction {
-	export function decodeTransaction(params: DecodeTransactionParams): PaymentTransaction | CreateAccountTransaction {
+	export function decodeTransaction(params: DecodeTransactionParams): Transaction {
 		return TransactionRetriever.fromTransactionPayload(params.envelope, params.networkId) as PaymentTransaction | CreateAccountTransaction;
 	}
 	export function decodeRawTransaction(params: DecodeTransactionParams): RawTransaction {
