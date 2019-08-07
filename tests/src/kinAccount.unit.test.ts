@@ -2,12 +2,18 @@ import * as nock from "nock";
 
 import {KinAccount} from "../../scripts/src/kinAccount";
 import {AccountDataRetriever} from "../../scripts/src/blockchain/accountDataRetriever";
-import {BadRequestError, ErrorDecoder, ErrorResponse, LowBalanceError} from "../../scripts/src/errors";
+import {
+	AccountNotFoundError,
+	BadRequestError,
+	ErrorDecoder,
+	ErrorResponse,
+	LowBalanceError
+} from "../../scripts/src/errors";
 import {Environment} from "../../scripts/src/environment";
 import {Memo, Network, Operation, Server} from "@kinecosystem/kin-sdk";
 import {WhitelistPayload} from "../../scripts/src/types";
 import {BlockchainInfoRetriever} from "../../scripts/src/blockchain/blockchainInfoRetriever";
-import {GLOBAL_RETRY, MEMO_LENGTH_ERROR} from "../../scripts/src/config";
+import {MEMO_LENGTH_ERROR} from "../../scripts/src/config";
 import CreateAccount = Operation.CreateAccount;
 
 const horizonUrl = "http://horizon.com";
@@ -86,25 +92,28 @@ const response400: ErrorResponse = {
 	}
 };
 
-describe("KinAccount.createAccount", async () => {
-	let retryDelay = 1;
-	let testRetry;
+const response404: ErrorResponse = {
+	type: "https://stellar.org/horizon-errors/not_found",
+	title: "Resource Missing",
+	status: 404,
+	detail: "The resource at the url requested was not found.  This is usually occurs for one of two reasons:  The url requested is not valid, or no data in our database could be found with the parameters provided."
+};
+
+function initKinAccount(retry?: any) {
+	const server = new Server(horizonUrl, {
+		allowHttp: true,
+		headers: new Map<string, string>().set(headerKey, headerVal),
+		retry: retry
+	});
+	const accountDataRetriever = new AccountDataRetriever(server);
+	Network.use(new Network(Environment.Testnet.passphrase));
+	kinAccount = new KinAccount(senderSeed, accountDataRetriever, server, new BlockchainInfoRetriever(server), appId);
+	nock.cleanAll();
+}
+
+describe("KinAccount create account transaction", async () => {
 	beforeEach(async () => {
-		testRetry = {
-			retries: GLOBAL_RETRY.retries,
-			retryDelay: (count: any): number => {
-				return retryDelay *= count;
-			}
-		};
-		const server = new Server(horizonUrl, {
-			allowHttp: true,
-			headers: new Map<string, string>().set(headerKey, headerVal),
-			retry: testRetry
-		});
-		const accountDataRetriever = new AccountDataRetriever(server);
-		Network.use(new Network(Environment.Testnet.passphrase));
-		kinAccount = new KinAccount(senderSeed, accountDataRetriever, server, new BlockchainInfoRetriever(server), appId);
-		nock.cleanAll();
+		initKinAccount();
 	});
 
 	test("builder transaction, create account succeed", async () => {
@@ -186,7 +195,7 @@ describe("KinAccount.createAccount", async () => {
 		response.extras.result_codes.transaction = "tx_insufficient_balance";
 
 		mockLoadAccountResponse("6319125253062657");
-		mockErrorResponse(response);
+		mockTransactionErrorResponse(response);
 
 		const txBuilder = await kinAccount.buildCreateAccount({
 			address: receiverPublic,
@@ -194,7 +203,8 @@ describe("KinAccount.createAccount", async () => {
 			fee: amount,
 			memoText: memo
 		});
-		await expect(kinAccount.submitTransaction(txBuilder)).rejects.toEqual(new LowBalanceError(response));
+		await expect(kinAccount.submitTransaction(txBuilder))
+			.rejects.toEqual(new LowBalanceError(response));
 	});
 
 	test("create account tx_bad_seq, error expect 400 ServerError", async () => {
@@ -203,7 +213,7 @@ describe("KinAccount.createAccount", async () => {
 		response.extras.result_codes.transaction = "tx_bad_seq";
 
 		mockLoadAccountResponse("6319125253062657");
-		mockErrorResponse(response);
+		mockTransactionErrorResponse(response);
 
 		const txBuilder = await kinAccount.buildCreateAccount({
 			address: receiverPublic,
@@ -212,116 +222,6 @@ describe("KinAccount.createAccount", async () => {
 			memoText: memo
 		});
 		await expect(kinAccount.submitTransaction(txBuilder)).rejects.toEqual(new BadRequestError(response));
-	});
-
-	test("send kin", async () => {
-		mockLoadAccountResponse("6319125253062662");
-		mockTransactionRequest({requestBody: bodySendKin_2});
-
-		const txBuilder = await kinAccount.buildSendKin({
-			address: receiverPublic,
-			amount: 23.3,
-			fee: amount,
-			memoText: memo
-		});
-		expect(await kinAccount.submitTransaction(txBuilder)).toEqual(transactionId);
-	});
-
-	test("test get proxy redirect", async () => {
-		const fakeUrl = "https://fake.url.com";
-		nock(horizonUrl)
-			.get(url => url.includes(senderPublic))
-			.reply(307, undefined, {location: fakeUrl + "/accounts/" + senderPublic});
-		mockLoadAccountResponse("6319125253062661", {url: fakeUrl});
-
-		const createBuilder = await kinAccount.buildCreateAccount({
-			address: receiverPublic,
-			startingBalance: 0,
-			fee: amount
-		});
-		const transaction = createBuilder.build();
-		expect((transaction.operations[0] as CreateAccount).startingBalance).toEqual("0");
-	});
-
-	test("test retry with get proxy redirect", async () => {
-		const fakeUrl = "https://fake.url.com";
-		nock(horizonUrl)
-			.get(url => url.includes(senderPublic))
-			.reply(307, undefined, {location: fakeUrl + "/accounts/" + senderPublic});
-		mockLoadAccountResponse("6319125253062661", {retry: 2});
-
-		const createBuilder = await kinAccount.buildCreateAccount({
-			address: receiverPublic,
-			startingBalance: 0,
-			fee: amount
-		});
-		const transaction = createBuilder.build();
-		expect(transaction.sequence).toEqual("6319125253062662");
-	});
-
-	test("test post proxy redirect", async () => {
-		const fakeUrl = "https://fake.url.com";
-		mockLoadAccountResponse("6319125253062661");
-		nock(horizonUrl)
-			.post(url => true)
-			.reply(307, undefined, {
-				location: fakeUrl + "/transactions/" + bodyCreateAccountRedirect
-			});
-		mockTransactionRequest({url: fakeUrl, requestBody: bodyCreateAccount_3});
-
-		const txBuilder = await kinAccount.buildCreateAccount({
-			address: receiverPublic_2,
-			startingBalance: 10,
-			fee: amount
-		});
-		txBuilder.addMemo(Memo.text(memo));
-		expect(await kinAccount.submitTransaction(txBuilder)).toEqual(transactionId);
-	});
-
-	test("test retry with post proxy redirect", async () => {
-		const fakeUrl = "https://fake.url.com";
-		mockLoadAccountResponse("6319125253062661");
-		nock(horizonUrl)
-			.post(url => url.includes(senderPublic))
-			.reply(307, undefined, {
-				location: fakeUrl + "/transactions/" + bodyCreateAccountRedirect
-			});
-		mockTransactionRequest({retry: 3, requestBody: bodyCreatAccount});
-
-		const txBuilder = await kinAccount.buildCreateAccount({
-			address: receiverPublic_2,
-			startingBalance: 10,
-			fee: amount
-		});
-		txBuilder.addMemo(Memo.text(memo));
-		expect(await kinAccount.submitTransaction(txBuilder)).toEqual(transactionId);
-	});
-
-	test("send kin, error expect 400 ServerError. when error tx_bad_seq expect BadRequestError", async () => {
-		const response: ErrorResponse = response400;
-		response.extras.envelope_xdr = bodySendKin_3;
-		response.extras.result_codes.transaction = "tx_bad_seq";
-
-		mockLoadAccountResponse("6319125253062657");
-		mockErrorResponse(response);
-
-		const txBuilder = await kinAccount.buildSendKin({
-			address: receiverPublic,
-			amount: 10,
-			fee: amount,
-			memoText: memo
-		});
-		await expect(kinAccount.submitTransaction(txBuilder)).rejects.toEqual(new BadRequestError(response));
-	});
-
-	test("whitelist transaction - send kin", async () => {
-		const data = "AAAAAG809+MhGZ82rRmsoUDGVlkQGcjGXbF2fX62aTPsrih8AAAAAAAXi3wAAAABAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAABAA" +
-			"AAB2JsYSBibGEAAAAAAQAAAAAAAAABAAAAAMn/CFYMgqIVL2JthzKcO+0IQKdG8GGNFDf6BjKHT1KPAAAAAAAAAAAF9eEAAAAAAAAAAAA=";
-		const txPair: WhitelistPayload = {envelope: data, networkId: Network.current().networkPassphrase()};
-		await expect(kinAccount.whitelistTransaction(txPair)).toEqual("AAAAAG809+MhGZ82rRmsoUDGVlkQGcjGXbF2fX62aTPsrih8A" +
-			"AAAAAAXi3wAAAABAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAABAAAAB2JsYSBibGEAAAAAAQAAAAAAAAABAAAAAMn/CFYMgqIVL2JthzKcO+0I" +
-			"QKdG8GGNFDf6BjKHT1KPAAAAAAAAAAAF9eEAAAAAAAAAAAHsrih8AAAAQEp6EC/3dO8zMeY33USui59MPIxxLaXsiYWxSVaIX7MwNaocb+N" +
-			"yoR5++eT/GPynxbPKQptftf/JPv2FNev2VwU=");
 	});
 
 	test("create account without memo", async () => {
@@ -349,6 +249,53 @@ describe("KinAccount.createAccount", async () => {
 		expect(await kinAccount.submitTransaction(txBuilder)).toEqual(transactionId);
 	});
 
+	test("create account, account not exists - expect error", async () => {
+		mockLoadAccountErrorResponse(response404);
+		await expect(kinAccount.buildCreateAccount({
+			address: receiverPublic_2,
+			startingBalance: 10,
+			fee: amount
+		}))
+			.rejects.toEqual(new AccountNotFoundError(response404));
+	});
+});
+
+describe("KinAccount send kin transaction", async () => {
+
+	beforeEach(async () => {
+		initKinAccount();
+	});
+
+	test("send kin", async () => {
+		mockLoadAccountResponse("6319125253062662");
+		mockTransactionRequest({requestBody: bodySendKin_2});
+
+		const txBuilder = await kinAccount.buildSendKin({
+			address: receiverPublic,
+			amount: 23.3,
+			fee: amount,
+			memoText: memo
+		});
+		expect(await kinAccount.submitTransaction(txBuilder)).toEqual(transactionId);
+	});
+
+	test("send kin, error expect 400 ServerError. when error tx_bad_seq expect BadRequestError", async () => {
+		const response: ErrorResponse = response400;
+		response.extras.envelope_xdr = bodySendKin_3;
+		response.extras.result_codes.transaction = "tx_bad_seq";
+
+		mockLoadAccountResponse("6319125253062657");
+		mockTransactionErrorResponse(response);
+
+		const txBuilder = await kinAccount.buildSendKin({
+			address: receiverPublic,
+			amount: 10,
+			fee: amount,
+			memoText: memo
+		});
+		await expect(kinAccount.submitTransaction(txBuilder)).rejects.toEqual(new BadRequestError(response));
+	});
+
 	test("send kin, change fee before submitting transaction", async () => {
 		mockLoadAccountResponse("6319125253062662");
 		mockTransactionRequest({requestBody: bodySendKin});
@@ -362,62 +309,231 @@ describe("KinAccount.createAccount", async () => {
 		txBuilder.addFee(20);
 		expect(await kinAccount.submitTransaction(txBuilder)).toEqual(transactionId);
 	});
-
-	test("retry send kin, change fee before submitting transaction.", async () => {
-		mockLoadAccountResponse("6319125253062662");
-		mockTransactionRequest({retry: 3, requestBody: bodySendKin});
-
-		const txBuilder = await kinAccount.buildSendKin({
-			address: receiverPublic,
-			amount: 23.3,
-			fee: amount,
-			memoText: memo
-		});
-		txBuilder.addFee(20);
-		expect(await kinAccount.submitTransaction(txBuilder)).toEqual(transactionId);
-		expect(retryDelay).toEqual(6);
-	});
-
-	test("retry send kin, error 500 ServerError.", async () => {
-		mockLoadAccountResponse("6319125253062662");
-		mockFailedRetries(6);
-
-		const txBuilder = await kinAccount.buildSendKin({
-			address: receiverPublic,
-			amount: 23.3,
-			fee: amount,
-			memoText: memo
-		});
-		txBuilder.addFee(20);
-		await expect(kinAccount.submitTransaction(txBuilder)).rejects.toEqual(ErrorDecoder.translate({response: mock500NetworkResponse}));
-	}, 120000);
 });
 
-function mockFailedRetries(retries: number) {
-	const builder = nock(horizonUrl)
-		.matchHeader(headerKey, headerVal);
-	for (let i = 0; i < retries; i++) {
-		builder.post(url => true).reply(mock500NetworkResponse.status, mock500NetworkResponse);
-	}
-}
+describe("KinAccount redirect", async () => {
 
-function mockErrorResponse(response: ErrorResponse) {
+	beforeEach(async () => {
+		initKinAccount();
+	});
+
+	test("test get proxy redirect", async () => {
+		const fakeUrl = "https://fake.url.com";
+		nock(horizonUrl)
+			.get(url => url.includes(senderPublic))
+			.reply(307, undefined, {location: fakeUrl + "/accounts/" + senderPublic});
+		mockLoadAccountResponse("6319125253062661", {url: fakeUrl});
+
+		const createBuilder = await kinAccount.buildCreateAccount({
+			address: receiverPublic,
+			startingBalance: 0,
+			fee: amount
+		});
+		const transaction = createBuilder.build();
+		expect((transaction.operations[0] as CreateAccount).startingBalance).toEqual("0");
+	});
+
+	test("test post proxy redirect", async () => {
+		const fakeUrl = "https://fake.url.com";
+		mockLoadAccountResponse("6319125253062661");
+		nock(horizonUrl)
+			.post(url => true)
+			.reply(307, undefined, {
+				location: fakeUrl + "/transactions/" + bodyCreateAccountRedirect
+			});
+		mockTransactionRequest({url: fakeUrl, requestBody: bodyCreateAccount_3});
+
+		const txBuilder = await kinAccount.buildCreateAccount({
+			address: receiverPublic_2,
+			startingBalance: 10,
+			fee: amount
+		});
+		txBuilder.addMemo(Memo.text(memo));
+		expect(await kinAccount.submitTransaction(txBuilder)).toEqual(transactionId);
+	});
+});
+
+describe("KinAccount whitelist transaction", async () => {
+
+	const txPayload = "AAAAAG809+MhGZ82rRmsoUDGVlkQGcjGXbF2fX62aTPsrih8AAAAAAAXi3wAAAABAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAABAA" +
+		"AAB2JsYSBibGEAAAAAAQAAAAAAAAABAAAAAMn/CFYMgqIVL2JthzKcO+0IQKdG8GGNFDf6BjKHT1KPAAAAAAAAAAAF9eEAAAAAAAAAAAA=";
+	const expectedWhitelistedPayload = "AAAAAG809+MhGZ82rRmsoUDGVlkQGcjGXbF2fX62aTPsrih8A" +
+		"AAAAAAXi3wAAAABAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAABAAAAB2JsYSBibGEAAAAAAQAAAAAAAAABAAAAAMn/CFYMgqIVL2JthzKcO+0I" +
+		"QKdG8GGNFDf6BjKHT1KPAAAAAAAAAAAF9eEAAAAAAAAAAAHsrih8AAAAQEp6EC/3dO8zMeY33USui59MPIxxLaXsiYWxSVaIX7MwNaocb+N" +
+		"yoR5++eT/GPynxbPKQptftf/JPv2FNev2VwU=";
+
+	beforeEach(async () => {
+		initKinAccount();
+	});
+
+	test("whitelist transaction with networkId", () => {
+		const txPair: WhitelistPayload = {envelope: txPayload, networkId: Network.current().networkPassphrase()};
+		expect(kinAccount.whitelistTransaction(txPair)).toEqual(expectedWhitelistedPayload);
+	});
+
+	test("whitelist transaction with network_id", () => {
+		const txPair: WhitelistPayload = {envelope: txPayload, network_id: Network.current().networkPassphrase()};
+		expect(kinAccount.whitelistTransaction(txPair)).toEqual(expectedWhitelistedPayload);
+	});
+
+	test("whitelist transaction, missing network id, expect error", () => {
+		expect(() => kinAccount.whitelistTransaction({envelope: txPayload} as any))
+			.toThrow(TypeError);
+	});
+
+	test("whitelist transaction, missing envelope, expect error", () => {
+		expect(() => kinAccount.whitelistTransaction({network_id: Network.current().networkPassphrase()} as any))
+			.toThrow(TypeError);
+	});
+
+	test("whitelist transaction, envelope string, expect error", () => {
+		expect(() => kinAccount.whitelistTransaction(txPayload as any))
+			.toThrow(TypeError);
+	});
+});
+
+describe("KinAccount retry", async () => {
+
+	const RETRY_COUNT = 4;
+
+	beforeEach(async () => {
+		initKinAccount({
+			retries: RETRY_COUNT
+		});
+	});
+
+	test("retry for get request, response with errors less than retry threshold - should succeed", async () => {
+		const builder = await buildTransaction("6319125253062662", RETRY_COUNT);
+		const transaction = builder.build();
+		expect(transaction.sequence).toEqual("6319125253062663");
+	});
+
+	test("retry for get request, response with errors more than retry threshold - should failed", async () => {
+		await expect(buildTransaction("6319125253062662", RETRY_COUNT + 1))
+			.rejects.toEqual(ErrorDecoder.translate({response: mock500NetworkResponse}));
+	});
+
+	async function buildTransaction(sequence: string, errorsCount: number) {
+		mockLoadAccountResponse(sequence, {retry: errorsCount});
+
+		//build send kin will load account which is get request
+		const builder = await kinAccount.buildSendKin({
+			address: receiverPublic,
+			amount: 23.3,
+			fee: amount,
+			memoText: memo
+		});
+		return builder;
+	}
+
+	test("retry for post request, response with errors less than retry threshold - should succeed", async () => {
+		expect(await submitTransaction(RETRY_COUNT)).toEqual(transactionId);
+	});
+
+	test("retry for post request, response with errors more than retry threshold - should failed", async () => {
+		await expect(submitTransaction(RETRY_COUNT + 1))
+			.rejects.toEqual(ErrorDecoder.translate({response: mock500NetworkResponse}));
+	});
+
+	async function submitTransaction(errorsCount: number) {
+		mockLoadAccountResponse("6319125253062662");
+		mockTransactionRequest({requestBody: bodySendKin_2, retry: errorsCount});
+
+		const txBuilder = await kinAccount.buildSendKin({
+			address: receiverPublic,
+			amount: 23.3,
+			fee: amount,
+			memoText: memo
+		});
+
+		//submit transaction will make a post request to the blockchain
+		return await kinAccount.submitTransaction(txBuilder)
+	}
+
+	test("retry for get request with redirect, response with errors less than retry threshold - should succeed", async () => {
+		//redirect "consumes" one retry, so retry will handle only RETRY_COUNT - 1 errors
+		const createBuilder = await buildTransactionWithRedirect("6319125253062661", RETRY_COUNT - 1);
+		const transaction = createBuilder.build();
+		expect(transaction.sequence).toEqual("6319125253062662");
+	});
+
+	test("retry for get request with redirect, response with errors more than retry threshold - should failed", async () => {
+		//redirect "consumes" one retry, so retry will failed with only RETRY_COUNT errors
+		await expect(buildTransactionWithRedirect("6319125253062661", RETRY_COUNT))
+			.rejects.toEqual(ErrorDecoder.translate({response: mock500NetworkResponse}));
+	});
+
+	async function buildTransactionWithRedirect(sequence: string, errorsCount: number) {
+		const fakeUrl = "https://fake.url.com";
+		nock(horizonUrl)
+			.get(url => url.includes(senderPublic))
+			.reply(307, undefined, {location: fakeUrl + "/accounts/" + senderPublic});
+		mockLoadAccountResponse(sequence, {retry: errorsCount});
+
+		const createBuilder = await kinAccount.buildCreateAccount({
+			address: receiverPublic,
+			startingBalance: 0,
+			fee: amount
+		});
+		return createBuilder;
+	}
+
+	test("retry for post request with redirect, response with errors less than retry threshold - should succeed", async () => {
+		//redirect "consumes" one retry, so retry will handle only RETRY_COUNT - 1 errors
+		expect(await submitTransactionWithRedirect(RETRY_COUNT - 1)).toEqual(transactionId);
+	});
+
+	test("retry for post request with redirect, response with errors more than retry threshold - should failed", async () => {
+		//redirect "consumes" one retry, so retry will failed with only RETRY_COUNT errors
+		await expect(submitTransactionWithRedirect(RETRY_COUNT))
+			.rejects.toEqual(ErrorDecoder.translate({response: mock500NetworkResponse}));
+	});
+
+	async function submitTransactionWithRedirect(errorsCount: number) {
+		const fakeUrl = "https://fake.url.com";
+		mockLoadAccountResponse("6319125253062661");
+		nock(horizonUrl)
+			.log(console.log)
+			.post(url => true)
+			.reply(307, undefined, {
+				location: fakeUrl + "/transactions/" + bodyCreateAccountRedirect
+			});
+		mockTransactionRequest({retry: errorsCount, requestBody: bodyCreateAccount_3});
+
+		const txBuilder = await kinAccount.buildCreateAccount({
+			address: receiverPublic_2,
+			startingBalance: 10,
+			fee: amount
+		});
+		txBuilder.addMemo(Memo.text(memo));
+		return kinAccount.submitTransaction(txBuilder);
+	}
+
+});
+
+function mockTransactionErrorResponse(response: ErrorResponse) {
 	nock(horizonUrl)
 		.matchHeader(headerKey, headerVal)
 		.post(url => url.includes("/transactions"), /tx=\w+/gi)
 		.reply(response.status, response);
 }
 
+function mockLoadAccountErrorResponse(response: ErrorResponse) {
+	nock(horizonUrl)
+		.matchHeader(headerKey, headerVal)
+		.get(url => true)
+		.reply(response.status, response);
+}
+
 function mockLoadAccountResponse(sequence: string, options?: { url?: string, retry?: number }) {
 	const builder = nock(options && options.url ? options.url : horizonUrl)
 		.matchHeader(headerKey, headerVal);
-	if (options && options.retry && options.retry > 0) {
-		for (let i = 0; i < options.retry; i++) {
-			builder.get(url => true).reply(mock500NetworkResponse.status, mock500NetworkResponse);
-		}
+	if (options && options.retry) {
+		builder.get(url => true)
+			.times(options.retry)
+			.reply(mock500NetworkResponse.status, mock500NetworkResponse);
 	}
-	builder
-		.get(url => url.includes(senderPublic))
+	builder.get(url => url.includes(senderPublic))
 		.reply(200,
 			{
 				"_links": {
@@ -499,14 +615,14 @@ function mockLoadAccountResponse(sequence: string, options?: { url?: string, ret
 
 function mockTransactionRequest(options: { url?: string, retry?: number, requestBody: string, hash?: string }) {
 	const builder = nock(options && options.url ? options.url : horizonUrl)
+		.log(console.log)
 		.matchHeader(headerKey, headerVal);
-	if (options && options.retry && options.retry > 0) {
-		for (let i = 0; i < options.retry; i++) {
-			builder.get(url => true).reply(mock500NetworkResponse.status, mock500NetworkResponse);
-		}
+	if (options && options.retry) {
+		builder.post(url => true)
+			.times(options.retry)
+			.reply(mock500NetworkResponse.status, mock500NetworkResponse)
 	}
-	builder
-		.post(url => url.includes("/transactions"), options.requestBody)
+	builder.post(url => url.includes("/transactions"), options.requestBody)
 		.reply(200,
 			{
 				"_links": {

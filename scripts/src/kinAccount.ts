@@ -65,7 +65,7 @@ export class KinAccount {
 		return await this._txSender.submitTransaction(transactionBuilder);
 	}
 
-	whitelistTransaction(payload: string | WhitelistPayload): string {
+	whitelistTransaction(payload: WhitelistPayload): string {
 		return this._txSender.whitelistTransaction(payload);
 	}
 }
