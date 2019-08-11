@@ -15,6 +15,7 @@ import {WhitelistPayload} from "../../scripts/src/types";
 import {BlockchainInfoRetriever} from "../../scripts/src/blockchain/blockchainInfoRetriever";
 import {MEMO_LENGTH_ERROR} from "../../scripts/src/config";
 import CreateAccount = Operation.CreateAccount;
+import RetryData = Server.RetryData;
 
 const horizonUrl = "http://horizon.com";
 const headerKey = "user-agent";
@@ -99,7 +100,7 @@ const response404: ErrorResponse = {
 	detail: "The resource at the url requested was not found.  This is usually occurs for one of two reasons:  The url requested is not valid, or no data in our database could be found with the parameters provided."
 };
 
-function initKinAccount(retry?: any) {
+function initKinAccount(retry?: RetryData) {
 	const server = new Server(horizonUrl, {
 		allowHttp: true,
 		headers: new Map<string, string>().set(headerKey, headerVal),
@@ -398,7 +399,9 @@ describe("KinAccount retry", async () => {
 
 	beforeEach(async () => {
 		initKinAccount({
-			retries: RETRY_COUNT
+			retries: RETRY_COUNT,
+			// override delay for making tests faster
+			retryDelay: () => 1
 		});
 	});
 
@@ -493,7 +496,6 @@ describe("KinAccount retry", async () => {
 		const fakeUrl = "https://fake.url.com";
 		mockLoadAccountResponse("6319125253062661");
 		nock(horizonUrl)
-			.log(console.log)
 			.post(url => true)
 			.reply(307, undefined, {
 				location: fakeUrl + "/transactions/" + bodyCreateAccountRedirect
@@ -615,7 +617,6 @@ function mockLoadAccountResponse(sequence: string, options?: { url?: string, ret
 
 function mockTransactionRequest(options: { url?: string, retry?: number, requestBody: string, hash?: string }) {
 	const builder = nock(options && options.url ? options.url : horizonUrl)
-		.log(console.log)
 		.matchHeader(headerKey, headerVal);
 	if (options && options.retry) {
 		builder.post(url => true)
