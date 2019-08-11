@@ -2,18 +2,11 @@ import {Address, TransactionId, WhitelistPayload} from "../types";
 import {Asset, Keypair, Network, Operation, Server, Transaction as XdrTransaction} from "@kinecosystem/kin-sdk";
 import {KeyPair} from "./keyPair";
 import {TransactionBuilder} from "./transactionBuilder";
-import {ErrorDecoder, HorizonError, NetworkError, NetworkMismatchedError} from "../errors";
+import {AccountNotFoundError, ErrorDecoder, HorizonError, NetworkError, NetworkMismatchedError} from "../errors";
 import {Channel} from "./channelsPool";
 import {IBlockchainInfoRetriever} from "./blockchainInfoRetriever";
 import {CHANNEL_TOP_UP_TX_COUNT} from "../config";
 import {TransactionErrorList} from "./errors";
-
-interface WhitelistPayloadTemp {
-	// The android stellar sdk spells 'envelope' as 'envelop'
-	envelop: string;
-	envelope?: string;
-	networkId: string;
-}
 
 export class TxSender {
 	constructor(private readonly _keypair: KeyPair,
@@ -32,7 +25,7 @@ export class TxSender {
 
 	public async getTransactionBuilder(txFee: number, channel?: Channel): Promise<TransactionBuilder> {
 		const response = await this.loadSenderAccountData(channel);
-		return new TransactionBuilder(response, { fee: txFee, appId: this.appId }, channel)
+		return new TransactionBuilder(response, {fee: txFee, appId: this.appId}, channel)
 			.setTimeout(0);
 	}
 
@@ -87,30 +80,25 @@ export class TxSender {
 		}
 	}
 
-	public whitelistTransaction(payload: string | WhitelistPayload): string {
-		let txPair: WhitelistPayload | WhitelistPayloadTemp;
-		if (typeof payload === "string") {
-			const tx = JSON.parse(payload);
-			if (tx.envelop != null) {
-				txPair = tx as WhitelistPayloadTemp;
-				txPair.envelope = txPair.envelop;
-			} else {
-				txPair = tx as WhitelistPayload;
-			}
-		} else {
-			txPair = payload;
+	public whitelistTransaction(payload: WhitelistPayload): string {
+		let networkId = (payload as any).networkId;
+		if (networkId === undefined) {
+			networkId = (payload as any).network_id;
 		}
-
-		if (typeof txPair.envelope !== "string") {
-			throw new TypeError("'envelope' must be type of string");
+		const txEnvelope = payload.envelope;
+		if (networkId === undefined) {
+			throw new TypeError("network id cannot be empty.");
+		}
+		if (txEnvelope === undefined) {
+			throw new TypeError("envelope cannot be empty.");
 		}
 
 		const networkPassphrase = Network.current().networkPassphrase();
-		if (networkPassphrase !== txPair.networkId) {
+		if (networkPassphrase !== networkId) {
 			throw new NetworkMismatchedError("Unable to sign whitelist transaction, network type is mismatched");
 		}
 
-		const transaction = new XdrTransaction(txPair.envelope);
+		const transaction = new XdrTransaction(txEnvelope);
 		transaction.sign(Keypair.fromSecret(this._keypair.seed));
 		const envelope = transaction.toEnvelope();
 		const buffer = envelope.toXDR("base64");
@@ -135,7 +123,16 @@ export class TxSender {
 
 	private async loadSenderAccountData(channel?: Channel) {
 		const addressToLoad = channel ? channel.keyPair.publicAddress : this._keypair.publicAddress;
-		const response: Server.AccountResponse = await this._server.loadAccount(addressToLoad);
-		return response;
+		try {
+			const response: Server.AccountResponse = await this._server.loadAccount(addressToLoad);
+			return response;
+		} catch (e) {
+			const error = ErrorDecoder.translate(e);
+			if (error.type == "ResourceNotFoundError") {
+				throw new AccountNotFoundError(error.errorBody)
+			} else {
+				throw error;
+			}
+		}
 	}
 }

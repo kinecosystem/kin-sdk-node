@@ -84,7 +84,7 @@ export class AccountNotFoundError extends HorizonError {
 	readonly type: ErrorType = 'AccountNotFoundError';
 
 	constructor(readonly errorBody: ErrorResponse, readonly title?: string) {
-		super(`Account was not found in the network.`, errorBody, title);
+		super(`Account was not found in the network`, errorBody, title);
 		this.errorCode = 404;
 	}
 }
