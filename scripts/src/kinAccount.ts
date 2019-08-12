@@ -1,13 +1,13 @@
-import { AccountData, Balance } from "./blockchain/horizonModels";
-import { Server } from "@kinecosystem/kin-sdk";
-import { AccountDataRetriever } from "./blockchain/accountDataRetriever";
-import { TxSender } from "./blockchain/txSender";
-import { Address, TransactionId, WhitelistPayload } from "./types";
+import {AccountData, Balance} from "./blockchain/horizonModels";
+import {Server} from "@kinecosystem/kin-sdk";
+import {AccountDataRetriever} from "./blockchain/accountDataRetriever";
+import {TxSender} from "./blockchain/txSender";
+import {Address, TransactionId} from "./types";
 import * as config from "./config";
-import { KeyPair } from "./blockchain/keyPair";
-import { TransactionBuilder } from "./blockchain/transactionBuilder";
-import { Channel, ChannelsPool } from "./blockchain/channelsPool";
-import { IBlockchainInfoRetriever } from "./blockchain/blockchainInfoRetriever";
+import {KeyPair} from "./blockchain/keyPair";
+import {TransactionBuilder} from "./blockchain/transactionBuilder";
+import {Channel, ChannelsPool} from "./blockchain/channelsPool";
+import {IBlockchainInfoRetriever} from "./blockchain/blockchainInfoRetriever";
 
 export class KinAccount {
 	private readonly _keypair: KeyPair;
@@ -65,7 +65,7 @@ export class KinAccount {
 		return await this._txSender.submitTransaction(transactionBuilder);
 	}
 
-	whitelistTransaction(payload: WhitelistPayload): string {
+	whitelistTransaction(payload: WhitelistParams): string {
 		return this._txSender.whitelistTransaction(payload);
 	}
 }
@@ -134,3 +134,10 @@ export interface GetTransactionParams {
 	 */
 	channel?: Channel;
 }
+
+export interface WhitelistParams {
+	envelope: string;
+	networkId: string;
+};
+
+export type WhitelistPayload = WhitelistParams;

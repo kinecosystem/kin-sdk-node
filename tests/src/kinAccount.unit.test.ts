@@ -11,7 +11,6 @@ import {
 } from "../../scripts/src/errors";
 import {Environment} from "../../scripts/src/environment";
 import {Memo, Network, Operation, Server} from "@kinecosystem/kin-sdk";
-import {WhitelistPayload} from "../../scripts/src/types";
 import {BlockchainInfoRetriever} from "../../scripts/src/blockchain/blockchainInfoRetriever";
 import {MEMO_LENGTH_ERROR} from "../../scripts/src/config";
 import CreateAccount = Operation.CreateAccount;
@@ -367,14 +366,37 @@ describe("KinAccount whitelist transaction", async () => {
 		initKinAccount();
 	});
 
-	test("whitelist transaction with networkId", () => {
-		const txPair: WhitelistPayload = {envelope: txPayload, networkId: Network.current().networkPassphrase()};
-		expect(kinAccount.whitelistTransaction(txPair)).toEqual(expectedWhitelistedPayload);
+	test("whitelist transaction with raw string", () => {
+		const json = {envelope: txPayload, network_id: Network.current().networkPassphrase()};
+		const rawString = JSON.stringify(json);
+		expect(kinAccount.whitelistTransaction(rawString as any)).toEqual(expectedWhitelistedPayload);
 	});
 
-	test("whitelist transaction with network_id", () => {
-		const txPair: WhitelistPayload = {envelope: txPayload, network_id: Network.current().networkPassphrase()};
-		expect(kinAccount.whitelistTransaction(txPair)).toEqual(expectedWhitelistedPayload);
+	test("whitelist transaction with raw string, missing network id, expect error", () => {
+		const json = {envelope: txPayload};
+		const rawString = JSON.stringify(json);
+		expect(() => kinAccount.whitelistTransaction(rawString as any))
+			.toThrow(TypeError);
+	});
+
+	test("whitelist transaction with raw string, missing envelope, expect error", () => {
+		const json = {network_id: Network.current().networkPassphrase()};
+		const rawString = JSON.stringify(json);
+		expect(() => kinAccount.whitelistTransaction(rawString as any))
+			.toThrow(TypeError);
+	});
+
+	test("whitelist transaction with raw string, invalid json, expect error", () => {
+		const rawString = JSON.stringify(txPayload);
+		expect(() => kinAccount.whitelistTransaction(rawString as any))
+			.toThrow(TypeError);
+	});
+
+	test("whitelist transaction, expect success", () => {
+		expect(kinAccount.whitelistTransaction({
+			envelope: txPayload,
+			networkId: Network.current().networkPassphrase()
+		})).toEqual(expectedWhitelistedPayload);
 	});
 
 	test("whitelist transaction, missing network id, expect error", () => {
@@ -383,7 +405,7 @@ describe("KinAccount whitelist transaction", async () => {
 	});
 
 	test("whitelist transaction, missing envelope, expect error", () => {
-		expect(() => kinAccount.whitelistTransaction({network_id: Network.current().networkPassphrase()} as any))
+		expect(() => kinAccount.whitelistTransaction({networkId: Network.current().networkPassphrase()} as any))
 			.toThrow(TypeError);
 	});
 
