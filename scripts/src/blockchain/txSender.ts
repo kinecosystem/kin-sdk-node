@@ -1,4 +1,4 @@
-import {Address, TransactionId, WhitelistPayload} from "../types";
+import {Address, TransactionId} from "../types";
 import {Asset, Keypair, Network, Operation, Server, Transaction as XdrTransaction} from "@kinecosystem/kin-sdk";
 import {KeyPair} from "./keyPair";
 import {TransactionBuilder} from "./transactionBuilder";
@@ -7,6 +7,7 @@ import {Channel} from "./channelsPool";
 import {IBlockchainInfoRetriever} from "./blockchainInfoRetriever";
 import {CHANNEL_TOP_UP_TX_COUNT} from "../config";
 import {TransactionErrorList} from "./errors";
+import {WhitelistParams} from "../kinAccount";
 
 export class TxSender {
 	constructor(private readonly _keypair: KeyPair,
@@ -80,17 +81,27 @@ export class TxSender {
 		}
 	}
 
-	public whitelistTransaction(payload: WhitelistPayload): string {
-		let networkId = (payload as any).networkId;
-		if (networkId === undefined) {
-			networkId = (payload as any).network_id;
+	public whitelistTransaction(params: WhitelistParams): string {
+		let networkId, envelope;
+		if (typeof params === "string") {
+			//support json as a raw string for backward compatibility
+			try {
+				const fromJson = JSON.parse(params);
+				networkId = fromJson.network_id;
+				envelope = fromJson.envelope;
+			} catch (e) {
+				throw new TypeError("input string must be json");
+			}
+		} else {
+			networkId = params.networkId;
+			envelope = params.envelope;
 		}
-		const txEnvelope = payload.envelope;
-		if (networkId === undefined) {
-			throw new TypeError("network id cannot be empty.");
+
+		if (!networkId) {
+			throw new TypeError("networkId must be a non empty string");
 		}
-		if (txEnvelope === undefined) {
-			throw new TypeError("envelope cannot be empty.");
+		if (!envelope) {
+			throw new TypeError("envelope must be a non empty string");
 		}
 
 		const networkPassphrase = Network.current().networkPassphrase();
@@ -98,10 +109,10 @@ export class TxSender {
 			throw new NetworkMismatchedError("Unable to sign whitelist transaction, network type is mismatched");
 		}
 
-		const transaction = new XdrTransaction(txEnvelope);
+		const transaction = new XdrTransaction(envelope);
 		transaction.sign(Keypair.fromSecret(this._keypair.seed));
-		const envelope = transaction.toEnvelope();
-		const buffer = envelope.toXDR("base64");
+		const txEnvelope = transaction.toEnvelope();
+		const buffer = txEnvelope.toXDR("base64");
 
 		return buffer.toString();
 	}
@@ -128,7 +139,7 @@ export class TxSender {
 			return response;
 		} catch (e) {
 			const error = ErrorDecoder.translate(e);
-			if (error.type == "ResourceNotFoundError") {
+			if (error.type === "ResourceNotFoundError") {
 				throw new AccountNotFoundError(error.errorBody)
 			} else {
 				throw error;

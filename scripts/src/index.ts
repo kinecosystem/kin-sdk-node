@@ -5,9 +5,16 @@ import {
 	PaymentListenerParams,
 	TransactionHistoryParams
 } from "./kinClient";
-import {CreateAccountParams, GetTransactionParams, KinAccount, SendKinParams} from "./kinAccount";
+import {
+	CreateAccountParams,
+	GetTransactionParams,
+	KinAccount,
+	SendKinParams,
+	WhitelistParams,
+	WhitelistPayload
+} from "./kinAccount";
 import {Environment} from "./environment";
-import {Address, TransactionId, WhitelistPayload} from "./types"
+import {Address, TransactionId} from "./types"
 import {
 	AccountData,
 	AssetType,
@@ -68,6 +75,7 @@ export {
 	CreateAccountParams,
 	SendKinParams,
 	WhitelistPayload,
+	WhitelistParams,
 	ChannelsPool,
 	Channel,
 	ChannelsPoolStatus,
