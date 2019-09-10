@@ -37,9 +37,9 @@ describe("KinClient", async () => {
 		expect(data.signers[0].publicKey).toBe(keypair.publicAddress);
 		expect(data.id).toBe(keypair.publicAddress);
 
-		const thirdKeypair = KeyPair.generate();
+		const getDataKeypair = KeyPair.generate();
 		const builder = await sender.buildCreateAccount({
-			address: thirdKeypair.publicAddress,
+			address: getDataKeypair.publicAddress,
 			fee: 100,
 			startingBalance: 1000,
 			memoText: "my first wallet"
@@ -55,9 +55,9 @@ describe("KinClient", async () => {
 	}, 60000);
 
 	test("Test getTransactionData", async () => {
-		const thirdKeypair = KeyPair.generate();
+		const getTxKeypair = KeyPair.generate();
 		const builder = await sender.buildCreateAccount({
-			address: thirdKeypair.publicAddress,
+			address: getTxKeypair.publicAddress,
 			fee: 100,
 			startingBalance: 1000,
 			memoText: "my first wallet"
@@ -65,20 +65,20 @@ describe("KinClient", async () => {
 
 		const transactionId = await sender.submitTransaction(builder);
 		const data = await client.getTransactionData(transactionId);
-		expect((data as any).destination).toBe(thirdKeypair.publicAddress);
+		expect((data as any).destination).toBe(getTxKeypair.publicAddress);
 		expect((data as any).startingBalance).toBe(1000);
 		expect(data.source).toBe(sender.publicAddress);
 		expect(data.memo).toBe("1-anon-my first wallet");
 	}, 30000);
 
 	test("Test get transaction history", async () => {
-		const thirdKeypair = KeyPair.generate();
-		await client.friendbot({ address: thirdKeypair.publicAddress, amount: 1000 });
+		const historyKeypair = KeyPair.generate();
+		await client.friendbot({ address: historyKeypair.publicAddress, amount: 1000 });
 
 		let sendBuilder: TransactionBuilder;
 		for (let i = 0; i < 2; i++) {
 			sendBuilder = await sender.buildSendKin({
-				address: thirdKeypair.publicAddress,
+				address: historyKeypair.publicAddress,
 				amount: 10,
 				fee: 100,
 				memoText: "sending kin: " + i
@@ -86,7 +86,7 @@ describe("KinClient", async () => {
 			await sender.submitTransaction(sendBuilder);
 		}
 
-		const history = await client.getTransactionHistory({ address: thirdKeypair.publicAddress });
+		const history = await client.getTransactionHistory({ address: historyKeypair.publicAddress });
 		expect(history.length).toBe(3);
 		expect(history[0].memo).toBe("1-anon-sending kin: 1");
 		expect(history[1].memo).toBe("1-anon-sending kin: 0");
@@ -94,13 +94,13 @@ describe("KinClient", async () => {
 	}, 60000);
 
 	test("Test getBalance", async () => {
-		const thirdKeypair = KeyPair.generate();
-		await client.friendbot({ address: thirdKeypair.publicAddress, amount: 1000 });
+		const balanceKeypair = KeyPair.generate();
+		await client.friendbot({ address: balanceKeypair.publicAddress, amount: 1000 });
 
 		let sendBuilder: TransactionBuilder;
 		for (let i = 0; i < 2; i++) {
 			sendBuilder = await sender.buildSendKin({
-				address: thirdKeypair.publicAddress,
+				address: balanceKeypair.publicAddress,
 				amount: 10,
 				fee: 100,
 				memoText: "sending kin: " + i
@@ -108,7 +108,7 @@ describe("KinClient", async () => {
 			await sender.submitTransaction(sendBuilder);
 		}
 
-		const balance = await client.getAccountBalance(thirdKeypair.publicAddress);
+		const balance = await client.getAccountBalance(balanceKeypair.publicAddress);
 		expect(balance).toBe(1020);
 	}, 60000);
 
